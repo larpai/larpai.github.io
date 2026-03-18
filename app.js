@@ -1059,13 +1059,31 @@ class FacialAnalyzer {
         </div>`;
 
         this.els.featuresBox.innerHTML = html;
+        
+        // Check if mobile
+        const isMobile = window.innerWidth <= 768;
+        
+        // On mobile, hide the face overlay canvas
+        if (isMobile && this.els.overlay) {
+            this.els.overlay.style.display = 'none';
+        }
+        
         this.els.statsSection.classList.add('active');
-        this.els.featuresCollapseBtn.style.display = 'flex';
-        this.els.featuresBox.classList.add('collapsed'); // Start collapsed
-        this.els.featuresCollapseBtn.classList.add('collapsed');
-        this.els.featuresCollapseBtn.querySelector('span').textContent = 'Expand';
-        this.els.featuresCollapseBtn.title = 'Expand detailed scores';
-        this.els.statsSection.classList.remove('active'); // Also hide measurements initially
+        
+        // On mobile, don't show collapse button and always show everything
+        if (isMobile) {
+            this.els.featuresCollapseBtn.style.display = 'none';
+            this.els.featuresBox.classList.remove('collapsed');
+            this.els.statsSection.classList.add('active');
+        } else {
+            // Desktop: show collapse button and start collapsed
+            this.els.featuresCollapseBtn.style.display = 'flex';
+            this.els.featuresBox.classList.add('collapsed'); // Start collapsed
+            this.els.featuresCollapseBtn.classList.add('collapsed');
+            this.els.featuresCollapseBtn.querySelector('span').textContent = 'Expand';
+            this.els.featuresCollapseBtn.title = 'Expand detailed scores';
+            this.els.statsSection.classList.remove('active'); // Also hide measurements initially
+        }
 
         const rows = [
             ['Face Width (est.)',   `${m.faceWidth.toFixed(0)}px`],
