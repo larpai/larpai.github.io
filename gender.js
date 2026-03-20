@@ -392,10 +392,10 @@ function patchAnalyzer(analyzer) {
         return _genderAwareScores(m, ideals, _origCalcScores);
     };
 
-    /* ── 5. Intercept displayResults — show gender popup first ── */
+    /* ── 5. Set up gender popup hook for after analysis ── */
     const _origDisplay = analyzer.displayResults.bind(analyzer);
-    analyzer.displayResults = function (scores, m) {
-        console.log('[gender.js] displayResults called, genderResult:', this._genderResult);
+    analyzer._onDisplayResults = function(scores, m) {
+        console.log('[gender.js] _onDisplayResults called, genderResult:', this._genderResult);
         this._showGenderConfirm(scores, m);
     };
 
@@ -405,9 +405,8 @@ function patchAnalyzer(analyzer) {
         const gr = this._genderResult;
         console.log('[gender.js] genderResult:', gr);
         if (!gr) {
-            console.log('[gender.js] No gender detected - showing results directly');
-            // No gender detected — just show results directly
-            _origDisplay(scores, m);
+            console.log('[gender.js] No gender detected - results already shown');
+            // No gender detected — results are already displayed
             return;
         }
 
@@ -429,9 +428,8 @@ function patchAnalyzer(analyzer) {
         console.log('[gender.js] Popup elements:', { overlay: !!overlay, iconEl: !!iconEl, labelEl: !!labelEl, confirmBtn: !!confirmBtn, switchBtn: !!switchBtn });
 
         if (!overlay) {
-            console.log('[gender.js] Popup overlay not found - showing results directly');
-            // Popup HTML not in index.html — skip straight to results
-            _origDisplay(scores, m);
+            console.log('[gender.js] Popup overlay not found - results already shown');
+            // Popup HTML not in index.html — results are already displayed
             return;
         }
 
@@ -447,12 +445,13 @@ function patchAnalyzer(analyzer) {
         overlay.classList.add('active');
         console.log('[gender.js] Overlay classes:', overlay.className);
 
-        // Confirm button — show results as detected
+        // Confirm button — just close popup and add gender badge
         const onConfirm = () => {
+            console.log('[gender.js] Confirm button clicked');
             overlay.classList.remove('active');
             confirmBtn.removeEventListener('click', onConfirm);
             switchBtn.removeEventListener('click', onSwitch);
-            _origDisplay(scores, m);
+            
             // Patch female display if female
             if (isFemale) {
                 _patchFemaleDisplayContent(analyzer.els.featuresBox, scores, m);
