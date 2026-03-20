@@ -425,41 +425,6 @@ class FacialAnalyzer {
         });
     }
 
-    runHairlineDemo(line, doneBtn, imgRect) {
-        // Animate line moving from default position (15%) down to ~22% (hair area)
-        // then back to ~12%, then settling at 15% — shows user what to do
-        const startPct = parseFloat(line.style.top);
-        if (isNaN(startPct)) return;
-
-        const keyframes = [
-            { pct: startPct,      dur: 0    },   // start
-            { pct: startPct + 8,  dur: 600  },   // drift down slowly
-            { pct: startPct - 4,  dur: 500  },   // back up
-            { pct: startPct,      dur: 400  },   // settle
-        ];
-
-        let i = 1;
-        const step = () => {
-            if (i >= keyframes.length) return;
-            const kf = keyframes[i];
-            line.style.transition = `top ${kf.dur}ms ease`;
-            line.style.top = kf.pct + '%';
-            // Keep done button in sync
-            doneBtn.style.transition = `top ${kf.dur}ms ease`;
-            doneBtn.style.top = `calc(${kf.pct}% + 10px)`;
-            i++;
-            if (i < keyframes.length) setTimeout(step, kf.dur + 80);
-            else {
-                // Remove transition after demo so dragging feels instant
-                setTimeout(() => {
-                    line.style.transition = '';
-                    doneBtn.style.transition = '';
-                }, kf.dur + 100);
-            }
-        };
-        setTimeout(step, keyframes[0].dur + 200);
-    }
-
     showHairlinePopup() {
         const popup = document.getElementById('hairlinePopup');
         const btn   = document.getElementById('hairlinePopupBtn');
