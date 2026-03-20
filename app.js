@@ -1,5 +1,5 @@
 /**
- * FacialAnalyzer v4.3 — Mobile-optimized hairline edition
+ * FacialAnalyzer v4.4 — Mobile hairline drag fixed edition
  *
  * ROOT CAUSE OF ALL BROKEN MEASUREMENTS (fixed in this version):
  *
