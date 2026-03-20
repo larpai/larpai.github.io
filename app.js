@@ -198,6 +198,7 @@ class FacialAnalyzer {
             height:${imgRect.height}px;
             pointer-events:none;
             z-index:20;
+            touch-action: none;
         `;
 
         // ── The draggable line — white with black glow (matches app theme) ──
@@ -298,16 +299,32 @@ class FacialAnalyzer {
         const onDown = e => {
             if (confirmed) return;
             dragging = true;
-            startY   = e.clientY ?? e.touches?.[0]?.clientY;
+            
+            // Handle both mouse and touch events
+            if (e.type === 'touchstart') {
+                startY = e.touches[0].clientY;
+            } else {
+                startY = e.clientY;
+            }
+            
             startTop = parseFloat(line.style.top) / 100 * imgRect.height;
             line.style.boxShadow = '0 1px 12px rgba(0,0,0,0.9), 0 -1px 12px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.3)';
             e.preventDefault();
             e.stopPropagation();
-            console.log('Touch/mouse down - dragging started', { startY, startTop });
+            console.log('Touch/mouse down - dragging started', { type: e.type, startY, startTop });
         };
+        
         const onMove = e => {
             if (!dragging) return;
-            const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+            
+            // Handle both mouse and touch events
+            let clientY;
+            if (e.type === 'touchmove') {
+                clientY = e.touches[0].clientY;
+            } else {
+                clientY = e.clientY;
+            }
+            
             const delta   = clientY - startY;
             const newTop  = Math.max(0, Math.min(imgRect.height - 2, startTop + delta));
             const fracY   = newTop / imgRect.height;
@@ -318,19 +335,21 @@ class FacialAnalyzer {
             updateDonePos();
             e.preventDefault();
             e.stopPropagation();
-            console.log('Touch/mouse move', { clientY, delta, newTop, fracY });
+            console.log('Touch/mouse move', { type: e.type, clientY, delta, newTop, fracY });
         };
+        
         const onUp = () => {
             dragging = false;
             line.style.boxShadow = '0 1px 8px rgba(0,0,0,0.8), 0 -1px 8px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.4)';
+            console.log('Touch/mouse up - dragging ended');
         };
 
         line.addEventListener('mousedown', onDown);
-        line.addEventListener('touchstart', onDown, { passive: false, capture: true });
+        line.addEventListener('touchstart', onDown, { passive: false });
         document.addEventListener('mousemove', onMove);
-        document.addEventListener('touchmove', onMove, { passive: false, capture: true });
+        document.addEventListener('touchmove', onMove, { passive: false });
         document.addEventListener('mouseup', onUp);
-        document.addEventListener('touchend', onUp, { capture: true });
+        document.addEventListener('touchend', onUp);
 
         // ── Done button click — confirm dialog ───────────────────────────────
         doneBtn.addEventListener('click', () => {
