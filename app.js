@@ -220,6 +220,20 @@ class FacialAnalyzer {
             z-index:25;
         `;
 
+        // ── Invisible drag area — extends 20px above and below line for easier touch ──
+        const dragArea = document.createElement('div');
+        dragArea.style.cssText = `
+            position:absolute;
+            left:0; right:0;
+            top:${defaultFrac * 100 - 0.1}%;
+            height:20%;
+            background:transparent;
+            cursor:ns-resize;
+            pointer-events:all;
+            touch-action: pan-y;
+            z-index:24;
+        `;
+
         // ── Label floating above the line ───────────────────────────────────
         const label = document.createElement('div');
         label.style.cssText = `
@@ -282,6 +296,7 @@ class FacialAnalyzer {
             z-index:30;
         `;
 
+        ui.appendChild(dragArea);
         ui.appendChild(line);
         ui.appendChild(doneBtn);
         previewBox.appendChild(ui);
@@ -330,6 +345,7 @@ class FacialAnalyzer {
             const newTop  = Math.max(0, Math.min(imgRect.height - 2, startTop + delta));
             const fracY   = newTop / imgRect.height;
             line.style.top        = (fracY * 100) + '%';
+            dragArea.style.top    = ((fracY - 0.1) * 100) + '%';
             this.hairlineY        = fracY * this.naturalH;
             this.hairlineFracY    = fracY;
             label.textContent     = '↕  Hairline — looks good?';
@@ -345,8 +361,9 @@ class FacialAnalyzer {
             console.log('Touch/mouse up - dragging ended');
         };
 
-        line.addEventListener('mousedown', onDown);
-        line.addEventListener('touchstart', function(e) {
+        // Attach events to drag area instead of just line
+        dragArea.addEventListener('mousedown', onDown);
+        dragArea.addEventListener('touchstart', function(e) {
             e.preventDefault();
             onDown(e);
         });
