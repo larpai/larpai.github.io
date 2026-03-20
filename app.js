@@ -351,7 +351,12 @@ class FacialAnalyzer {
                 label.style.color = 'rgba(255,255,255,0.6)';
                 line.style.cursor = 'default';
                 line.style.pointerEvents = 'none';
-                this.setStatus('Hairline set — click Analyze');
+                this.setStatus('Hairline set — analyzing...');
+                
+                // Auto-start analysis after hairline confirmation
+                setTimeout(() => {
+                    this.analyze();
+                }, 500);
             });
         };
 
