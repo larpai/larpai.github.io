@@ -356,16 +356,12 @@ function patchAnalyzer(analyzer) {
         }
 
         try {
-            console.log('[gender.js] Running gender detection...');
+            console.log('[gender.js] Running gender detection on existing face...');
             this.setLoader('Detecting gender & age\u2026');
+            
+            // Use the already detected face and run age/gender estimation
             const withGender = await faceapi
-                .detectSingleFace(this.currentImage,
-                    this.useTiny
-                        ? new faceapi.TinyFaceDetectorOptions({ inputSize: 608, scoreThreshold: 0.3 })
-                        : new faceapi.SsdMobilenetv1Options({ minConfidenceScore: 0.35 })
-                )
-                .withFaceLandmarks()
-                .withAgeAndGender();
+                .estimateAgeAndGender(det.detection, det.landmarks, this.currentImage);
 
             console.log('[gender.js] Gender detection result:', withGender);
             if (withGender) {
