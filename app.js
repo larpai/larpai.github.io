@@ -1,5 +1,5 @@
 /**
- * FacialAnalyzer v4.1 — Landmark-corrected edition
+ * FacialAnalyzer v4.3 — Mobile-optimized hairline edition
  *
  * ROOT CAUSE OF ALL BROKEN MEASUREMENTS (fixed in this version):
  *
