@@ -207,16 +207,17 @@ class FacialAnalyzer {
             position:absolute;
             left:0; right:0;
             top:${defaultFrac * 100}%;
-            height:2px;
+            height:8px;
             background:#ffffff;
             box-shadow: 0 1px 8px rgba(0,0,0,0.8), 0 -1px 8px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.4);
             cursor:ns-resize;
             pointer-events:all;
             transition: box-shadow 0.15s;
-            touch-action: none;
+            touch-action: pan-y;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: rgba(255,255,255,0.3);
+            z-index:25;
         `;
 
         // ── Label floating above the line ───────────────────────────────────
@@ -345,11 +346,20 @@ class FacialAnalyzer {
         };
 
         line.addEventListener('mousedown', onDown);
-        line.addEventListener('touchstart', onDown, { passive: false });
+        line.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            onDown(e);
+        });
         document.addEventListener('mousemove', onMove);
-        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            onMove(e);
+        });
         document.addEventListener('mouseup', onUp);
-        document.addEventListener('touchend', onUp);
+        document.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            onUp();
+        });
 
         // ── Done button click — confirm dialog ───────────────────────────────
         doneBtn.addEventListener('click', () => {
