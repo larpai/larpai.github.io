@@ -502,8 +502,9 @@ class FacialAnalyzer {
             this.els.analyzeBtn.disabled = false;
 
             this.displayResults(this.scores, this.measurements);
-            const hlMsg = this.measurements.usingHairline ? ' \u00b7 hairline: manual' : ' \u00b7 hairline: estimated (drag yellow line to set)';
-            this.setStatus('Analysis complete \u2713' + hlMsg, false, true);
+            const hlMsg = this.measurements.usingHairline ? ' · hairline: manual' : ' · hairline: estimated';
+            const genderMsg = this._genderResult ? ` · gender: ${this._genderResult.gender}` : '';
+            this.setStatus('Analysis complete ✓' + hlMsg + genderMsg, false, true);
         } catch (err) {
             console.error(err);
             this.fail('Unexpected error \u2014 please retry');
@@ -1446,7 +1447,10 @@ class FacialAnalyzer {
             `<div class="stat-box"><div class="stat-label">${l}</div><div class="stat-value">${v}</div></div>`
         ).join('');
 
+        if (typeof this._onDisplayResults === 'function') {
+            this._onDisplayResults(scores, m);
         }
+    }
 
     dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 

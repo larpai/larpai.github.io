@@ -409,110 +409,18 @@ function patchAnalyzer(analyzer) {
         return _genderAwareScores(m, ideals, _origCalcScores);
     };
 
-    /* ── 5. Intercept displayResults — show gender popup first ── */
-    const _origDisplay = analyzer.displayResults.bind(analyzer);
-    analyzer.displayResults = function (scores, m) {
-        this._showGenderConfirm(scores, m);
-    };
-
-    /* ── 6. Show gender confirmation popup after scoring ── */
-    analyzer._showGenderConfirm = function(scores, m) {
-        console.log('[gender.js] _showGenderConfirm called');
+    /* ── 5. After displayResults runs, patch female content automatically ── */
+    analyzer._onDisplayResults = function(scores, m) {
         const gr = this._genderResult;
-        console.log('[gender.js] genderResult:', gr);
-        if (!gr) {
-            console.log('[gender.js] No gender detected - results already shown');
-            // No gender detected — results are already displayed
-            return;
+        if (!gr) return;
+        const isFemale = gr.gender === 'female' && gr.genderProbability >= 0.70;
+        if (isFemale) {
+            _patchFemaleDisplayContent(this.els.featuresBox, scores, m);
+            _patchFemaleRatingLabel(scores.overall, this.els.featuresBox);
         }
-
-        const isFemale = gr.gender === 'female';
-        const color    = isFemale ? '#ff6eb4' : '#5ac8fa';
-        const icon     = isFemale ? '♀' : '♂';
-        const label    = isFemale ? 'Female' : 'Male';
-        const opposite = isFemale ? 'Male' : 'Female';
-        const confPct  = (gr.genderProbability * 100).toFixed(0);
-
-        // Populate popup
-        console.log('[gender.js] Populating popup...');
-        const overlay    = document.getElementById('genderConfirmOverlay');
-        const iconEl     = document.getElementById('genderConfirmIcon');
-        const labelEl    = document.getElementById('genderConfirmLabel');
-        const confirmBtn = document.getElementById('genderConfirmYes');
-        const switchBtn  = document.getElementById('genderConfirmSwitch');
-
-        console.log('[gender.js] Popup elements:', { overlay: !!overlay, iconEl: !!iconEl, labelEl: !!labelEl, confirmBtn: !!confirmBtn, switchBtn: !!switchBtn });
-
-        if (!overlay) {
-            console.log('[gender.js] Popup overlay not found - results already shown');
-            // Popup HTML not in index.html — results are already displayed
-            return;
-        }
-
-        iconEl.textContent  = icon;
-        iconEl.style.color  = color;
-        labelEl.textContent = `${icon} ${label}  ·  ${confPct}% confidence`;
-        labelEl.style.background = `${color}18`;
-        labelEl.style.border     = `1px solid ${color}60`;
-        labelEl.style.color      = color;
-        switchBtn.textContent    = `Different Gender — Switch to ${opposite}`;
-
-        console.log('[gender.js] Adding active class to overlay');
-        overlay.classList.add('active');
-        console.log('[gender.js] Overlay classes:', overlay.className);
-
-        // Confirm button — just close popup and add gender badge
-        const onConfirm = () => {
-            console.log('[gender.js] Confirm button clicked');
-            overlay.classList.remove('active');
-            confirmBtn.removeEventListener('click', onConfirm);
-            switchBtn.removeEventListener('click', onSwitch);
-            
-            // Patch female display if female
-            if (isFemale) {
-                _patchFemaleDisplayContent(analyzer.els.featuresBox, scores, m);
-                _patchFemaleRatingLabel(scores.overall, analyzer.els.featuresBox);
-            }
-            // Insert gender badge
-            _insertGenderBadge(analyzer.els.featuresBox, gr);
-        };
-
-        // Switch button — flip gender and re-score
-        const onSwitch = () => {
-            overlay.classList.remove('active');
-            confirmBtn.removeEventListener('click', onConfirm);
-            switchBtn.removeEventListener('click', onSwitch);
-
-            // Override gender result to opposite
-            const flipped = {
-                gender:            isFemale ? 'male' : 'female',
-                genderProbability: 0.95,
-                age:               gr.age,
-            };
-            analyzer._genderResult = flipped;
-            analyzer._ideals       = blendIdeals(flipped);
-
-            // Re-score and re-display with flipped gender
-            const newScores = analyzer.calculateScores(analyzer.measurements);
-            analyzer.scores = newScores;
-            _origDisplay(newScores, analyzer.measurements);
-
-            const newFemale = flipped.gender === 'female';
-            if (newFemale) {
-                _patchFemaleDisplayContent(analyzer.els.featuresBox, newScores, analyzer.measurements);
-                _patchFemaleRatingLabel(newScores.overall, analyzer.els.featuresBox);
-            }
-            _insertGenderBadge(analyzer.els.featuresBox, flipped);
-
-            // Update score ring
-            const C = 389.6;
-            analyzer.els.scoreCircle.style.strokeDashoffset = C - (newScores.overall / 10) * C;
-            analyzer.els.scoreNum.textContent = newScores.overall.toFixed(1);
-        };
-
-        confirmBtn.addEventListener('click', onConfirm);
-        switchBtn.addEventListener('click', onSwitch);
+        _insertGenderBadge(this.els.featuresBox, gr);
     };
+
 }
 
 /* ─── PATCH FEMALE DISPLAY CONTENT ──────────────────────────────────────── */

@@ -728,98 +728,6 @@
             opacity: 0.85;
         }
 
-        /* Gender confirmation popup */
-        .gender-confirm-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 900;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .gender-confirm-overlay.active {
-            display: flex;
-            animation: popupIn 0.25s ease;
-        }
-
-        .gender-confirm-box {
-            background: #141414;
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 20px;
-            padding: 32px 28px;
-            max-width: 340px;
-            width: calc(100% - 40px);
-            text-align: center;
-            box-shadow: 0 16px 48px rgba(0,0,0,0.8);
-        }
-
-        .gender-confirm-icon {
-            font-size: 40px;
-            margin-bottom: 16px;
-            line-height: 1;
-        }
-
-        .gender-confirm-title {
-            font-size: 22px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 6px;
-        }
-
-        .gender-confirm-sub {
-            font-size: 13px;
-            color: rgba(255,255,255,0.45);
-            margin-bottom: 8px;
-            line-height: 1.5;
-        }
-
-        .gender-confirm-detected {
-            display: inline-block;
-            padding: 6px 18px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 28px;
-            margin-top: 4px;
-        }
-
-        .gender-confirm-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .gender-confirm-btn-primary {
-            background: #ffffff;
-            color: #000000;
-            border: none;
-            border-radius: 12px;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-            transition: opacity 0.15s;
-        }
-
-        .gender-confirm-btn-primary:hover { opacity: 0.85; }
-
-        .gender-confirm-btn-secondary {
-            background: rgba(255,255,255,0.06);
-            color: rgba(255,255,255,0.7);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 12px;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            font-family: inherit;
-            transition: background 0.15s;
-        }
-
-        .gender-confirm-btn-secondary:hover { background: rgba(255,255,255,0.10); }
     </style>
 </head>
 <body>
@@ -950,26 +858,8 @@
         <button class="hairline-popup-btn" id="hairlinePopupBtn">Done</button>
     </div>
 
-    <!-- Gender confirmation popup -->
-    <div class="gender-confirm-overlay" id="genderConfirmOverlay">
-        <div class="gender-confirm-box">
-            <div class="gender-confirm-icon" id="genderConfirmIcon">♀</div>
-            <div class="gender-confirm-title">Gender Detected</div>
-            <div class="gender-confirm-sub">We detected your gender as:</div>
-            <div class="gender-confirm-detected" id="genderConfirmLabel">Female</div>
-            <div class="gender-confirm-buttons">
-                <button class="gender-confirm-btn-primary" id="genderConfirmYes">
-                    Confirm — Show Results
-                </button>
-                <button class="gender-confirm-btn-secondary" id="genderConfirmSwitch">
-                    Different Gender — Switch to Male
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    <script src="gender.js?v=5"></script>
-    <script src="app.js?v=5"></script>
+    <script src="gender.js?v=6"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>
