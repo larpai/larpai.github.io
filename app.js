@@ -212,6 +212,10 @@ class FacialAnalyzer {
             cursor:ns-resize;
             pointer-events:all;
             transition: box-shadow 0.15s;
+            touch-action: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
         `;
 
         // ── Label floating above the line ───────────────────────────────────
@@ -294,14 +298,15 @@ class FacialAnalyzer {
         const onDown = e => {
             if (confirmed) return;
             dragging = true;
-            startY   = e.clientY ?? e.touches[0].clientY;
+            startY   = e.clientY ?? e.touches?.[0]?.clientY;
             startTop = parseFloat(line.style.top) / 100 * imgRect.height;
             line.style.boxShadow = '0 1px 12px rgba(0,0,0,0.9), 0 -1px 12px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.3)';
             e.preventDefault();
+            e.stopPropagation();
         };
         const onMove = e => {
             if (!dragging) return;
-            const clientY = e.clientY ?? e.touches[0].clientY;
+            const clientY = e.clientY ?? e.touches?.[0]?.clientY;
             const delta   = clientY - startY;
             const newTop  = Math.max(0, Math.min(imgRect.height - 2, startTop + delta));
             const fracY   = newTop / imgRect.height;
@@ -311,18 +316,19 @@ class FacialAnalyzer {
             label.textContent     = '↕  Hairline — looks good?';
             updateDonePos();
             e.preventDefault();
+            e.stopPropagation();
         };
         const onUp = () => {
             dragging = false;
             line.style.boxShadow = '0 1px 8px rgba(0,0,0,0.8), 0 -1px 8px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.4)';
         };
 
-        line.addEventListener('mousedown',  onDown);
-        line.addEventListener('touchstart', onDown, { passive: false });
-        document.addEventListener('mousemove',  onMove);
-        document.addEventListener('touchmove',  onMove, { passive: false });
-        document.addEventListener('mouseup',    onUp);
-        document.addEventListener('touchend',   onUp);
+        line.addEventListener('mousedown', onDown);
+        line.addEventListener('touchstart', onDown, { passive: false, capture: true });
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', onMove, { passive: false, capture: true });
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchend', onUp, { capture: true });
 
         // ── Done button click — confirm dialog ───────────────────────────────
         doneBtn.addEventListener('click', () => {
