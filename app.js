@@ -303,6 +303,7 @@ class FacialAnalyzer {
             line.style.boxShadow = '0 1px 12px rgba(0,0,0,0.9), 0 -1px 12px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.3)';
             e.preventDefault();
             e.stopPropagation();
+            console.log('Touch/mouse down - dragging started', { startY, startTop });
         };
         const onMove = e => {
             if (!dragging) return;
@@ -317,6 +318,7 @@ class FacialAnalyzer {
             updateDonePos();
             e.preventDefault();
             e.stopPropagation();
+            console.log('Touch/mouse move', { clientY, delta, newTop, fracY });
         };
         const onUp = () => {
             dragging = false;
