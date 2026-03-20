@@ -409,12 +409,9 @@ function patchAnalyzer(analyzer) {
         return _genderAwareScores(m, ideals, _origCalcScores);
     };
 
-    /* ── 5. Set up gender popup hook for after analysis ── */
+    /* ── 5. Intercept displayResults — show gender popup first ── */
     const _origDisplay = analyzer.displayResults.bind(analyzer);
-    analyzer._onDisplayResults = function(scores, m) {
-        console.log('[gender.js] _onDisplayResults called');
-        console.log('[gender.js] _genderResult:', this._genderResult);
-        console.log('[gender.js] _genderModelLoaded:', this._genderModelLoaded);
+    analyzer.displayResults = function (scores, m) {
         this._showGenderConfirm(scores, m);
     };
 

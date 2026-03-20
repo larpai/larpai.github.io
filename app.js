@@ -497,9 +497,9 @@ class FacialAnalyzer {
 
             this.syncCanvas();
             this.drawOverlay(p);
+            this.els.loader.classList.remove('active');
             this.displayResults(this.scores, this.measurements);
 
-            this.els.loader.classList.remove('active');
             this.els.analyzeBtn.disabled = false;
             const hlMsg = this.measurements.usingHairline ? ' \u00b7 hairline: manual' : ' \u00b7 hairline: estimated (drag yellow line to set)';
             this.setStatus('Analysis complete \u2713' + hlMsg, false, true);
@@ -1445,14 +1445,7 @@ class FacialAnalyzer {
             `<div class="stat-box"><div class="stat-label">${l}</div><div class="stat-value">${v}</div></div>`
         ).join('');
 
-        // ── GENDER HOOK ────────────────────────────────────────────────────
-        // gender.js can set this._onDisplayResults to intercept after render.
-        // Called with (scores, m) after the DOM is fully built.
-        // This is the ONLY addition to this file — no other code changed.
-        if (typeof this._onDisplayResults === 'function') {
-            this._onDisplayResults(scores, m);
         }
-    }
 
     dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
