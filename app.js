@@ -1959,7 +1959,7 @@ class FacialAnalyzer {
         };
 
         /* ══════════════════════════════════════════════════
-           PHASE 1 — TOP STRENGTHS
+           PHASE 1 — YOUR STRENGTHS (clean list only)
         ══════════════════════════════════════════════════ */
         const phase1 = async () => {
             await clearContent();
@@ -1970,145 +1970,126 @@ class FacialAnalyzer {
             content.style.paddingTop = '40px';
             content.style.textAlign = 'left';
 
-            const h = bigHeading('Your Best Features', 'What\'s Working For You', '#30d158');
+            const h = bigHeading('Your Strengths', "What's Working For You", '#30d158');
             fadeInEl(h, 0);
             content.appendChild(h);
 
             const sub = document.createElement('div');
             sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
-            sub.textContent = `These are your top-scoring metrics — features that are giving you a competitive advantage. Protect and enhance these.`;
-            fadeInEl(sub, 150);
+            sub.textContent = `These features are giving you a real advantage. They are above average and pulling your score up.`;
+            fadeInEl(sub, 120);
             content.appendChild(sub);
 
-            // Feature pills
-            topN.forEach((f, i) => {
-                const pill = featurePill(f.name, f.score, scoreColor(f.score), i * 100 + 200);
-                content.appendChild(pill);
-            });
-
-            content.appendChild(divider());
-
-            // Deep dive into top 3 KB data
-            const topKBFeatures = topN.slice(0, 3).filter(f => KB[f.key]);
-            topKBFeatures.forEach((f, i) => {
+            // All features scoring 6.5+, sorted best first, show up to 8
+            const goodFeatures = sorted.filter(f => f.score >= 6.5).slice(0, 8);
+            goodFeatures.forEach((f, i) => {
+                const sc = scoreColor(f.score);
                 const kb = KB[f.key];
-                const wrap = document.createElement('div');
-                wrap.style.cssText = `margin-bottom:24px;`;
-
-                const title = document.createElement('div');
-                title.style.cssText = `font-size:15px;font-weight:700;color:#30d158;margin-bottom:4px;`;
-                title.textContent = `✓ ${f.name}`;
-                fadeInEl(title, 700 + i * 100);
-
-                const why = document.createElement('div');
-                why.style.cssText = `font-size:12px;color:rgba(255,255,255,0.45);line-height:1.65;margin-bottom:10px;`;
-                why.textContent = kb.why || '';
-                fadeInEl(why, 800 + i * 100);
-
-                // Show "what to maintain" from diet/softmax
-                if (kb.softmax && kb.softmax.length > 0) {
-                    const maintainLabel = document.createElement('div');
-                    maintainLabel.style.cssText = `font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(48,209,88,0.6);margin-bottom:8px;`;
-                    maintainLabel.textContent = '✦ How to maintain & push higher';
-                    wrap.appendChild(title);
-                    wrap.appendChild(why);
-                    wrap.appendChild(maintainLabel);
-                    kb.softmax.slice(0, 2).forEach(item => {
-                        const card = document.createElement('div');
-                        card.style.cssText = `background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.18);border-radius:10px;padding:10px 13px;margin-bottom:7px;`;
-                        card.innerHTML = `<div style="font-size:12px;font-weight:600;color:rgba(48,209,88,0.8);margin-bottom:3px;">${item.label}</div><div style="font-size:11px;color:rgba(255,255,255,0.4);line-height:1.6;">${item.detail}</div>`;
-                        fadeInEl(card, 900 + i * 100);
-                        wrap.appendChild(card);
-                    });
-                } else {
-                    wrap.appendChild(title);
-                    wrap.appendChild(why);
-                }
-                content.appendChild(wrap);
-                if (i < topKBFeatures.length - 1) content.appendChild(divider());
+                const row = document.createElement('div');
+                row.style.cssText = `
+                    display:flex;align-items:center;gap:12px;
+                    padding:14px 16px;margin-bottom:8px;
+                    background:${sc}0d;border:1px solid ${sc}30;border-radius:12px;
+                    opacity:0;transform:translateX(-14px);
+                    transition:opacity 360ms ease ${i*80+150}ms,transform 360ms ease ${i*80+150}ms;
+                `;
+                const barPct = f.score * 10;
+                row.innerHTML = `
+                    <div style="font-size:20px;font-weight:700;color:${sc};min-width:34px;">${f.score.toFixed(1)}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:5px;">${f.name}</div>
+                        <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+                            <div style="height:100%;width:0%;background:${sc};border-radius:2px;transition:width 0.7s ease ${i*80+400}ms;" data-w="${barPct}"></div>
+                        </div>
+                        ${kb ? `<div style="font-size:10px;color:rgba(255,255,255,0.28);margin-top:4px;line-height:1.45;">${kb.why.split('.')[0]}.</div>` : ''}
+                    </div>
+                    <div style="font-size:18px;color:${sc};">✓</div>
+                `;
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateX(0)';
+                    setTimeout(() => {
+                        const bar = row.querySelector('[data-w]');
+                        if (bar) bar.style.width = bar.dataset.w + '%';
+                    }, i*80 + 400);
+                }));
+                content.appendChild(row);
             });
 
-            const nb = nextBtn('See What\'s Holding You Back →', phase2);
-            fadeInEl(nb, 1200);
+            if (goodFeatures.length === 0) {
+                const msg = document.createElement('div');
+                msg.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);text-align:center;padding:40px 0;`;
+                msg.textContent = 'No features currently above average — the fix guide below will change that.';
+                content.appendChild(msg);
+            }
+
+            const nb = nextBtn("See What's Holding You Back →", phase2);
+            fadeInEl(nb, goodFeatures.length * 80 + 600);
             content.appendChild(nb);
         };
 
         /* ══════════════════════════════════════════════════
-           PHASE 2 — WEAKNESSES
+           PHASE 2 — YOUR WEAKNESSES (clean list only)
         ══════════════════════════════════════════════════ */
         const phase2 = async () => {
             await clearContent();
             content.style.paddingTop = '40px';
 
-            const h = bigHeading('Your Weak Points', 'Holding You Back', '#ff453a');
+            const h = bigHeading('Your Weak Points', 'Dragging Your Score Down', '#ff453a');
             fadeInEl(h, 0);
             content.appendChild(h);
 
             const sub = document.createElement('div');
             sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
-            sub.textContent = `These are your lowest-scoring metrics. They are dragging your overall score down. Focus on these first for maximum ROI.`;
-            fadeInEl(sub, 150);
+            sub.textContent = `These are your lowest-scoring features. Each one gets a full dedicated fix guide on the next pages.`;
+            fadeInEl(sub, 120);
             content.appendChild(sub);
 
-            bottomN.forEach((f, i) => {
-                const pill = featurePill(f.name, f.score, scoreColor(f.score), i * 100 + 200);
-                content.appendChild(pill);
-            });
-
-            content.appendChild(divider());
-
-            // Deep analysis for each bottom feature
-            bottomN.slice(0, 4).forEach((f, i) => {
+            // All features under 7.5, worst first, up to 8
+            const weakFeatures = sorted.filter(f => f.score < 7.5).slice(0, 8).reverse();
+            weakFeatures.forEach((f, i) => {
+                const sc = scoreColor(f.score);
                 const kb = KB[f.key];
-                const wrap = document.createElement('div');
-                wrap.style.cssText = `margin-bottom:28px;`;
-
-                const titleRow = document.createElement('div');
-                titleRow.style.cssText = `display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;`;
-                titleRow.innerHTML = `
-                    <div style="font-size:16px;font-weight:700;color:${scoreColor(f.score)};">${f.name}</div>
-                    <div style="font-size:22px;font-weight:700;color:${scoreColor(f.score)};">${f.score.toFixed(1)}</div>
+                const row = document.createElement('div');
+                row.style.cssText = `
+                    display:flex;align-items:center;gap:12px;
+                    padding:14px 16px;margin-bottom:8px;
+                    background:${sc}0d;border:1px solid ${sc}30;border-radius:12px;
+                    opacity:0;transform:translateX(-14px);
+                    transition:opacity 360ms ease ${i*80+150}ms,transform 360ms ease ${i*80+150}ms;
                 `;
-                fadeInEl(titleRow, 600 + i * 80);
-
-                if (kb) {
-                    const why = document.createElement('div');
-                    why.style.cssText = `font-size:12px;color:rgba(255,255,255,0.4);line-height:1.65;margin-bottom:12px;`;
-                    why.textContent = kb.why;
-                    fadeInEl(why, 700 + i * 80);
-                    wrap.appendChild(titleRow);
-                    wrap.appendChild(why);
-
-                    // Show diet if available
-                    if (kb.diet && kb.diet.length > 0) {
-                        const dietLabel = document.createElement('div');
-                        dietLabel.style.cssText = `font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(126,231,135,0.7);margin-bottom:8px;`;
-                        dietLabel.textContent = '🥗 Diet & Supplements';
-                        wrap.appendChild(dietLabel);
-                        kb.diet.slice(0, 2).forEach(item => {
-                            const card = document.createElement('div');
-                            card.style.cssText = `background:rgba(126,231,135,0.06);border:1px solid rgba(126,231,135,0.18);border-radius:10px;padding:10px 13px;margin-bottom:7px;`;
-                            card.innerHTML = `<div style="font-size:12px;font-weight:600;color:rgba(126,231,135,0.8);margin-bottom:3px;">${item.label}</div><div style="font-size:11px;color:rgba(255,255,255,0.4);line-height:1.6;">${item.detail}</div>`;
-                            fadeInEl(card, 800 + i * 80);
-                            wrap.appendChild(card);
-                        });
-                    }
-                } else {
-                    wrap.appendChild(titleRow);
-                    if (f.fix) {
-                        const fixBox = document.createElement('div');
-                        fixBox.style.cssText = `font-size:11px;color:rgba(255,255,255,0.4);line-height:1.65;white-space:pre-line;background:rgba(255,69,58,0.06);border:1px solid rgba(255,69,58,0.2);border-radius:10px;padding:11px 14px;`;
-                        fixBox.textContent = f.fix;
-                        wrap.appendChild(fixBox);
-                    }
-                }
-
-                content.appendChild(wrap);
-                if (i < 3) content.appendChild(divider());
+                const barPct = f.score * 10;
+                row.innerHTML = `
+                    <div style="font-size:20px;font-weight:700;color:${sc};min-width:34px;">${f.score.toFixed(1)}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:5px;">${f.name}</div>
+                        <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+                            <div style="height:100%;width:0%;background:${sc};border-radius:2px;transition:width 0.7s ease ${i*80+400}ms;" data-w="${barPct}"></div>
+                        </div>
+                        ${kb ? `<div style="font-size:10px;color:rgba(255,255,255,0.28);margin-top:4px;line-height:1.45;">${kb.why.split('.')[0]}.</div>` : ''}
+                    </div>
+                    <div style="font-size:16px;color:${sc};">→</div>
+                `;
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateX(0)';
+                    setTimeout(() => {
+                        const bar = row.querySelector('[data-w]');
+                        if (bar) bar.style.width = bar.dataset.w + '%';
+                    }, i*80 + 400);
+                }));
+                content.appendChild(row);
             });
 
-            const nb = nextBtn('See Full Fix Guide →', phase3);
-            fadeInEl(nb, 1500);
+            if (weakFeatures.length === 0) {
+                const msg = document.createElement('div');
+                msg.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);text-align:center;padding:40px 0;`;
+                msg.textContent = 'No significant weaknesses found. You are scoring above average across the board.';
+                content.appendChild(msg);
+            }
+
+            const nb = nextBtn('See How To Fix Each One →', phase3);
+            fadeInEl(nb, weakFeatures.length * 80 + 600);
             content.appendChild(nb);
         };
 
