@@ -507,6 +507,9 @@ class FacialAnalyzer {
             const hlMsg = this.measurements.usingHairline ? ' · hairline: manual' : ' · hairline: estimated';
             const genderMsg = this._selectedGender ? ` · gender: ${this._selectedGender}` : '';
             this.setStatus('Analysis complete ✓' + hlMsg + genderMsg, false, true);
+
+            // Cinematic reveal — runs after gender.js has patched the DOM (120ms grace)
+            setTimeout(() => this._showCinematicReveal(this.scores, this.measurements), 120);
         } catch (err) {
             console.error(err);
             this.fail('Unexpected error \u2014 please retry');
@@ -1694,6 +1697,385 @@ class FacialAnalyzer {
                 setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.style.color = 'rgba(255,255,255,0.6)'; }, 2000);
             });
         });
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       CINEMATIC RESULTS REVEAL
+       Runs after displayResults() has built the full DOM.
+       Reads feature names/scores directly from the rendered .feature-item
+       cards so it always reflects gender-patched content.
+    ══════════════════════════════════════════════════════════════════════ */
+    _showCinematicReveal(scores, m) {
+        // --- 1. Harvest feature data from already-rendered DOM cards ---
+        const ORDER = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
+                       'jawline','bizygoBigonial','nose','lips','maxilla','gonion','mandible',
+                       'temples','eyebrows','EMEangle','facialIndex','neoclassical'];
+
+        const features = [];
+        this.els.featuresBox.querySelectorAll('.feature-item').forEach((item, idx) => {
+            const key   = ORDER[idx];
+            const score = scores[key] ?? 0;
+            const name  = item.querySelector('.feature-name')?.textContent?.trim() ?? key;
+            // grab fix text if present
+            const fixEl = item.querySelector('[style*="border-left:2px solid #ff9f0a"]');
+            const fix   = fixEl?.textContent?.trim() ?? null;
+            features.push({ key, name, score, fix });
+        });
+
+        // Sort into tiers
+        const sorted  = [...features].sort((a,b) => b.score - a.score);
+        const topN    = sorted.slice(0, 4);
+        const bottomN = sorted.slice(-4).reverse(); // worst first
+        // Fixes: bottom features that actually have fix text, max 3
+        const fixItems = bottomN.filter(f => f.fix).slice(0, 3);
+
+        const rating  = scores.looksmaxxRating;
+        const overall = scores.overall;
+        const gender  = this._selectedGender ?? 'male';
+        const scoreColor = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
+
+        // --- 2. Build overlay ---
+        const ov = document.createElement('div');
+        ov.id = '_cinematicOv';
+        ov.style.cssText = `
+            position:fixed;inset:0;z-index:4000;
+            background:#000;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+            overflow:hidden;
+        `;
+
+        // Subtle radial glow bg
+        const glowColor = gender === 'female' ? '180,60,180' : '60,100,200';
+        ov.innerHTML = `
+            <div id="_cBg" style="position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 40%, rgba(${glowColor},0.18) 0%, #000 70%);opacity:0;transition:opacity 1.2s ease;pointer-events:none;"></div>
+            <div id="_cContent" style="position:relative;width:min(520px,calc(100% - 40px));text-align:center;padding:0 20px;">
+            </div>
+            <div id="_cProgress" style="position:absolute;bottom:0;left:0;height:2px;background:rgba(255,255,255,0.12);width:100%;">
+                <div id="_cProgressBar" style="height:100%;background:#fff;width:0%;transition:width linear;"></div>
+            </div>
+        `;
+        document.body.appendChild(ov);
+
+        const content = ov.querySelector('#_cContent');
+        const bg      = ov.querySelector('#_cBg');
+        const progBar = ov.querySelector('#_cProgressBar');
+
+        // Helper: fade in element
+        const fadeIn = (el, delay=0, dur=400) => {
+            el.style.cssText += `opacity:0;transform:translateY(14px);transition:opacity ${dur}ms ease ${delay}ms,transform ${dur}ms ease ${delay}ms;`;
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }));
+        };
+
+        // Helper: set progress bar over N ms
+        const setProgress = (pct, ms) => {
+            progBar.style.transition = `width ${ms}ms linear`;
+            progBar.style.width = pct + '%';
+        };
+
+        // Helper: clear content with fade
+        const clearContent = (ms=200) => new Promise(res => {
+            content.style.transition = `opacity ${ms}ms ease`;
+            content.style.opacity = '0';
+            setTimeout(() => { content.innerHTML = ''; content.style.opacity = '1'; res(); }, ms);
+        });
+
+        // Helper: build a feature pill row
+        const featurePill = (name, score, color, delay=0) => {
+            const d = document.createElement('div');
+            d.style.cssText = `
+                display:flex;align-items:center;justify-content:space-between;
+                background:${color}14;border:1px solid ${color}40;
+                border-radius:12px;padding:13px 18px;margin-bottom:10px;
+                opacity:0;transform:translateX(-12px);
+                transition:opacity 350ms ease ${delay}ms,transform 350ms ease ${delay}ms;
+            `;
+            d.innerHTML = `
+                <span style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.85);">${name}</span>
+                <span style="font-size:18px;font-weight:700;color:${color};">${score.toFixed(1)}</span>
+            `;
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                d.style.opacity = '1';
+                d.style.transform = 'translateX(0)';
+            }));
+            return d;
+        };
+
+        // Helper: section heading
+        const heading = (text, sub='', color='rgba(255,255,255,0.9)') => {
+            const h = document.createElement('div');
+            h.style.cssText = `margin-bottom:20px;`;
+            h.innerHTML = `
+                <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:8px;">${sub}</div>
+                <div style="font-size:26px;font-weight:700;color:${color};letter-spacing:-.01em;">${text}</div>
+            `;
+            fadeIn(h, 0, 350);
+            return h;
+        };
+
+        // ── PHASE DEFINITIONS ────────────────────────────────────────────
+        let phase = 0;
+        const TOTAL_DURATION = 18000; // ~18s auto-advance, user can skip
+
+        const phases = [
+            // 0 — TITLE
+            async () => {
+                bg.style.opacity = '1';
+                setProgress(12, 2200);
+                const wrap = document.createElement('div');
+                wrap.innerHTML = `
+                    <div style="font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:18px;opacity:0;transition:opacity 600ms ease 200ms;">larp.ai</div>
+                    <div style="font-size:48px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1;opacity:0;transition:opacity 500ms ease 500ms,transform 500ms ease 500ms;transform:translateY(20px);">Your Results<br><span style="font-size:48px;">Are In</span></div>
+                    <div style="width:40px;height:2px;background:rgba(255,255,255,0.3);margin:24px auto;opacity:0;transition:opacity 400ms ease 900ms;"></div>
+                    <div style="font-size:14px;color:rgba(255,255,255,0.4);opacity:0;transition:opacity 400ms ease 1100ms;">Detailed biometric facial analysis complete</div>
+                `;
+                content.appendChild(wrap);
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    wrap.querySelectorAll('[style*="opacity:0"]').forEach(el => {
+                        el.style.opacity = '1';
+                        if (el.style.transform) el.style.transform = 'translateY(0)';
+                    });
+                }));
+            },
+
+            // 1 — STRENGTHS
+            async () => {
+                await clearContent();
+                setProgress(30, 3500);
+                const h = heading("Your Strongest Features", "What's Working For You", '#30d158');
+                content.appendChild(h);
+                topN.forEach((f, i) => {
+                    const pill = featurePill(f.name, f.score, scoreColor(f.score), i * 120 + 150);
+                    content.appendChild(pill);
+                });
+                // Star rating visual
+                const stars = document.createElement('div');
+                stars.style.cssText = `margin-top:18px;font-size:20px;letter-spacing:4px;opacity:0;transition:opacity 400ms ease 700ms;`;
+                stars.textContent = topN[0]?.score >= 9 ? '★★★★★' : topN[0]?.score >= 8 ? '★★★★☆' : '★★★☆☆';
+                stars.style.color = '#30d158';
+                content.appendChild(stars);
+                requestAnimationFrame(() => requestAnimationFrame(() => { stars.style.opacity='0.7'; }));
+            },
+
+            // 2 — WEAKNESSES
+            async () => {
+                await clearContent();
+                setProgress(52, 3500);
+                const h = heading("Areas to Improve", "Holding You Back", '#ff453a');
+                content.appendChild(h);
+                bottomN.forEach((f, i) => {
+                    const pill = featurePill(f.name, f.score, scoreColor(f.score), i * 120 + 150);
+                    content.appendChild(pill);
+                });
+            },
+
+            // 3 — FIXES (only if there are actionable ones)
+            async () => {
+                await clearContent();
+                setProgress(68, 3000);
+                if (fixItems.length === 0) {
+                    // Skip phase if no fixes — show "strong overall" message
+                    const h = heading("Minimal Interventions Needed", "Already Scoring High", '#ff9f0a');
+                    content.appendChild(h);
+                    const msg = document.createElement('div');
+                    msg.style.cssText = `font-size:14px;color:rgba(255,255,255,0.5);line-height:1.7;margin-top:8px;opacity:0;transition:opacity 400ms ease 300ms;`;
+                    msg.textContent = 'Your facial structure scores above average across most metrics. Focus on softmax improvements for marginal gains.';
+                    content.appendChild(msg);
+                    requestAnimationFrame(() => requestAnimationFrame(() => { msg.style.opacity='1'; }));
+                    return;
+                }
+                const h = heading("What You Can Fix", "Actionable Steps", '#ff9f0a');
+                content.appendChild(h);
+                fixItems.forEach((f, i) => {
+                    const card = document.createElement('div');
+                    card.style.cssText = `
+                        background:rgba(255,159,10,0.07);border:1px solid rgba(255,159,10,0.25);
+                        border-radius:12px;padding:14px 16px;margin-bottom:10px;text-align:left;
+                        opacity:0;transform:translateY(10px);
+                        transition:opacity 350ms ease ${i*150+200}ms,transform 350ms ease ${i*150+200}ms;
+                    `;
+                    // Show first 2 bullet points of the fix only
+                    const fixLines = f.fix.split('\n').filter(l => l.trim()).slice(0,4).join('\n');
+                    card.innerHTML = `
+                        <div style="font-size:13px;font-weight:600;color:#ff9f0a;margin-bottom:6px;">${f.name}</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.45);white-space:pre-line;line-height:1.6;">${fixLines}</div>
+                    `;
+                    content.appendChild(card);
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        card.style.opacity='1'; card.style.transform='translateY(0)';
+                    }));
+                });
+            },
+
+            // 4 — SCORE REVEAL
+            async () => {
+                await clearContent();
+                setProgress(90, 2800);
+                const rColor = rating.color;
+
+                const wrap = document.createElement('div');
+                wrap.style.cssText = `text-align:center;`;
+
+                // Pre-heading
+                const pre = document.createElement('div');
+                pre.style.cssText = `font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:20px;opacity:0;transition:opacity 400ms ease 100ms;`;
+                pre.textContent = 'Official Score';
+                wrap.appendChild(pre);
+
+                // Score ring (recreated in cinematic)
+                const ringWrap = document.createElement('div');
+                ringWrap.style.cssText = `width:160px;height:160px;margin:0 auto 24px;position:relative;opacity:0;transition:opacity 500ms ease 300ms;`;
+                const circumference = 452;
+                const dashOffset    = circumference - (overall / 10) * circumference;
+                ringWrap.innerHTML = `
+                    <svg viewBox="0 0 160 160" style="width:100%;height:100%;transform:rotate(-90deg);">
+                        <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+                        <circle id="_cRingBar" cx="80" cy="80" r="72" fill="none" stroke="${rColor}" stroke-width="6"
+                            stroke-linecap="round"
+                            stroke-dasharray="${circumference}"
+                            stroke-dashoffset="${circumference}"
+                            style="transition:stroke-dashoffset 1.8s cubic-bezier(0.4,0,0.2,1) 600ms;"/>
+                    </svg>
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+                        <div id="_cScoreNum" style="font-size:52px;font-weight:200;color:#fff;line-height:1;">--</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:2px;">out of 10</div>
+                    </div>
+                `;
+                wrap.appendChild(ringWrap);
+
+                // Label
+                const labelWrap = document.createElement('div');
+                labelWrap.style.cssText = `margin-bottom:8px;opacity:0;transition:opacity 500ms ease 1200ms;`;
+                labelWrap.innerHTML = `
+                    <div style="display:inline-block;padding:12px 32px;background:${rColor}18;border:2px solid ${rColor};border-radius:14px;">
+                        <span style="font-size:30px;font-weight:900;color:${rColor};letter-spacing:.04em;">${rating.label}</span>
+                    </div>
+                `;
+                wrap.appendChild(labelWrap);
+
+                // Percentile
+                const pct = document.createElement('div');
+                pct.style.cssText = `font-size:13px;font-weight:600;color:${rColor};margin-top:8px;opacity:0;transition:opacity 400ms ease 1500ms;`;
+                pct.textContent = rating.pct;
+                wrap.appendChild(pct);
+
+                // Tooltip
+                const tip = document.createElement('div');
+                tip.style.cssText = `font-size:12px;color:rgba(255,255,255,0.35);margin-top:6px;opacity:0;transition:opacity 400ms ease 1700ms;`;
+                tip.textContent = rating.tooltip;
+                wrap.appendChild(tip);
+
+                content.appendChild(wrap);
+
+                // Animate in
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    pre.style.opacity = '1';
+                    ringWrap.style.opacity = '1';
+                    labelWrap.style.opacity = '1';
+                    pct.style.opacity = '1';
+                    tip.style.opacity = '1';
+                    // Animate ring after brief delay
+                    setTimeout(() => {
+                        const ring = ov.querySelector('#_cRingBar');
+                        if (ring) ring.style.strokeDashoffset = dashOffset;
+                        // Count up score number
+                        const numEl = ov.querySelector('#_cScoreNum');
+                        if (numEl) {
+                            const start = Date.now();
+                            const dur   = 1800;
+                            const tick  = () => {
+                                const t = Math.min(1, (Date.now()-start)/dur);
+                                const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+                                numEl.textContent = (overall * ease).toFixed(1);
+                                if (t < 1) requestAnimationFrame(tick);
+                                else numEl.textContent = overall.toFixed(1);
+                            };
+                            requestAnimationFrame(tick);
+                        }
+                    }, 600);
+                }));
+            },
+
+            // 5 — CTA
+            async () => {
+                setProgress(100, 800);
+                // Just add the CTA button below current content (don't clear)
+                await new Promise(res => setTimeout(res, 200));
+                const cta = document.createElement('div');
+                cta.style.cssText = `margin-top:28px;opacity:0;transition:opacity 500ms ease;`;
+                cta.innerHTML = `
+                    <button id="_cViewFull" style="
+                        width:100%;padding:16px 32px;border-radius:14px;border:none;
+                        background:#ffffff;color:#000;font-size:16px;font-weight:700;
+                        cursor:pointer;font-family:inherit;letter-spacing:-.01em;
+                        transition:transform 0.15s,box-shadow 0.15s;
+                        touch-action:manipulation;
+                    ">See Full Analysis →</button>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:10px;">All scores, measurements & improvement guides</div>
+                `;
+                content.appendChild(cta);
+                requestAnimationFrame(() => requestAnimationFrame(() => { cta.style.opacity='1'; }));
+
+                cta.querySelector('#_cViewFull').onmouseenter = e => {
+                    e.target.style.transform='translateY(-2px)';
+                    e.target.style.boxShadow='0 8px 24px rgba(255,255,255,0.2)';
+                };
+                cta.querySelector('#_cViewFull').onmouseleave = e => {
+                    e.target.style.transform='';
+                    e.target.style.boxShadow='';
+                };
+                cta.querySelector('#_cViewFull').addEventListener('click', () => {
+                    ov.style.transition = 'opacity 0.4s ease';
+                    ov.style.opacity = '0';
+                    setTimeout(() => ov.remove(), 400);
+                });
+                cta.querySelector('#_cViewFull').addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    ov.style.transition = 'opacity 0.4s ease';
+                    ov.style.opacity = '0';
+                    setTimeout(() => ov.remove(), 400);
+                });
+
+                // Auto-dismiss after 12s if user doesn't click
+                setTimeout(() => {
+                    if (document.getElementById('_cinematicOv')) {
+                        ov.style.transition = 'opacity 0.6s ease';
+                        ov.style.opacity = '0';
+                        setTimeout(() => ov.remove(), 600);
+                    }
+                }, 12000);
+            },
+        ];
+
+        // ── PHASE RUNNER ─────────────────────────────────────────────────
+        const PHASE_DURATIONS = [2400, 3800, 3800, 3500, 3200, 99999];
+
+        const runPhase = async (idx) => {
+            if (idx >= phases.length) return;
+            await phases[idx]();
+            phase = idx;
+            // Auto-advance
+            const timer = setTimeout(() => runPhase(idx + 1), PHASE_DURATIONS[idx]);
+            // Skip on tap/click (except the last CTA phase)
+            if (idx < phases.length - 1) {
+                const skip = (e) => {
+                    // Don't skip if clicking the CTA button
+                    if (e.target.id === '_cViewFull') return;
+                    clearTimeout(timer);
+                    ov.removeEventListener('click', skip);
+                    ov.removeEventListener('touchend', skip);
+                    runPhase(idx + 1);
+                };
+                ov.addEventListener('click', skip);
+                ov.addEventListener('touchend', skip);
+            }
+        };
+
+        runPhase(0);
     }
 
     delay(ms) { return new Promise(r => setTimeout(r, ms)); }
