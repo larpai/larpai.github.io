@@ -649,6 +649,13 @@
     </style>
 </head>
 <body>
+    <!-- Auth nav bar -->
+    <div id="appNav" style="position:fixed;top:0;left:0;right:0;z-index:800;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,10,10,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.05);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;">
+        <a href="home.html" style="font-size:16px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:-.02em;">← larp.ai</a>
+        <div id="appNavRight" style="display:flex;align-items:center;gap:10px;font-size:13px;"></div>
+    </div>
+    <div style="height:56px;"></div>
+
     <div class="app">
         <header class="header">
             <div class="branding">
@@ -764,8 +771,41 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="auth.js"></script>
     <script src="looksmax_kb.js?v=56"></script>
     <script src="gender.js?v=56"></script>
     <script src="app.js?v=56"></script>
+
+    <script>
+    // Auth nav bar
+    (function() {
+        const auth = window.LarpAuth;
+        if (!auth) return;
+        const navRight = document.getElementById('appNavRight');
+        const session = auth.currentUser();
+        if (session) {
+            navRight.innerHTML = `<span style="color:rgba(255,255,255,0.45);">Hi, <b style="color:#fff;">${session.name.split(' ')[0]}</b></span><button onclick="LarpAuth.logout()" style="padding:7px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:transparent;color:rgba(255,255,255,0.55);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Log Out</button>`;
+        } else {
+            navRight.innerHTML = `<a href="login.html" style="padding:7px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:transparent;color:rgba(255,255,255,0.55);font-size:12px;font-weight:600;text-decoration:none;transition:all .15s;">Log In</a><a href="signup.html" style="padding:7px 16px;border-radius:8px;border:none;background:#fff;color:#000;font-size:12px;font-weight:700;text-decoration:none;">Sign Up</a>`;
+        }
+    })();
+
+    // Save result after cinematic dismisses — hook into the onDone callback
+    // We patch LarpAuth.saveResult to be called from the cinematic onDone
+    document.addEventListener('DOMContentLoaded', () => {
+        const origShowCinematic = FacialAnalyzer.prototype._showCinematicReveal;
+        // The save is done inside the analyze() flow via a patched onDone
+        // We patch analyze() to also save the result
+        const origAnalyze = FacialAnalyzer.prototype.analyze;
+        FacialAnalyzer.prototype.analyze = async function() {
+            await origAnalyze.call(this);
+            // After analyze resolves, scores and measurements are set
+            if (this.scores && this.scores.overall && window.LarpAuth) {
+                window.LarpAuth.saveResult(this.scores, this.measurements, this._selectedGender);
+            }
+        };
+    });
+    </script>
+
 </body>
 </html>

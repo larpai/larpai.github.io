@@ -237,13 +237,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Analysis
     const goAnalysis = () => {
-        if (auth.isLoggedIn()) { window.location.href = 'app.html'; }
+        if (auth.isLoggedIn()) { window.location.href = 'index.html'; }
         else { showOv('suggestPopup'); }
     };
     document.getElementById('btnAnalysis').addEventListener('click', goAnalysis);
     document.getElementById('btnAnalysisCta').addEventListener('click', goAnalysis);
     document.getElementById('suggestLogin').addEventListener('click', () => window.location.href = 'login.html');
-    document.getElementById('suggestContinue').addEventListener('click', () => window.location.href = 'app.html');
+    document.getElementById('suggestContinue').addEventListener('click', () => window.location.href = 'index.html');
 
     // Results
     document.getElementById('btnResults').addEventListener('click', () => {
@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('lrpBack').addEventListener('click',  () => hideOv('loginRequiredPopup'));
     document.getElementById('lrpLogin').addEventListener('click', () => window.location.href = 'login.html');
     document.getElementById('closeResultsPopup').addEventListener('click', () => hideOv('resultsPopup'));
-    document.getElementById('newAnalysisBtn').addEventListener('click', () => window.location.href = 'app.html');
+    document.getElementById('newAnalysisBtn').addEventListener('click', () => window.location.href = 'index.html');
 });
 </script>
 </body>
