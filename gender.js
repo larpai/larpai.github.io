@@ -450,6 +450,10 @@ function _femaleScores(m, ideals, fallbackFn) {
     const penalty   = Math.max(0, spread - 2) * 0.1;
     const conf      = clamp(m.detectionConfidence, 0.5, 1);
     s.overall       = clamp((composite - penalty) * (0.88 + 0.12*conf), 0, 10);
+    
+    // Apply 0.91x nerf to female overall rating
+    s.overall = clamp(s.overall * 0.91, 0, 10);
+    
     s.looksmaxxRating = _getFemaleRating(s.overall);
 
     return s;

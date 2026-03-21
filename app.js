@@ -1707,7 +1707,7 @@ class FacialAnalyzer {
        cards so it always reflects gender-patched content.
     ══════════════════════════════════════════════════════════════════════ */
     _showCinematicReveal(scores, m) {
-        // --- 1. Harvest feature data from already-rendered DOM cards ---
+        /* ── harvest feature data from rendered DOM (gender-patched) ── */
         const ORDER = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
                        'jawline','bizygoBigonial','nose','lips','maxilla','gonion','mandible',
                        'temples','eyebrows','EMEangle','facialIndex','neoclassical'];
@@ -1717,367 +1717,660 @@ class FacialAnalyzer {
             const key   = ORDER[idx];
             const score = scores[key] ?? 0;
             const name  = item.querySelector('.feature-name')?.textContent?.trim() ?? key;
-            // grab fix text if present
             const fixEl = item.querySelector('[style*="border-left:2px solid #ff9f0a"]');
             const fix   = fixEl?.textContent?.trim() ?? null;
             features.push({ key, name, score, fix });
         });
 
-        // Sort into tiers
-        const sorted  = [...features].sort((a,b) => b.score - a.score);
-        const topN    = sorted.slice(0, 4);
-        const bottomN = sorted.slice(-4).reverse(); // worst first
-        // Fixes: bottom features that actually have fix text, max 3
-        const fixItems = bottomN.filter(f => f.fix).slice(0, 3);
-
-        const rating  = scores.looksmaxxRating;
-        const overall = scores.overall;
-        const gender  = this._selectedGender ?? 'male';
+        const sorted   = [...features].sort((a,b) => b.score - a.score);
+        const topN     = sorted.slice(0, 5);
+        const bottomN  = sorted.slice(-5).reverse();
+        const rating   = scores.looksmaxxRating;
+        const overall  = scores.overall;
+        const gender   = this._selectedGender ?? 'male';
+        const KB       = window.LOOKSMAX_KB || {};
+        const FDN      = window.LOOKSMAX_FOUNDATION || null;
         const scoreColor = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
 
-        // --- 2. Build overlay ---
+        /* ── build overlay ── */
         const ov = document.createElement('div');
         ov.id = '_cinematicOv';
         ov.style.cssText = `
             position:fixed;inset:0;z-index:4000;
             background:#000;
-            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
             font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
-            overflow:hidden;
+            overflow-y:auto;overflow-x:hidden;
+            -webkit-overflow-scrolling:touch;
         `;
-
-        // Subtle radial glow bg
         const glowColor = gender === 'female' ? '180,60,180' : '60,100,200';
         ov.innerHTML = `
-            <div id="_cBg" style="position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 40%, rgba(${glowColor},0.18) 0%, #000 70%);opacity:0;transition:opacity 1.2s ease;pointer-events:none;"></div>
-            <div id="_cContent" style="position:relative;width:min(520px,calc(100% - 40px));text-align:center;padding:0 20px;">
-            </div>
-            <div id="_cProgress" style="position:absolute;bottom:0;left:0;height:2px;background:rgba(255,255,255,0.12);width:100%;">
-                <div id="_cProgressBar" style="height:100%;background:#fff;width:0%;transition:width linear;"></div>
-            </div>
+            <div id="_cBg" style="position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 30%, rgba(${glowColor},0.15) 0%, #000 65%);pointer-events:none;z-index:0;opacity:0;transition:opacity 1.2s ease;"></div>
+            <div id="_cContent" style="position:relative;z-index:1;width:100%;max-width:560px;padding:0 20px 60px;min-height:100vh;box-sizing:border-box;"></div>
+            <div id="_cSkipHint" style="position:fixed;bottom:20px;right:20px;font-size:11px;color:rgba(255,255,255,0.2);z-index:10;pointer-events:none;">Tap to skip</div>
         `;
         document.body.appendChild(ov);
 
         const content = ov.querySelector('#_cContent');
         const bg      = ov.querySelector('#_cBg');
-        const progBar = ov.querySelector('#_cProgressBar');
 
-        // Helper: fade in element
-        const fadeIn = (el, delay=0, dur=400) => {
-            el.style.cssText += `opacity:0;transform:translateY(14px);transition:opacity ${dur}ms ease ${delay}ms,transform ${dur}ms ease ${delay}ms;`;
+        const fadeInEl = (el, delay=0, dur=450, fromY=16) => {
+            el.style.opacity = '0';
+            el.style.transform = `translateY(${fromY}px)`;
+            el.style.transition = `opacity ${dur}ms ease ${delay}ms, transform ${dur}ms ease ${delay}ms`;
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 el.style.opacity = '1';
                 el.style.transform = 'translateY(0)';
             }));
         };
 
-        // Helper: set progress bar over N ms
-        const setProgress = (pct, ms) => {
-            progBar.style.transition = `width ${ms}ms linear`;
-            progBar.style.width = pct + '%';
+        const slideInEl = (el, delay=0) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(-16px)';
+            el.style.transition = `opacity 380ms ease ${delay}ms, transform 380ms ease ${delay}ms`;
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateX(0)';
+            }));
         };
 
-        // Helper: clear content with fade
-        const clearContent = (ms=200) => new Promise(res => {
+        const clearContent = (ms=250) => new Promise(res => {
             content.style.transition = `opacity ${ms}ms ease`;
             content.style.opacity = '0';
-            setTimeout(() => { content.innerHTML = ''; content.style.opacity = '1'; res(); }, ms);
+            setTimeout(() => {
+                content.innerHTML = '';
+                content.style.opacity = '1';
+                ov.scrollTop = 0;
+                res();
+            }, ms);
         });
 
-        // Helper: build a feature pill row
+        const sectionLabel = (text, color='rgba(255,255,255,0.3)') => {
+            const d = document.createElement('div');
+            d.style.cssText = `font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:${color};margin-bottom:10px;`;
+            d.textContent = text;
+            return d;
+        };
+
+        const bigHeading = (text, sub='', color='#fff') => {
+            const d = document.createElement('div');
+            d.style.cssText = `margin-bottom:28px;`;
+            d.innerHTML = `
+                ${sub ? `<div style="font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:10px;">${sub}</div>` : ''}
+                <div style="font-size:32px;font-weight:800;color:${color};letter-spacing:-.02em;line-height:1.15;">${text}</div>
+            `;
+            return d;
+        };
+
+        const divider = () => {
+            const d = document.createElement('div');
+            d.style.cssText = `height:1px;background:rgba(255,255,255,0.07);margin:24px 0;`;
+            return d;
+        };
+
         const featurePill = (name, score, color, delay=0) => {
             const d = document.createElement('div');
             d.style.cssText = `
                 display:flex;align-items:center;justify-content:space-between;
-                background:${color}14;border:1px solid ${color}40;
-                border-radius:12px;padding:13px 18px;margin-bottom:10px;
-                opacity:0;transform:translateX(-12px);
-                transition:opacity 350ms ease ${delay}ms,transform 350ms ease ${delay}ms;
+                background:${color}10;border:1px solid ${color}35;
+                border-radius:12px;padding:14px 18px;margin-bottom:10px;
             `;
+            const bar = `<div style="flex:1;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin:0 14px;overflow:hidden;">
+                <div style="height:100%;width:0%;background:${color};border-radius:2px;transition:width 0.8s ease ${delay+200}ms;" data-target="${score*10}"></div>
+            </div>`;
             d.innerHTML = `
-                <span style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.85);">${name}</span>
-                <span style="font-size:18px;font-weight:700;color:${color};">${score.toFixed(1)}</span>
+                <span style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.8);min-width:120px;">${name}</span>
+                ${bar}
+                <span style="font-size:20px;font-weight:700;color:${color};min-width:32px;text-align:right;">${score.toFixed(1)}</span>
             `;
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-                d.style.opacity = '1';
-                d.style.transform = 'translateX(0)';
-            }));
+            slideInEl(d, delay);
+            // animate bar
+            setTimeout(() => {
+                const barFill = d.querySelector('[data-target]');
+                if (barFill) barFill.style.width = barFill.dataset.target + '%';
+            }, delay + 300);
             return d;
         };
 
-        // Helper: section heading
-        const heading = (text, sub='', color='rgba(255,255,255,0.9)') => {
-            const h = document.createElement('div');
-            h.style.cssText = `margin-bottom:20px;`;
-            h.innerHTML = `
-                <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:8px;">${sub}</div>
-                <div style="font-size:26px;font-weight:700;color:${color};letter-spacing:-.01em;">${text}</div>
-            `;
-            fadeIn(h, 0, 350);
-            return h;
-        };
+        const kbSection = (key, isBottom) => {
+            const kb = KB[key];
+            if (!kb) return null;
+            const color = isBottom ? '#ff9f0a' : '#30d158';
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = `margin-bottom:12px;`;
 
-        // ── PHASE DEFINITIONS ────────────────────────────────────────────
-        let phase = 0;
-        const TOTAL_DURATION = 18000; // ~18s auto-advance, user can skip
-
-        const phases = [
-            // 0 — TITLE
-            async () => {
-                bg.style.opacity = '1';
-                setProgress(12, 2200);
-                const wrap = document.createElement('div');
-                wrap.innerHTML = `
-                    <div style="font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:18px;opacity:0;transition:opacity 600ms ease 200ms;">larp.ai</div>
-                    <div style="font-size:48px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1;opacity:0;transition:opacity 500ms ease 500ms,transform 500ms ease 500ms;transform:translateY(20px);">Your Results<br><span style="font-size:48px;">Are In</span></div>
-                    <div style="width:40px;height:2px;background:rgba(255,255,255,0.3);margin:24px auto;opacity:0;transition:opacity 400ms ease 900ms;"></div>
-                    <div style="font-size:14px;color:rgba(255,255,255,0.4);opacity:0;transition:opacity 400ms ease 1100ms;">Detailed biometric facial analysis complete</div>
-                `;
-                content.appendChild(wrap);
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    wrap.querySelectorAll('[style*="opacity:0"]').forEach(el => {
-                        el.style.opacity = '1';
-                        if (el.style.transform) el.style.transform = 'translateY(0)';
-                    });
-                }));
-            },
-
-            // 1 — STRENGTHS
-            async () => {
-                await clearContent();
-                setProgress(30, 3500);
-                const h = heading("Your Strongest Features", "What's Working For You", '#30d158');
-                content.appendChild(h);
-                topN.forEach((f, i) => {
-                    const pill = featurePill(f.name, f.score, scoreColor(f.score), i * 120 + 150);
-                    content.appendChild(pill);
-                });
-                // Star rating visual
-                const stars = document.createElement('div');
-                stars.style.cssText = `margin-top:18px;font-size:20px;letter-spacing:4px;opacity:0;transition:opacity 400ms ease 700ms;`;
-                stars.textContent = topN[0]?.score >= 9 ? '★★★★★' : topN[0]?.score >= 8 ? '★★★★☆' : '★★★☆☆';
-                stars.style.color = '#30d158';
-                content.appendChild(stars);
-                requestAnimationFrame(() => requestAnimationFrame(() => { stars.style.opacity='0.7'; }));
-            },
-
-            // 2 — WEAKNESSES
-            async () => {
-                await clearContent();
-                setProgress(52, 3500);
-                const h = heading("Areas to Improve", "Holding You Back", '#ff453a');
-                content.appendChild(h);
-                bottomN.forEach((f, i) => {
-                    const pill = featurePill(f.name, f.score, scoreColor(f.score), i * 120 + 150);
-                    content.appendChild(pill);
-                });
-            },
-
-            // 3 — FIXES (only if there are actionable ones)
-            async () => {
-                await clearContent();
-                setProgress(68, 3000);
-                if (fixItems.length === 0) {
-                    // Skip phase if no fixes — show "strong overall" message
-                    const h = heading("Minimal Interventions Needed", "Already Scoring High", '#ff9f0a');
-                    content.appendChild(h);
-                    const msg = document.createElement('div');
-                    msg.style.cssText = `font-size:14px;color:rgba(255,255,255,0.5);line-height:1.7;margin-top:8px;opacity:0;transition:opacity 400ms ease 300ms;`;
-                    msg.textContent = 'Your facial structure scores above average across most metrics. Focus on softmax improvements for marginal gains.';
-                    content.appendChild(msg);
-                    requestAnimationFrame(() => requestAnimationFrame(() => { msg.style.opacity='1'; }));
-                    return;
-                }
-                const h = heading("What You Can Fix", "Actionable Steps", '#ff9f0a');
-                content.appendChild(h);
-                fixItems.forEach((f, i) => {
+            // Softmax cards
+            const makePillGroup = (title, items, col) => {
+                if (!items || items.length === 0) return null;
+                const g = document.createElement('div');
+                g.style.cssText = `margin-bottom:14px;`;
+                const lbl = document.createElement('div');
+                lbl.style.cssText = `font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:${col};margin-bottom:8px;`;
+                lbl.textContent = title;
+                g.appendChild(lbl);
+                items.forEach((item, i) => {
                     const card = document.createElement('div');
                     card.style.cssText = `
-                        background:rgba(255,159,10,0.07);border:1px solid rgba(255,159,10,0.25);
-                        border-radius:12px;padding:14px 16px;margin-bottom:10px;text-align:left;
-                        opacity:0;transform:translateY(10px);
-                        transition:opacity 350ms ease ${i*150+200}ms,transform 350ms ease ${i*150+200}ms;
+                        background:${col}09;border:1px solid ${col}25;border-radius:10px;
+                        padding:11px 14px;margin-bottom:7px;
                     `;
-                    // Show first 2 bullet points of the fix only
-                    const fixLines = f.fix.split('\n').filter(l => l.trim()).slice(0,4).join('\n');
                     card.innerHTML = `
-                        <div style="font-size:13px;font-weight:600;color:#ff9f0a;margin-bottom:6px;">${f.name}</div>
-                        <div style="font-size:11px;color:rgba(255,255,255,0.45);white-space:pre-line;line-height:1.6;">${fixLines}</div>
+                        <div style="font-size:12px;font-weight:600;color:${col};margin-bottom:4px;">${item.label}</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.6;">${item.detail}</div>
                     `;
-                    content.appendChild(card);
-                    requestAnimationFrame(() => requestAnimationFrame(() => {
-                        card.style.opacity='1'; card.style.transform='translateY(0)';
-                    }));
+                    g.appendChild(card);
                 });
-            },
+                return g;
+            };
 
-            // 4 — SCORE REVEAL
-            async () => {
-                await clearContent();
-                setProgress(90, 2800);
-                const rColor = rating.color;
+            // Diet
+            const genderNote = gender === 'female' ? kb.female_note : kb.male_note;
 
-                const wrap = document.createElement('div');
-                wrap.style.cssText = `text-align:center;`;
-
-                // Pre-heading
-                const pre = document.createElement('div');
-                pre.style.cssText = `font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:20px;opacity:0;transition:opacity 400ms ease 100ms;`;
-                pre.textContent = 'Official Score';
-                wrap.appendChild(pre);
-
-                // Score ring (recreated in cinematic)
-                const ringWrap = document.createElement('div');
-                ringWrap.style.cssText = `width:160px;height:160px;margin:0 auto 24px;position:relative;opacity:0;transition:opacity 500ms ease 300ms;`;
-                const circumference = 452;
-                const dashOffset    = circumference - (overall / 10) * circumference;
-                ringWrap.innerHTML = `
-                    <svg viewBox="0 0 160 160" style="width:100%;height:100%;transform:rotate(-90deg);">
-                        <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
-                        <circle id="_cRingBar" cx="80" cy="80" r="72" fill="none" stroke="${rColor}" stroke-width="6"
-                            stroke-linecap="round"
-                            stroke-dasharray="${circumference}"
-                            stroke-dashoffset="${circumference}"
-                            style="transition:stroke-dashoffset 1.8s cubic-bezier(0.4,0,0.2,1) 600ms;"/>
-                    </svg>
-                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
-                        <div id="_cScoreNum" style="font-size:52px;font-weight:200;color:#fff;line-height:1;">--</div>
-                        <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:2px;">out of 10</div>
-                    </div>
-                `;
-                wrap.appendChild(ringWrap);
-
-                // Label
-                const labelWrap = document.createElement('div');
-                labelWrap.style.cssText = `margin-bottom:8px;opacity:0;transition:opacity 500ms ease 1200ms;`;
-                labelWrap.innerHTML = `
-                    <div style="display:inline-block;padding:12px 32px;background:${rColor}18;border:2px solid ${rColor};border-radius:14px;">
-                        <span style="font-size:30px;font-weight:900;color:${rColor};letter-spacing:.04em;">${rating.label}</span>
-                    </div>
-                `;
-                wrap.appendChild(labelWrap);
-
-                // Percentile
-                const pct = document.createElement('div');
-                pct.style.cssText = `font-size:13px;font-weight:600;color:${rColor};margin-top:8px;opacity:0;transition:opacity 400ms ease 1500ms;`;
-                pct.textContent = rating.pct;
-                wrap.appendChild(pct);
-
-                // Tooltip
-                const tip = document.createElement('div');
-                tip.style.cssText = `font-size:12px;color:rgba(255,255,255,0.35);margin-top:6px;opacity:0;transition:opacity 400ms ease 1700ms;`;
-                tip.textContent = rating.tooltip;
-                wrap.appendChild(tip);
-
-                content.appendChild(wrap);
-
-                // Animate in
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    pre.style.opacity = '1';
-                    ringWrap.style.opacity = '1';
-                    labelWrap.style.opacity = '1';
-                    pct.style.opacity = '1';
-                    tip.style.opacity = '1';
-                    // Animate ring after brief delay
-                    setTimeout(() => {
-                        const ring = ov.querySelector('#_cRingBar');
-                        if (ring) ring.style.strokeDashoffset = dashOffset;
-                        // Count up score number
-                        const numEl = ov.querySelector('#_cScoreNum');
-                        if (numEl) {
-                            const start = Date.now();
-                            const dur   = 1800;
-                            const tick  = () => {
-                                const t = Math.min(1, (Date.now()-start)/dur);
-                                const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
-                                numEl.textContent = (overall * ease).toFixed(1);
-                                if (t < 1) requestAnimationFrame(tick);
-                                else numEl.textContent = overall.toFixed(1);
-                            };
-                            requestAnimationFrame(tick);
-                        }
-                    }, 600);
-                }));
-            },
-
-            // 5 — CTA
-            async () => {
-                setProgress(100, 800);
-                // Just add the CTA button below current content (don't clear)
-                await new Promise(res => setTimeout(res, 200));
-                const cta = document.createElement('div');
-                cta.style.cssText = `margin-top:28px;opacity:0;transition:opacity 500ms ease;`;
-                cta.innerHTML = `
-                    <button id="_cViewFull" style="
-                        width:100%;padding:16px 32px;border-radius:14px;border:none;
-                        background:#ffffff;color:#000;font-size:16px;font-weight:700;
-                        cursor:pointer;font-family:inherit;letter-spacing:-.01em;
-                        transition:transform 0.15s,box-shadow 0.15s;
-                        touch-action:manipulation;
-                    ">See Full Analysis →</button>
-                    <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:10px;">All scores, measurements & improvement guides</div>
-                `;
-                content.appendChild(cta);
-                requestAnimationFrame(() => requestAnimationFrame(() => { cta.style.opacity='1'; }));
-
-                cta.querySelector('#_cViewFull').onmouseenter = e => {
-                    e.target.style.transform='translateY(-2px)';
-                    e.target.style.boxShadow='0 8px 24px rgba(255,255,255,0.2)';
-                };
-                cta.querySelector('#_cViewFull').onmouseleave = e => {
-                    e.target.style.transform='';
-                    e.target.style.boxShadow='';
-                };
-                cta.querySelector('#_cViewFull').addEventListener('click', () => {
-                    ov.style.transition = 'opacity 0.4s ease';
-                    ov.style.opacity = '0';
-                    setTimeout(() => ov.remove(), 400);
-                });
-                cta.querySelector('#_cViewFull').addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    ov.style.transition = 'opacity 0.4s ease';
-                    ov.style.opacity = '0';
-                    setTimeout(() => ov.remove(), 400);
-                });
-
-                // Auto-dismiss after 12s if user doesn't click
-                setTimeout(() => {
-                    if (document.getElementById('_cinematicOv')) {
-                        ov.style.transition = 'opacity 0.6s ease';
-                        ov.style.opacity = '0';
-                        setTimeout(() => ov.remove(), 600);
-                    }
-                }, 12000);
-            },
-        ];
-
-        // ── PHASE RUNNER ─────────────────────────────────────────────────
-        const PHASE_DURATIONS = [2400, 3800, 3800, 3500, 3200, 99999];
-
-        const runPhase = async (idx) => {
-            if (idx >= phases.length) return;
-            await phases[idx]();
-            phase = idx;
-            // Auto-advance
-            const timer = setTimeout(() => runPhase(idx + 1), PHASE_DURATIONS[idx]);
-            // Skip on tap/click (except the last CTA phase)
-            if (idx < phases.length - 1) {
-                const skip = (e) => {
-                    // Don't skip if clicking the CTA button
-                    if (e.target.id === '_cViewFull') return;
-                    clearTimeout(timer);
-                    ov.removeEventListener('click', skip);
-                    ov.removeEventListener('touchend', skip);
-                    runPhase(idx + 1);
-                };
-                ov.addEventListener('click', skip);
-                ov.addEventListener('touchend', skip);
+            if (kb.diet && kb.diet.length) {
+                const dg = makePillGroup('🥗 Diet & Supplements', kb.diet, '#7ee787');
+                if (dg) wrapper.appendChild(dg);
             }
+            if (kb.softmax && kb.softmax.length) {
+                const sg = makePillGroup('✦ Softmax', kb.softmax, '#ff9f0a');
+                if (sg) wrapper.appendChild(sg);
+            }
+            if (kb.medmax && kb.medmax.length) {
+                const mg = makePillGroup('⚕ Medmax (Non-Surgical)', kb.medmax, '#5ac8fa');
+                if (mg) wrapper.appendChild(mg);
+            }
+            if (kb.hardmax && kb.hardmax.length) {
+                const hg = makePillGroup('⚡ Hardmax (Surgery)', kb.hardmax, '#ff453a');
+                if (hg) wrapper.appendChild(hg);
+            }
+            if (genderNote) {
+                const note = document.createElement('div');
+                note.style.cssText = `background:rgba(255,255,255,0.04);border-radius:10px;padding:11px 14px;margin-top:8px;font-size:11px;color:rgba(255,255,255,0.45);line-height:1.6;border-left:2px solid rgba(255,255,255,0.15);`;
+                note.innerHTML = `<span style="color:rgba(255,255,255,0.6);font-weight:600;">Note: </span>${genderNote}`;
+                wrapper.appendChild(note);
+            }
+            return wrapper;
         };
 
-        runPhase(0);
-    }
+        const nextBtn = (label, onClick) => {
+            const btn = document.createElement('button');
+            btn.style.cssText = `
+                width:100%;padding:16px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);
+                background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.8);
+                font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+                margin-top:20px;letter-spacing:-.01em;transition:all 0.15s;
+                touch-action:manipulation;
+            `;
+            btn.textContent = label;
+            btn.onmouseenter = () => { btn.style.background='rgba(255,255,255,0.1)'; btn.style.color='#fff'; };
+            btn.onmouseleave = () => { btn.style.background='rgba(255,255,255,0.06)'; btn.style.color='rgba(255,255,255,0.8)'; };
+            btn.addEventListener('click', onClick);
+            btn.addEventListener('touchend', e => { e.preventDefault(); onClick(); });
+            return btn;
+        };
 
+        /* ══════════════════════════════════════════════════
+           PHASE 0 — INTRO TITLE
+        ══════════════════════════════════════════════════ */
+        const phase0 = () => {
+            content.innerHTML = '';
+            ov.scrollTop = 0;
+            content.style.display = 'flex';
+            content.style.flexDirection = 'column';
+            content.style.alignItems = 'center';
+            content.style.justifyContent = 'center';
+            content.style.minHeight = '100vh';
+            content.style.textAlign = 'center';
+            content.style.paddingTop = '0';
+            bg.style.opacity = '1';
+
+            const wrap = document.createElement('div');
+            wrap.style.cssText = `padding:20px;width:100%;max-width:400px;`;
+
+            const larpLabel = document.createElement('div');
+            larpLabel.style.cssText = `font-size:11px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:20px;`;
+            larpLabel.textContent = 'larp.ai';
+            fadeInEl(larpLabel, 200);
+
+            const title = document.createElement('div');
+            title.style.cssText = `font-size:52px;font-weight:800;color:#fff;line-height:1.05;letter-spacing:-.03em;margin-bottom:12px;`;
+            title.innerHTML = `Your<br>Results<br><span style="color:rgba(255,255,255,0.4);">Are In</span>`;
+            fadeInEl(title, 500, 600, 30);
+
+            const line = document.createElement('div');
+            line.style.cssText = `width:36px;height:2px;background:rgba(255,255,255,0.25);margin:20px auto;`;
+            fadeInEl(line, 1000, 400);
+
+            const sub = document.createElement('div');
+            sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);line-height:1.6;`;
+            sub.textContent = 'Detailed biometric facial analysis complete';
+            fadeInEl(sub, 1200, 400);
+
+            const tapHint = document.createElement('div');
+            tapHint.style.cssText = `font-size:11px;color:rgba(255,255,255,0.2);margin-top:40px;`;
+            tapHint.textContent = 'tap anywhere to continue';
+            fadeInEl(tapHint, 1800, 500);
+
+            wrap.appendChild(larpLabel);
+            wrap.appendChild(title);
+            wrap.appendChild(line);
+            wrap.appendChild(sub);
+            wrap.appendChild(tapHint);
+            content.appendChild(wrap);
+        };
+
+        /* ══════════════════════════════════════════════════
+           PHASE 1 — TOP STRENGTHS
+        ══════════════════════════════════════════════════ */
+        const phase1 = async () => {
+            await clearContent();
+            content.style.display = 'block';
+            content.style.alignItems = '';
+            content.style.justifyContent = '';
+            content.style.minHeight = '';
+            content.style.paddingTop = '40px';
+            content.style.textAlign = 'left';
+
+            const h = bigHeading('Your Best Features', 'What\'s Working For You', '#30d158');
+            fadeInEl(h, 0);
+            content.appendChild(h);
+
+            const sub = document.createElement('div');
+            sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
+            sub.textContent = `These are your top-scoring metrics — features that are giving you a competitive advantage. Protect and enhance these.`;
+            fadeInEl(sub, 150);
+            content.appendChild(sub);
+
+            // Feature pills
+            topN.forEach((f, i) => {
+                const pill = featurePill(f.name, f.score, scoreColor(f.score), i * 100 + 200);
+                content.appendChild(pill);
+            });
+
+            content.appendChild(divider());
+
+            // Deep dive into top 3 KB data
+            const topKBFeatures = topN.slice(0, 3).filter(f => KB[f.key]);
+            topKBFeatures.forEach((f, i) => {
+                const kb = KB[f.key];
+                const wrap = document.createElement('div');
+                wrap.style.cssText = `margin-bottom:24px;`;
+
+                const title = document.createElement('div');
+                title.style.cssText = `font-size:15px;font-weight:700;color:#30d158;margin-bottom:4px;`;
+                title.textContent = `✓ ${f.name}`;
+                fadeInEl(title, 700 + i * 100);
+
+                const why = document.createElement('div');
+                why.style.cssText = `font-size:12px;color:rgba(255,255,255,0.45);line-height:1.65;margin-bottom:10px;`;
+                why.textContent = kb.why || '';
+                fadeInEl(why, 800 + i * 100);
+
+                // Show "what to maintain" from diet/softmax
+                if (kb.softmax && kb.softmax.length > 0) {
+                    const maintainLabel = document.createElement('div');
+                    maintainLabel.style.cssText = `font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(48,209,88,0.6);margin-bottom:8px;`;
+                    maintainLabel.textContent = '✦ How to maintain & push higher';
+                    wrap.appendChild(title);
+                    wrap.appendChild(why);
+                    wrap.appendChild(maintainLabel);
+                    kb.softmax.slice(0, 2).forEach(item => {
+                        const card = document.createElement('div');
+                        card.style.cssText = `background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.18);border-radius:10px;padding:10px 13px;margin-bottom:7px;`;
+                        card.innerHTML = `<div style="font-size:12px;font-weight:600;color:rgba(48,209,88,0.8);margin-bottom:3px;">${item.label}</div><div style="font-size:11px;color:rgba(255,255,255,0.4);line-height:1.6;">${item.detail}</div>`;
+                        fadeInEl(card, 900 + i * 100);
+                        wrap.appendChild(card);
+                    });
+                } else {
+                    wrap.appendChild(title);
+                    wrap.appendChild(why);
+                }
+                content.appendChild(wrap);
+                if (i < topKBFeatures.length - 1) content.appendChild(divider());
+            });
+
+            const nb = nextBtn('See What\'s Holding You Back →', phase2);
+            fadeInEl(nb, 1200);
+            content.appendChild(nb);
+        };
+
+        /* ══════════════════════════════════════════════════
+           PHASE 2 — WEAKNESSES
+        ══════════════════════════════════════════════════ */
+        const phase2 = async () => {
+            await clearContent();
+            content.style.paddingTop = '40px';
+
+            const h = bigHeading('Your Weak Points', 'Holding You Back', '#ff453a');
+            fadeInEl(h, 0);
+            content.appendChild(h);
+
+            const sub = document.createElement('div');
+            sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
+            sub.textContent = `These are your lowest-scoring metrics. They are dragging your overall score down. Focus on these first for maximum ROI.`;
+            fadeInEl(sub, 150);
+            content.appendChild(sub);
+
+            bottomN.forEach((f, i) => {
+                const pill = featurePill(f.name, f.score, scoreColor(f.score), i * 100 + 200);
+                content.appendChild(pill);
+            });
+
+            content.appendChild(divider());
+
+            // Deep analysis for each bottom feature
+            bottomN.slice(0, 4).forEach((f, i) => {
+                const kb = KB[f.key];
+                const wrap = document.createElement('div');
+                wrap.style.cssText = `margin-bottom:28px;`;
+
+                const titleRow = document.createElement('div');
+                titleRow.style.cssText = `display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;`;
+                titleRow.innerHTML = `
+                    <div style="font-size:16px;font-weight:700;color:${scoreColor(f.score)};">${f.name}</div>
+                    <div style="font-size:22px;font-weight:700;color:${scoreColor(f.score)};">${f.score.toFixed(1)}</div>
+                `;
+                fadeInEl(titleRow, 600 + i * 80);
+
+                if (kb) {
+                    const why = document.createElement('div');
+                    why.style.cssText = `font-size:12px;color:rgba(255,255,255,0.4);line-height:1.65;margin-bottom:12px;`;
+                    why.textContent = kb.why;
+                    fadeInEl(why, 700 + i * 80);
+                    wrap.appendChild(titleRow);
+                    wrap.appendChild(why);
+
+                    // Show diet if available
+                    if (kb.diet && kb.diet.length > 0) {
+                        const dietLabel = document.createElement('div');
+                        dietLabel.style.cssText = `font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(126,231,135,0.7);margin-bottom:8px;`;
+                        dietLabel.textContent = '🥗 Diet & Supplements';
+                        wrap.appendChild(dietLabel);
+                        kb.diet.slice(0, 2).forEach(item => {
+                            const card = document.createElement('div');
+                            card.style.cssText = `background:rgba(126,231,135,0.06);border:1px solid rgba(126,231,135,0.18);border-radius:10px;padding:10px 13px;margin-bottom:7px;`;
+                            card.innerHTML = `<div style="font-size:12px;font-weight:600;color:rgba(126,231,135,0.8);margin-bottom:3px;">${item.label}</div><div style="font-size:11px;color:rgba(255,255,255,0.4);line-height:1.6;">${item.detail}</div>`;
+                            fadeInEl(card, 800 + i * 80);
+                            wrap.appendChild(card);
+                        });
+                    }
+                } else {
+                    wrap.appendChild(titleRow);
+                    if (f.fix) {
+                        const fixBox = document.createElement('div');
+                        fixBox.style.cssText = `font-size:11px;color:rgba(255,255,255,0.4);line-height:1.65;white-space:pre-line;background:rgba(255,69,58,0.06);border:1px solid rgba(255,69,58,0.2);border-radius:10px;padding:11px 14px;`;
+                        fixBox.textContent = f.fix;
+                        wrap.appendChild(fixBox);
+                    }
+                }
+
+                content.appendChild(wrap);
+                if (i < 3) content.appendChild(divider());
+            });
+
+            const nb = nextBtn('See Full Fix Guide →', phase3);
+            fadeInEl(nb, 1500);
+            content.appendChild(nb);
+        };
+
+        /* ══════════════════════════════════════════════════
+           PHASE 3 — DETAILED FIX GUIDE (per weak feature)
+        ══════════════════════════════════════════════════ */
+        const phase3 = async () => {
+            await clearContent();
+            content.style.paddingTop = '40px';
+
+            const h = bigHeading('Complete Fix Guide', 'Softmax · Medmax · Hardmax', '#ff9f0a');
+            fadeInEl(h, 0);
+            content.appendChild(h);
+
+            const sub = document.createElement('div');
+            sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
+            sub.textContent = `Every option from free lifestyle changes to surgical interventions — ordered by cost, risk, and impact.`;
+            fadeInEl(sub, 150);
+            content.appendChild(sub);
+
+            bottomN.slice(0, 4).forEach((f, i) => {
+                const kb = KB[f.key];
+                if (!kb && !f.fix) return;
+
+                const sectionHead = document.createElement('div');
+                sectionHead.style.cssText = `
+                    display:flex;align-items:center;gap:10px;
+                    margin-bottom:14px;padding:12px 16px;
+                    background:rgba(255,255,255,0.04);border-radius:12px;
+                    border-left:3px solid ${scoreColor(f.score)};
+                `;
+                sectionHead.innerHTML = `
+                    <div style="flex:1;">
+                        <div style="font-size:14px;font-weight:700;color:#fff;">${f.name}</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;">Current score: ${f.score.toFixed(1)} / 10</div>
+                    </div>
+                    <div style="font-size:24px;font-weight:700;color:${scoreColor(f.score)};">${f.score.toFixed(1)}</div>
+                `;
+                fadeInEl(sectionHead, 200 + i * 80);
+                content.appendChild(sectionHead);
+
+                if (kb) {
+                    const kbContent = kbSection(f.key, true);
+                    if (kbContent) {
+                        fadeInEl(kbContent, 300 + i * 80);
+                        content.appendChild(kbContent);
+                    }
+                } else if (f.fix) {
+                    const fixEl = document.createElement('div');
+                    fixEl.style.cssText = `font-size:11px;color:rgba(255,255,255,0.45);line-height:1.7;white-space:pre-line;background:rgba(255,159,10,0.06);border:1px solid rgba(255,159,10,0.2);border-radius:10px;padding:13px 16px;margin-bottom:14px;`;
+                    fixEl.textContent = f.fix;
+                    content.appendChild(fixEl);
+                }
+
+                if (i < 3) content.appendChild(divider());
+            });
+
+            // Universal foundation stack
+            if (FDN) {
+                content.appendChild(divider());
+                const fndTitle = document.createElement('div');
+                fndTitle.style.cssText = `font-size:16px;font-weight:700;color:rgba(255,255,255,0.8);margin-bottom:16px;`;
+                fndTitle.textContent = '⬛ Universal Foundation Stack';
+                fadeInEl(fndTitle, 500);
+                content.appendChild(fndTitle);
+
+                FDN.items.forEach((group, gi) => {
+                    const groupEl = document.createElement('div');
+                    groupEl.style.cssText = `margin-bottom:16px;`;
+                    const groupLabel = document.createElement('div');
+                    groupLabel.style.cssText = `font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:8px;`;
+                    groupLabel.textContent = group.category;
+                    groupEl.appendChild(groupLabel);
+                    group.items.forEach(item => {
+                        const itemEl = document.createElement('div');
+                        itemEl.style.cssText = `font-size:11px;color:rgba(255,255,255,0.45);padding:7px 12px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:5px;line-height:1.5;border-left:2px solid rgba(255,255,255,0.08);`;
+                        itemEl.textContent = item;
+                        groupEl.appendChild(itemEl);
+                    });
+                    fadeInEl(groupEl, 600 + gi * 100);
+                    content.appendChild(groupEl);
+                });
+            }
+
+            const nb = nextBtn('See Your Score →', phase4);
+            fadeInEl(nb, 800);
+            content.appendChild(nb);
+        };
+
+        /* ══════════════════════════════════════════════════
+           PHASE 4 — SCORE REVEAL
+        ══════════════════════════════════════════════════ */
+        const phase4 = async () => {
+            await clearContent();
+            content.style.display = 'flex';
+            content.style.flexDirection = 'column';
+            content.style.alignItems = 'center';
+            content.style.justifyContent = 'center';
+            content.style.minHeight = '100vh';
+            content.style.textAlign = 'center';
+            content.style.paddingTop = '0';
+
+            const rColor = rating.color;
+
+            const preLabel = document.createElement('div');
+            preLabel.style.cssText = `font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:24px;`;
+            preLabel.textContent = 'Official Rating';
+            fadeInEl(preLabel, 100, 500);
+
+            // Ring
+            const circumference = 452;
+            const dashOffset    = circumference - (overall / 10) * circumference;
+            const ringWrap = document.createElement('div');
+            ringWrap.style.cssText = `width:180px;height:180px;margin:0 auto 28px;position:relative;`;
+            ringWrap.innerHTML = `
+                <svg viewBox="0 0 180 180" style="width:100%;height:100%;transform:rotate(-90deg);">
+                    <circle cx="90" cy="90" r="82" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="7"/>
+                    <circle id="_cRingBar" cx="90" cy="90" r="82" fill="none" stroke="${rColor}" stroke-width="7"
+                        stroke-linecap="round"
+                        stroke-dasharray="${circumference}"
+                        stroke-dashoffset="${circumference}"
+                        style="transition:stroke-dashoffset 2s cubic-bezier(0.4,0,0.2,1) 500ms;"/>
+                </svg>
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+                    <div id="_cScoreNum" style="font-size:58px;font-weight:200;color:#fff;line-height:1;font-variant-numeric:tabular-nums;">--</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;">/ 10</div>
+                </div>
+            `;
+            fadeInEl(ringWrap, 300, 500);
+
+            const labelWrap = document.createElement('div');
+            labelWrap.style.cssText = `margin-bottom:10px;`;
+            labelWrap.innerHTML = `
+                <div style="display:inline-block;padding:14px 36px;background:${rColor}18;border:2px solid ${rColor};border-radius:16px;">
+                    <span style="font-size:34px;font-weight:900;color:${rColor};letter-spacing:.04em;">${rating.label}</span>
+                </div>
+            `;
+            fadeInEl(labelWrap, 1000, 600);
+
+            const pctEl = document.createElement('div');
+            pctEl.style.cssText = `font-size:14px;font-weight:700;color:${rColor};margin-bottom:8px;`;
+            pctEl.textContent = rating.pct;
+            fadeInEl(pctEl, 1400, 400);
+
+            const tipEl = document.createElement('div');
+            tipEl.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:32px;`;
+            tipEl.textContent = rating.tooltip;
+            fadeInEl(tipEl, 1600, 400);
+
+            // Composite mini breakdown
+            const compositeBox = document.createElement('div');
+            compositeBox.style.cssText = `width:100%;max-width:320px;margin:0 auto 28px;`;
+            [['HARM',scores.HARM,'32%'],['ANGU',scores.ANGU,'22%'],[gender==='female'?'NEOT':'DIMO',scores.DIMO,'20%'],['MISC',scores.MISC,'26%']].forEach(([k,v,w]) => {
+                const cv = Math.min(10,Math.max(0,v));
+                const row = document.createElement('div');
+                row.style.cssText = `display:flex;align-items:center;gap:10px;margin-bottom:8px;`;
+                row.innerHTML = `
+                    <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);min-width:40px;">${k}</span>
+                    <div style="flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+                        <div style="height:100%;width:0%;background:${scoreColor(cv)};border-radius:2px;transition:width 1s ease 1800ms;" data-w="${cv*10}"></div>
+                    </div>
+                    <span style="font-size:12px;font-weight:600;color:${scoreColor(cv)};min-width:28px;text-align:right;">${cv.toFixed(1)}</span>
+                    <span style="font-size:10px;color:rgba(255,255,255,0.2);min-width:26px;">${w}</span>
+                `;
+                compositeBox.appendChild(row);
+            });
+            fadeInEl(compositeBox, 1800, 500);
+
+            content.appendChild(preLabel);
+            content.appendChild(ringWrap);
+            content.appendChild(labelWrap);
+            content.appendChild(pctEl);
+            content.appendChild(tipEl);
+            content.appendChild(compositeBox);
+
+            // Animate ring + count-up
+            setTimeout(() => {
+                const ring = ov.querySelector('#_cRingBar');
+                if (ring) ring.style.strokeDashoffset = dashOffset;
+                const numEl = ov.querySelector('#_cScoreNum');
+                if (numEl) {
+                    const start = Date.now();
+                    const dur = 2000;
+                    const tick = () => {
+                        const t = Math.min(1, (Date.now()-start)/dur);
+                        const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+                        numEl.textContent = (overall * ease).toFixed(1);
+                        if (t < 1) requestAnimationFrame(tick);
+                        else numEl.textContent = overall.toFixed(1);
+                    };
+                    requestAnimationFrame(tick);
+                }
+                // Animate composite bars
+                setTimeout(() => {
+                    compositeBox.querySelectorAll('[data-w]').forEach(bar => {
+                        bar.style.width = bar.dataset.w + '%';
+                    });
+                }, 1800);
+            }, 500);
+
+            // CTA
+            const ctaWrap = document.createElement('div');
+            ctaWrap.style.cssText = `width:100%;max-width:320px;margin:0 auto;`;
+            const ctaBtn = document.createElement('button');
+            ctaBtn.style.cssText = `
+                width:100%;padding:18px 32px;border-radius:14px;border:none;
+                background:#ffffff;color:#000;font-size:16px;font-weight:700;
+                cursor:pointer;font-family:inherit;letter-spacing:-.01em;
+                transition:transform 0.15s,box-shadow 0.15s;
+                touch-action:manipulation;
+            `;
+            ctaBtn.textContent = 'See Full Analysis →';
+            ctaBtn.onmouseenter = () => { ctaBtn.style.transform='translateY(-2px)'; ctaBtn.style.boxShadow='0 8px 24px rgba(255,255,255,0.2)'; };
+            ctaBtn.onmouseleave = () => { ctaBtn.style.transform=''; ctaBtn.style.boxShadow=''; };
+            const dismiss = () => {
+                ov.style.transition = 'opacity 0.4s ease';
+                ov.style.opacity = '0';
+                setTimeout(() => ov.remove(), 400);
+            };
+            ctaBtn.addEventListener('click', dismiss);
+            ctaBtn.addEventListener('touchend', e => { e.preventDefault(); dismiss(); });
+
+            const ctaSub = document.createElement('div');
+            ctaSub.style.cssText = `font-size:11px;color:rgba(255,255,255,0.2);margin-top:10px;`;
+            ctaSub.textContent = 'All 18 scores, measurements & improvement guides';
+
+            ctaWrap.appendChild(ctaBtn);
+            ctaWrap.appendChild(ctaSub);
+            fadeInEl(ctaWrap, 2200, 600);
+            content.appendChild(ctaWrap);
+        };
+
+        /* ══════════════════════════════════════════════════
+           TAP-TO-ADVANCE from phase 0 only
+           (phases 1-3 have explicit next buttons)
+        ══════════════════════════════════════════════════ */
+        phase0();
+
+        // Phase 0 advances on tap after 1.5s (prevents accidental skip)
+        let phase0Tappable = false;
+        setTimeout(() => { phase0Tappable = true; }, 1500);
+
+        const phase0Handler = (e) => {
+            if (!phase0Tappable) return;
+            if (e.target.tagName === 'BUTTON') return;
+            // Check still on phase 0
+            if (!ov.querySelector('#_cinematicOv') && !document.getElementById('_cinematicOv')) return;
+            if (content.querySelector('.feature-item') === null && !content.querySelector('[data-phase]')) {
+                ov.removeEventListener('click', phase0Handler);
+                ov.removeEventListener('touchend', phase0Handler);
+                phase1();
+            }
+        };
+        ov.addEventListener('click', phase0Handler);
+        ov.addEventListener('touchend', e => { if (!phase0Tappable || e.target.tagName==='BUTTON') return; phase0Handler(e); });
+
+        // Hide skip hint after phase 0
+        setTimeout(() => {
+            const hint = ov.querySelector('#_cSkipHint');
+            if (hint) hint.style.display = 'none';
+        }, 4000);
+    }
     delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 }
 
