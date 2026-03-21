@@ -501,10 +501,6 @@ class FacialAnalyzer {
             this.els.loader.classList.remove('active');
             this.els.analyzeBtn.disabled = false;
 
-            // Hide results panel before building it so user never sees a flash
-            const _rightCard = this.els.featuresBox.closest('.card') || this.els.featuresBox.parentElement;
-            if (_rightCard) _rightCard.style.visibility = 'hidden';
-
             this.displayResults(this.scores, this.measurements);
             this._showDevButton();
 
@@ -512,10 +508,17 @@ class FacialAnalyzer {
             const genderMsg = this._selectedGender ? ` · gender: ${this._selectedGender}` : '';
             this.setStatus('Analysis complete ✓' + hlMsg + genderMsg, false, true);
 
-            // Cinematic reveal — runs after gender.js has patched the DOM (120ms grace)
-            // Pass a callback that unhides results when cinematic is dismissed
+            // Cinematic reveal — results panel hidden until cinematic dismissed
             setTimeout(() => this._showCinematicReveal(this.scores, this.measurements, () => {
-                if (_rightCard) _rightCard.style.visibility = '';
+                const panel = document.getElementById('resultsPanel');
+                if (panel) {
+                    panel.style.display = 'block';
+                    panel.style.opacity = '0';
+                    requestAnimationFrame(() => {
+                        panel.style.transition = 'opacity 0.5s ease';
+                        panel.style.opacity = '1';
+                    });
+                }
             }), 120);
         } catch (err) {
             console.error(err);
