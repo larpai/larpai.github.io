@@ -1,5 +1,5 @@
 /**
- * FacialAnalyzer v4.1 — Landmark-corrected edition
+ * FacialAnalyzer v4.4 — Mobile hairline drag fixed edition
  *
  * ROOT CAUSE OF ALL BROKEN MEASUREMENTS (fixed in this version):
  *
@@ -94,6 +94,7 @@ class FacialAnalyzer {
             statsSection:     document.getElementById('statsSection'),
             statsGrid:        document.getElementById('statsGrid'),
             statsCollapseBtn: document.getElementById('statsCollapseBtn'),
+            featuresCollapseBtn: document.getElementById('featuresCollapseBtn'),
             welcomeModal:     document.getElementById('welcomeModal'),
             startBtn:         document.getElementById('startBtn'),
         };
@@ -111,6 +112,7 @@ class FacialAnalyzer {
         this.els.analyzeBtn.addEventListener('click',  () => this.analyze());
         this.els.startBtn  ?.addEventListener('click', () => this.els.welcomeModal?.classList.add('hidden'));
         this.els.statsCollapseBtn?.addEventListener('click', () => this.toggleStats());
+        this.els.featuresCollapseBtn?.addEventListener('click', () => this.toggleFeatures());
 
         ['dragover','dragleave','drop'].forEach(evt => {
             this.els.uploadZone.addEventListener(evt, e => {
@@ -164,7 +166,7 @@ class FacialAnalyzer {
                 // Show hairline selector after image renders
                 requestAnimationFrame(() => requestAnimationFrame(() => {
                     this.showHairlineSelector();
-                    this.showHairlineToast();
+                    this.showHairlinePopup();
                 }));
             };
             img.src = e.target.result;
@@ -196,6 +198,7 @@ class FacialAnalyzer {
             height:${imgRect.height}px;
             pointer-events:none;
             z-index:20;
+            touch-action: none;
         `;
 
         // ── The draggable line — white with black glow (matches app theme) ──
@@ -204,12 +207,26 @@ class FacialAnalyzer {
             position:absolute;
             left:0; right:0;
             top:${defaultFrac * 100}%;
-            height:2px;
-            background:#ffffff;
-            box-shadow: 0 1px 8px rgba(0,0,0,0.8), 0 -1px 8px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.4);
+            height:1px;
+            background:rgba(255,255,255,0.9);
+            box-shadow: 0 0 6px rgba(0,0,0,0.8);
             cursor:ns-resize;
             pointer-events:all;
-            transition: box-shadow 0.15s;
+        `;
+
+        // ── Invisible drag area — extends 40px above and below line for easier touch ──
+        const dragArea = document.createElement('div');
+        dragArea.style.cssText = `
+            position:absolute;
+            left:0; right:0;
+            top:${defaultFrac * 100 - 5}%;
+            height:10%;
+            min-height:80px;
+            background:transparent;
+            cursor:ns-resize;
+            pointer-events:all;
+            touch-action: pan-y;
+            z-index:24;
         `;
 
         // ── Label floating above the line ───────────────────────────────────
@@ -230,7 +247,7 @@ class FacialAnalyzer {
             font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
             box-shadow:0 2px 8px rgba(0,0,0,0.5);
         `;
-        label.textContent = '↕  Drag to hairline';
+        label.textContent = '\u21d5  Drag to hairline';
         line.appendChild(label);
 
         // ── Drag handles — small white circles on each end ──────────────────
@@ -251,31 +268,8 @@ class FacialAnalyzer {
             line.appendChild(handle);
         });
 
-        // ── Done button — positioned below the line, centred ────────────────
-        const doneBtn = document.createElement('button');
-        doneBtn.textContent = 'Done';
-        doneBtn.style.cssText = `
-            position:absolute;
-            left:50%;
-            transform:translateX(-50%);
-            top:calc(${defaultFrac * 100}% + 10px);
-            background:#ffffff;
-            color:#000000;
-            border:none;
-            border-radius:10px;
-            padding:7px 22px;
-            font-size:13px;
-            font-weight:600;
-            font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
-            cursor:pointer;
-            pointer-events:all;
-            box-shadow:0 2px 12px rgba(0,0,0,0.6);
-            transition:opacity 0.15s, transform 0.15s;
-            z-index:30;
-        `;
-
+        ui.appendChild(dragArea);
         ui.appendChild(line);
-        ui.appendChild(doneBtn);
         previewBox.appendChild(ui);
 
         // ── Drag logic ──────────────────────────────────────────────────────
@@ -284,65 +278,91 @@ class FacialAnalyzer {
         let startTop = defaultFrac * imgRect.height;
         let confirmed = false;
 
-        const updateDonePos = () => {
-            const topPct = parseFloat(line.style.top);
-            doneBtn.style.top = `calc(${topPct}% + 10px)`;
-        };
-
         const onDown = e => {
             if (confirmed) return;
             dragging = true;
-            startY   = e.clientY ?? e.touches[0].clientY;
+
+            // Handle both mouse and touch events
+            if (e.type === 'touchstart') {
+                startY = e.touches[0].clientY;
+            } else {
+                startY = e.clientY;
+            }
+
             startTop = parseFloat(line.style.top) / 100 * imgRect.height;
-            line.style.boxShadow = '0 1px 12px rgba(0,0,0,0.9), 0 -1px 12px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.3)';
             e.preventDefault();
+            e.stopPropagation();
+            console.log('Touch/mouse down - dragging started', { type: e.type, startY, startTop });
         };
+
         const onMove = e => {
             if (!dragging) return;
-            const clientY = e.clientY ?? e.touches[0].clientY;
+
+            // Handle both mouse and touch events
+            let clientY;
+            if (e.type === 'touchmove') {
+                clientY = e.touches[0].clientY;
+            } else {
+                clientY = e.clientY;
+            }
+
             const delta   = clientY - startY;
             const newTop  = Math.max(0, Math.min(imgRect.height - 2, startTop + delta));
             const fracY   = newTop / imgRect.height;
             line.style.top        = (fracY * 100) + '%';
+            dragArea.style.top    = ((fracY - 5) * 100) + '%';
             this.hairlineY        = fracY * this.naturalH;
             this.hairlineFracY    = fracY;
-            label.textContent     = '↕  Hairline — looks good?';
-            updateDonePos();
+            label.textContent     = '\u21d5  Hairline \u2014 looks good?';
             e.preventDefault();
+            e.stopPropagation();
+            console.log('Touch/mouse move', { type: e.type, clientY, delta, newTop, fracY });
         };
+
         const onUp = () => {
             dragging = false;
-            line.style.boxShadow = '0 1px 8px rgba(0,0,0,0.8), 0 -1px 8px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.4)';
+            console.log('Touch/mouse up - dragging ended');
         };
 
-        line.addEventListener('mousedown',  onDown);
-        line.addEventListener('touchstart', onDown, { passive: false });
-        document.addEventListener('mousemove',  onMove);
-        document.addEventListener('touchmove',  onMove, { passive: false });
-        document.addEventListener('mouseup',    onUp);
-        document.addEventListener('touchend',   onUp);
+        // Attach events to drag area instead of just line
+        dragArea.addEventListener('mousedown', onDown);
+        dragArea.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            onDown(e);
+        });
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            onMove(e);
+        });
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            onUp();
+        });
 
-        // ── Done button click — confirm dialog ───────────────────────────────
-        doneBtn.addEventListener('click', () => {
+        // Done is now triggered from the popup button, not a button on the line
+        this._confirmHairline = () => {
             if (confirmed) return;
-            this.showHairlineConfirm(line, doneBtn, ui, imgRect, () => {
+            document.getElementById('hairlinePopup')?.classList.remove('active');
+            this.showHairlineConfirm(line, null, ui, imgRect, () => {
                 confirmed = true;
-                // Lock the line — hide label, show locked state
-                label.textContent = '✓  Hairline set';
+                label.textContent = '\u2713  Hairline set';
                 label.style.color = 'rgba(255,255,255,0.6)';
-                doneBtn.style.display = 'none';
                 line.style.cursor = 'default';
                 line.style.pointerEvents = 'none';
-                this.setStatus('Hairline set \u2014 click Analyze');
+                this.setStatus('Hairline set \u2014 analyzing...');
+
+                // Auto-start analysis after hairline confirmation
+                setTimeout(() => {
+                    this.analyze();
+                }, 500);
             });
-        });
+        };
 
         // Set initial values
         this.hairlineY     = defaultFrac * this.naturalH;
         this.hairlineFracY = defaultFrac;
-
-        // Run animated demo after 800ms so user sees what to do
-        setTimeout(() => this.runHairlineDemo(line, doneBtn, imgRect), 800);
 
         this._hairlineCleanup = () => {
             document.removeEventListener('mousemove', onMove);
@@ -352,7 +372,7 @@ class FacialAnalyzer {
         };
     }
 
-    showHairlineConfirm(line, doneBtn, ui, imgRect, onConfirm) {
+    showHairlineConfirm(line, _unused, ui, imgRect, onConfirm) {
         // Remove any existing confirm
         const oldC = ui.querySelector('.hairline-confirm');
         if (oldC) { oldC.remove(); return; }
@@ -390,13 +410,21 @@ class FacialAnalyzer {
                     background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);
                     font-size:12px;font-weight:500;cursor:pointer;
                     font-family:inherit;
+                    touch-action: manipulation;
+                    -webkit-tap-highlight-color: rgba(255,255,255,0.1);
+                    min-height: 44px;
+                    pointer-events: auto !important;
                 ">Adjust</button>
                 <button id="hlYes" style="
                     flex:1;padding:7px 0;border-radius:9px;border:none;
                     background:#ffffff;color:#000;
                     font-size:12px;font-weight:600;cursor:pointer;
                     font-family:inherit;
-                ">Confirm ✓</button>
+                    touch-action: manipulation;
+                    -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+                    min-height: 44px;
+                    pointer-events: auto !important;
+                ">Confirm \u2713</button>
             </div>
         `;
 
@@ -405,108 +433,37 @@ class FacialAnalyzer {
         confirm.querySelector('#hlNo').addEventListener('click', () => {
             confirm.remove();
         });
+        confirm.querySelector('#hlNo').addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            confirm.remove();
+        });
         confirm.querySelector('#hlYes').addEventListener('click', () => {
+            confirm.remove();
+            onConfirm();
+        });
+        confirm.querySelector('#hlYes').addEventListener('touchstart', function(e) {
+            e.preventDefault();
             confirm.remove();
             onConfirm();
         });
     }
 
-    runHairlineDemo(line, doneBtn, imgRect) {
-        // Animate line moving from default position (15%) down to ~22% (hair area)
-        // then back to ~12%, then settling at 15% — shows user what to do
-        const startPct = parseFloat(line.style.top);
-        if (isNaN(startPct)) return;
+    showHairlinePopup() {
+        const popup = document.getElementById('hairlinePopup');
+        const btn   = document.getElementById('hairlinePopupBtn');
+        if (!popup || !btn) return;
+        popup.classList.add('active');
 
-        const keyframes = [
-            { pct: startPct,      dur: 0    },   // start
-            { pct: startPct + 8,  dur: 600  },   // drift down slowly
-            { pct: startPct - 4,  dur: 500  },   // back up
-            { pct: startPct,      dur: 400  },   // settle
-        ];
-
-        let i = 1;
-        const step = () => {
-            if (i >= keyframes.length) return;
-            const kf = keyframes[i];
-            line.style.transition = `top ${kf.dur}ms ease`;
-            line.style.top = kf.pct + '%';
-            // Keep done button in sync
-            doneBtn.style.transition = `top ${kf.dur}ms ease`;
-            doneBtn.style.top = `calc(${kf.pct}% + 10px)`;
-            i++;
-            if (i < keyframes.length) setTimeout(step, kf.dur + 80);
-            else {
-                // Remove transition after demo so dragging feels instant
-                setTimeout(() => {
-                    line.style.transition = '';
-                    doneBtn.style.transition = '';
-                }, kf.dur + 100);
-            }
+        // Use both click and touch events for mobile compatibility
+        const confirmHairline = () => {
+            if (this._confirmHairline) this._confirmHairline();
         };
-        setTimeout(step, keyframes[0].dur + 200);
-    }
 
-    showHairlineToast() {
-        // Remove existing toast
-        const old = document.getElementById('hairlineToast');
-        if (old) old.remove();
-
-        const toast = document.createElement('div');
-        toast.id = 'hairlineToast';
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 28px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: #141414;
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 14px;
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 999;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-            opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            pointer-events: none;
-            max-width: 360px;
-            width: calc(100% - 40px);
-        `;
-
-        toast.innerHTML = `
-            <div style="
-                width: 32px; height: 32px; flex-shrink: 0;
-                background: rgba(255,214,10,0.12);
-                border: 1px solid rgba(255,214,10,0.3);
-                border-radius: 8px;
-                display: flex; align-items: center; justify-content: center;
-                font-size: 15px;
-            ">↕</div>
-            <div>
-                <div style="font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 2px;">
-                    Set your hairline
-                </div>
-                <div style="font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.4;">
-                    Drag the yellow line to your actual hairline for accurate measurements
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(toast);
-
-        // Animate in
-        requestAnimationFrame(() => {
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateX(-50%) translateY(0)';
+        btn.addEventListener('click', confirmHairline);
+        btn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            confirmHairline();
         });
-
-        // Dismiss after 5 seconds
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(-50%) translateY(10px)';
-            setTimeout(() => toast.remove(), 300);
-        }, 5000);
     }
 
     async analyze() {
@@ -540,12 +497,16 @@ class FacialAnalyzer {
 
             this.syncCanvas();
             this.drawOverlay(p);
-            this.displayResults(this.scores, this.measurements);
 
             this.els.loader.classList.remove('active');
             this.els.analyzeBtn.disabled = false;
-            const hlMsg = this.measurements.usingHairline ? ' · hairline: manual' : ' · hairline: estimated (drag yellow line to set)';
-            this.setStatus('Analysis complete \u2713' + hlMsg, false, true);
+
+            this.displayResults(this.scores, this.measurements);
+            this._showDevButton();
+
+            const hlMsg = this.measurements.usingHairline ? ' · hairline: manual' : ' · hairline: estimated';
+            const genderMsg = this._selectedGender ? ` · gender: ${this._selectedGender}` : '';
+            this.setStatus('Analysis complete ✓' + hlMsg + genderMsg, false, true);
         } catch (err) {
             console.error(err);
             this.fail('Unexpected error \u2014 please retry');
@@ -1069,7 +1030,7 @@ class FacialAnalyzer {
         const ocSpan = s(p[45]).x - s(p[36]).x;
         ctx.fillStyle = hairlineFrac != null ? 'rgba(255,214,10,0.8)' : 'rgba(255,255,255,0.28)';
         ctx.font = `${Math.max(9, cvs.width*0.012)}px system-ui`;
-        ctx.fillText(hairlineFrac != null ? 'Hairline ✓' : 'Upper', faceCX + lineHalfW + 4, hairlineScreenY - 2);
+        ctx.fillText(hairlineFrac != null ? 'Hairline \u2713' : 'Upper', faceCX + lineHalfW + 4, hairlineScreenY - 2);
         ctx.fillStyle = 'rgba(255,255,255,0.28)';
         ctx.fillText('Middle', faceCX + lineHalfW + 4, s(p[27]).y - 2);
         ctx.fillText('Lower',  faceCX + lineHalfW + 4, s(p[33]).y - 2);
@@ -1160,48 +1121,48 @@ class FacialAnalyzer {
         const META = {
             symmetry: {
                 name: 'Facial Symmetry',
-                what: 'Bilateral match across 25 landmark pairs on both X (left-right) and Y (up-down) axes. Most people score 88–94%. Every 0.5% above 95% is a meaningful advantage. Midline is now calculated from cheekbones (p[1]/p[15]) — corrected from the old jaw-edge midpoint.',
-                ideal: '≥97% bilateral match',
+                what: 'Bilateral match across 25 landmark pairs on both X (left-right) and Y (up-down) axes. Most people score 88\u201394%. Every 0.5% above 95% is a meaningful advantage. Midline is now calculated from cheekbones (p[1]/p[15]) \u2014 corrected from the old jaw-edge midpoint.',
+                ideal: '\u226597% bilateral match',
                 source: 'Bilateral anthropometric standard',
                 yourVal: `${(m.symmetryRaw*100).toFixed(1)}%`,
-                idealVal: '97–100%',
+                idealVal: '97\u2013100%',
             },
             goldenRatio: {
                 name: 'Facial Thirds',
-                what: 'How evenly the face divides into upper (brow→nasion), middle (nasion→subnasale), and lower (subnasale→menton) thirds. 1:1:1 is the mathematical ideal. The lower third can be up to 36% of face height without penalty.',
+                what: 'How evenly the face divides into upper (brow\u2192nasion), middle (nasion\u2192subnasale), and lower (subnasale\u2192menton) thirds. 1:1:1 is the mathematical ideal. The lower third can be up to 36% of face height without penalty.',
                 ideal: '<8% total deviation from equal thirds',
                 source: 'Alfertshofer 2024 + looksmax.org canonical thread',
                 yourVal: `${(m.facialThirdsDev*100).toFixed(1)}% deviation`,
-                idealVal: '0–8%',
+                idealVal: '0\u20138%',
             },
             FWHR: {
                 name: 'FWHR (Facial Width-to-Height Ratio)',
-                what: 'Bizygomatic width (corrected: p[1]→p[15]) divided by the distance from eyebrow midpoint to upper lip. The single most-discussed ratio on looksmax.org. Higher = wider, more masculine. Dominant halo trait. Low FWHR = narrow, feminine, "longface".',
-                ideal: '1.8–2.0 (higher is better within range)',
+                what: 'Bizygomatic width (corrected: p[1]\u2192p[15]) divided by the distance from eyebrow midpoint to upper lip. The single most-discussed ratio on looksmax.org. Higher = wider, more masculine. Dominant halo trait. Low FWHR = narrow, feminine, \u201clongface\u201d.',
+                ideal: '1.8\u20132.0 (higher is better within range)',
                 source: 'looksmax.org canonical thread + dominance literature',
                 yourVal: m.FWHR.toFixed(3),
-                idealVal: '1.80–2.0',
+                idealVal: '1.80\u20132.0',
             },
             midfaceRatio: {
                 name: 'Midface Ratio (IPD/MFH)',
-                what: 'Interpupillary distance divided by midface height (nasion to upper lip). Ideal is 1:1 — a "compact" midface. Values above 1.1 suggest a long, "horse-face" midface. Below 0.9 suggests an overly short midface.',
-                ideal: '0.95–1.05 (1.0 = perfect compact midface)',
+                what: 'Interpupillary distance divided by midface height (nasion to upper lip). Ideal is 1:1 \u2014 a \u201ccompact\u201d midface. Values above 1.1 suggest a long, \u201chorse-face\u201d midface. Below 0.9 suggests an overly short midface.',
+                ideal: '0.95\u20131.05 (1.0 = perfect compact midface)',
                 source: 'looksmax.org ideal ratios thread + PMC10335162',
                 yourVal: m.midfaceRatio.toFixed(3),
-                idealVal: '0.95–1.05',
+                idealVal: '0.95\u20131.05',
             },
             eyeArea: {
                 name: 'Eye Area',
-                what: '4-factor composite with 1.2× buff (eyes are systematically underscored by 2D frontal landmarks): canthal tilt (40%), eye separation ratio/ESR (25%), eye width symmetry (15%), eye aspect ratio/palpebral W:H (20%). Canthal tilt is the dominant driver — positive degrees = outer corner higher = hunter eyes.',
-                ideal: 'Canthal +4–8°, ESR 0.44–0.48, EAR 3.0–3.7',
+                what: '4-factor composite with 1.2\u00d7 buff (eyes are systematically underscored by 2D frontal landmarks): canthal tilt (40%), eye separation ratio/ESR (25%), eye width symmetry (15%), eye aspect ratio/palpebral W:H (20%). Canthal tilt is the dominant driver \u2014 positive degrees = outer corner higher = hunter eyes.',
+                ideal: 'Canthal +4\u20138\u00b0, ESR 0.44\u20130.48, EAR 3.0\u20133.7',
                 source: 'looksmax.org guides + PSL community consensus',
-                yourVal: `CT ${m.avgCanthal.toFixed(1)}° | ESR ${m.ESR.toFixed(3)} | EAR ${m.eyeAspectRatio.toFixed(2)}`,
-                idealVal: 'CT: +4–8°  ESR: 0.44–0.47',
+                yourVal: `CT ${m.avgCanthal.toFixed(1)}\u00b0 | ESR ${m.ESR.toFixed(3)} | EAR ${m.eyeAspectRatio.toFixed(2)}`,
+                idealVal: 'CT: +4\u20138\u00b0  ESR: 0.44\u20130.47',
             },
             zygomatic: {
                 name: 'Zygomatic Arch',
-                what: 'Cheekbone width (p[1]→p[15]) as percentage of total head width (p[0]→p[16]). Higher = more prominent cheekbones = better. This is a "more is better" trait with no upper penalty — values above 93% (cheekbones nearly as wide as the head) indicate very prominent, attractive cheekbone structure.',
-                ideal: '>85% of head width — higher is better, no penalty above 93%',
+                what: 'Cheekbone width (p[1]\u2192p[15]) as percentage of total head width (p[0]\u2192p[16]). Higher = more prominent cheekbones = better. This is a \u201cmore is better\u201d trait with no upper penalty \u2014 values above 93% indicate very prominent, attractive cheekbone structure.',
+                ideal: '>85% of head width \u2014 higher is better, no penalty above 93%',
                 source: 'PMC10335162 celebrity analysis + community consensus',
                 yourVal: `${(m.zygomaticProminence*100).toFixed(1)}%`,
                 idealVal: '>85% (higher = better)',
@@ -1209,70 +1170,70 @@ class FacialAnalyzer {
             jawline: {
                 name: 'Jawline',
                 what: '4-factor composite: gonial angle (30%), bigonial/face-width (35%), face-height/bigonial golden ratio (20%), jaw frontal angle (15%). GONIAL ANGLE: vertex at p[3]/p[13] (gonion), arms to p[0]/p[16] (ear/jaw edge = ramus direction) and p[8] (chin = jaw body direction). This is the anatomically correct ramus-vs-body angle.',
-                ideal: 'Gonial 118–130°, jaw/face 0.75–0.85, jaw frontal 82–94°',
+                ideal: 'Gonial 118\u2013130\u00b0, jaw/face 0.75\u20130.85, jaw frontal 82\u201394\u00b0',
                 source: 'looksmax.org concise guide + Dove Press 2023 gonial study',
-                yourVal: `Gonial ${m.jawAngle.toFixed(0)}° | W/F ${m.jawRatio.toFixed(3)}`,
-                idealVal: 'Gonial: 118–130°',
+                yourVal: `Gonial ${m.jawAngle.toFixed(0)}\u00b0 | W/F ${m.jawRatio.toFixed(3)}`,
+                idealVal: 'Gonial: 118\u2013130\u00b0',
             },
             bizygoBigonial: {
                 name: 'Bizygo/Bigonial Ratio',
-                what: 'Bizygomatic width (corrected: p[1]→p[15]) divided by bigonial jaw width (p[3]→p[13]). The looksmax.org canonical thread lists ideal as 1.35 — cheekbones about 35% wider than the jaw. Now returns correct values because bizygomatic is no longer inflated by jaw-edge points.',
-                ideal: '1.25–1.45 (ideal ~1.35)',
-                source: 'looksmax.org "ideal facial ratios" canonical thread',
+                what: 'Bizygomatic width (corrected: p[1]\u2192p[15]) divided by bigonial jaw width (p[3]\u2192p[13]). The looksmax.org canonical thread lists ideal as 1.35 \u2014 cheekbones about 35% wider than the jaw. Now returns correct values because bizygomatic is no longer inflated by jaw-edge points.',
+                ideal: '1.25\u20131.45 (ideal ~1.35)',
+                source: 'looksmax.org \u201cideal facial ratios\u201d canonical thread',
                 yourVal: m.bizygoBigonialRatio.toFixed(3),
-                idealVal: '1.25–1.45',
+                idealVal: '1.25\u20131.45',
             },
             chinPhiltrum: {
                 name: 'Chin/Philtrum Ratio',
-                what: 'Chin height (lower lip to gnathion) divided by philtrum height (subnasale to stomion). Philtrum is guarded against open-mouth distortion — minimum = 30% of eye width. Ideal 2.0–2.5. Below 2.0 = weak chin; above 2.5 = Jay Leno tier.',
-                ideal: '2.0–2.5 (ideal ~2.2)',
+                what: 'Chin height (lower lip to gnathion) divided by philtrum height (subnasale to stomion). Philtrum is guarded against open-mouth distortion \u2014 minimum = 30% of eye width. Ideal 2.0\u20132.5. Below 2.0 = weak chin; above 2.5 = Jay Leno tier.',
+                ideal: '2.0\u20132.5 (ideal ~2.2)',
                 source: 'looksmax.org canonical ideal ratios thread',
                 yourVal: m.chinPhiltrumRatio.toFixed(2),
-                idealVal: '2.0–2.5',
+                idealVal: '2.0\u20132.5',
             },
             nose: {
                 name: 'Nose',
-                what: '5-factor frontal composite: nasal W/H ratio (30%), alar/intercanthal ratio (25%), mouth/nose width ratio (20%), nose tip centrality (15%), alar symmetry (10%). W/H range is wide — narrow noses (0.45–0.55) are refined and score well. Nasolabial angle excluded — it is a profile-only measurement.',
-                ideal: 'W/H 0.45–0.85, alar/IC ≈ 1.0, mouth/nose 1.35–1.75, tip centred',
+                what: '5-factor frontal composite: nasal W/H ratio (30%), alar/intercanthal ratio (25%), mouth/nose width ratio (20%), nose tip centrality (15%), alar symmetry (10%). W/H range is wide \u2014 narrow noses (0.45\u20130.55) are refined and score well. Nasolabial angle excluded \u2014 it is a profile-only measurement.',
+                ideal: 'W/H 0.45\u20130.85, alar/IC \u22481.0, mouth/nose 1.35\u20131.75, tip centred',
                 source: 'looksmax.org + Alfertshofer 2024',
                 yourVal: `W/H ${m.nasalHWratio.toFixed(3)} | A/IC ${m.alarIntercanthal.toFixed(3)} | Tip dev ${(m.noseTipDeviation*100).toFixed(1)}%`,
-                idealVal: 'W/H: 0.45–0.85',
+                idealVal: 'W/H: 0.45\u20130.85',
             },
             lips: {
                 name: 'Lips',
-                what: 'Lower/upper lip ratio (60%) and mouth width as fraction of face width (40%). Looksmax: lower lip should be 1.62× upper lip height (golden ratio). Mouth width should be ~48–53% of face width.',
-                ideal: 'Lower/upper ≈ 1.4–1.8, mouth ≈ 48–53% of face',
+                what: 'Lower/upper lip ratio (60%) and mouth width as fraction of face width (40%). Looksmax: lower lip should be 1.62\u00d7 upper lip height (golden ratio). Mouth width should be ~48\u201353% of face width.',
+                ideal: 'Lower/upper \u22481.4\u20131.8, mouth \u224848\u201353% of face',
                 source: 'looksmax.org lip ratio thread + Penna et al. 2015',
                 yourVal: `L/U ${m.lowerUpperLipRatio.toFixed(2)} | W/F ${m.mouthWidthFace.toFixed(3)}`,
-                idealVal: 'L/U: 1.4–1.8',
+                idealVal: 'L/U: 1.4\u20131.8',
             },
             maxilla: {
                 name: 'Midface / Maxilla',
-                what: 'Forward projection cannot be measured from a front photo (requires profile). Instead, three reliable frontal proxies: (1) midface length ratio — middle third as % of face height, ideal 32–38%, (2) alar base vs intercanthal width — wider alar than IC suggests flat midface, (3) midface compactness (IPD/MFH).',
-                ideal: 'Midface 32–38% of face H, alar/IC ≈ 1.0, midface ratio ≈ 1.0',
+                what: 'Forward projection cannot be measured from a front photo (requires profile). Instead, three reliable frontal proxies: (1) midface length ratio \u2014 middle third as % of face height, ideal 32\u201338%, (2) alar base vs intercanthal width \u2014 wider alar than IC suggests flat midface, (3) midface compactness (IPD/MFH).',
+                ideal: 'Midface 32\u201338% of face H, alar/IC \u22481.0, midface ratio \u22481.0',
                 source: 'Frontal anthropometry proxies (Alfertshofer 2024)',
                 yourVal: `MF ${(m.midfaceLengthRatio*100).toFixed(1)}% | A/IC ${m.alarIntercanthal.toFixed(3)}`,
-                idealVal: '32–38% midface',
+                idealVal: '32\u201338% midface',
             },
             gonion: {
                 name: 'Gonion',
-                what: 'Width at the mandibular angles (p[3]→p[13]) relative to corrected bizygomatic width. Visible, sharp jaw corners are a key masculine marker. Looksmax: gonion position below the mouth line is especially attractive.',
-                ideal: '70–84% of bizygomatic width',
+                what: 'Width at the mandibular angles (p[3]\u2192p[13]) relative to corrected bizygomatic width. Visible, sharp jaw corners are a key masculine marker. Looksmax: gonion position below the mouth line is especially attractive.',
+                ideal: '70\u201384% of bizygomatic width',
                 source: 'looksmax.org concise guide + facial anthropometry',
                 yourVal: `${(m.gonionProminence*100).toFixed(1)}%`,
-                idealVal: '70–84%',
+                idealVal: '70\u201384%',
             },
             mandible: {
                 name: 'Mandible',
-                what: 'Lower jaw depth (p[4]→p[12]) relative to corrected bizygomatic width. The mandible is the structural floor of the face — a deep, forward-grown mandible is the core of a strong jawline.',
-                ideal: '72–88% of bizygomatic width',
+                what: 'Lower jaw depth (p[4]\u2192p[12]) relative to corrected bizygomatic width. The mandible is the structural floor of the face \u2014 a deep, forward-grown mandible is the core of a strong jawline.',
+                ideal: '72\u201388% of bizygomatic width',
                 source: 'Orthognathic norms + PSL community',
                 yourVal: `${(m.mandibleProminence*100).toFixed(1)}%`,
-                idealVal: '72–88%',
+                idealVal: '72\u201388%',
             },
             temples: {
                 name: 'Temples',
-                what: 'Temporal region fullness (p[0]→p[1]) relative to bizygomatic width. Full temples frame the upper face, prevent the "skull-like" appearance, and are associated with youth, health, and masculinity. Temple hollowing is a key aging marker.',
+                what: 'Temporal region fullness (p[0]\u2192p[1]) relative to bizygomatic width. Full temples frame the upper face, prevent the \u201cskull-like\u201d appearance, and are associated with youth, health, and masculinity. Temple hollowing is a key aging marker.',
                 ideal: 'Full temporal projection (ratio > 1.0)',
                 source: 'Aesthetic medicine filler norms + looksmax.org HARM guide',
                 yourVal: `ratio ${m.templeRatio.toFixed(3)}`,
@@ -1280,32 +1241,32 @@ class FacialAnalyzer {
             },
             eyebrows: {
                 name: 'Eyebrows',
-                what: '3-factor composite: low-setedness (50%), tilt angle (30%), thickness (20%). Thickness is measured as vertical span of brow landmarks normalised by eye height — thick dense brows score significantly higher. Low-set brows (B/E ratio < 0.80) = hooded/hunter. Tilt corrected: right brow uses p[26]→p[22] (inner→outer), not reversed.',
-                ideal: 'B/E ratio < 0.85, tilt 0–14°, thickness ratio > 0.7',
+                what: '3-factor composite: low-setedness (50%), tilt angle (30%), thickness (20%). Thickness is measured as vertical span of brow landmarks normalised by eye height \u2014 thick dense brows score significantly higher. Low-set brows (B/E ratio < 0.80) = hooded/hunter. Tilt corrected: right brow uses p[26]\u2192p[22] (inner\u2192outer), not reversed.',
+                ideal: 'B/E ratio < 0.85, tilt 0\u201314\u00b0, thickness ratio > 0.7',
                 source: 'looksmax.org HARM guide + corrected landmark mapping',
-                yourVal: `B/E ${m.browLowsetness.toFixed(3)} | Tilt ${m.avgBrowTilt.toFixed(1)}° | Thick ${m.browThickness.toFixed(2)}`,
+                yourVal: `B/E ${m.browLowsetness.toFixed(3)} | Tilt ${m.avgBrowTilt.toFixed(1)}\u00b0 | Thick ${m.browThickness.toFixed(2)}`,
                 idealVal: 'B/E < 0.85, thick > 0.7',
             },
             EMEangle: {
-                name: 'EME Angle (Eye–Mouth–Eye)',
-                what: 'Angle formed at the lip center with lines to each pupil. looksmax.org: ideal 47–50°. This measures face compactness and is a proxy for masculinity and harmony — wider angle = longer face or wider eye spacing.',
-                ideal: '47–50°',
+                name: 'EME Angle (Eye\u2013Mouth\u2013Eye)',
+                what: 'Angle formed at the lip center with lines to each pupil. looksmax.org: ideal 47\u201350\u00b0. This measures face compactness and is a proxy for masculinity and harmony \u2014 wider angle = longer face or wider eye spacing.',
+                ideal: '47\u201350\u00b0',
                 source: 'looksmax.org canonical ideal ratios thread',
-                yourVal: `${m.EMEangle.toFixed(1)}°`,
-                idealVal: '47–50°',
+                yourVal: `${m.EMEangle.toFixed(1)}\u00b0`,
+                idealVal: '47\u201350\u00b0',
             },
             facialIndex: {
                 name: 'Facial Index',
-                what: 'Full face height (brow p[19] → chin p[8]) divided by estimated bizygomatic width (outer canthus span × 1.35). The jaw contour landmarks in face-api do not reach the true zygomatic arch — the bizygomatic is now estimated at eye level from outer eye corners. Oval face = 1.25–1.45.',
-                ideal: '1.25–1.45 (oval)',
+                what: 'Full face height (brow p[19] \u2192 chin p[8]) divided by estimated bizygomatic width (outer canthus span \u00d7 1.35). The jaw contour landmarks in face-api do not reach the true zygomatic arch \u2014 the bizygomatic is now estimated at eye level from outer eye corners. Oval face = 1.25\u20131.45.',
+                ideal: '1.25\u20131.45 (oval)',
                 source: 'Farkas 1994 classical anthropometry',
                 yourVal: m.facialIndex.toFixed(3),
-                idealVal: '1.25–1.45',
+                idealVal: '1.25\u20131.45',
             },
             neoclassical: {
                 name: 'Neoclassical Canons',
-                what: 'Two Renaissance proportion rules: (1) each eye width = 1/5 bizygomatic face width, (2) intercanthal distance = 1 eye-width. Both now use corrected bizygomatic (p[1]→p[15]). Previously returning 0.83 due to inflated bizygomatic — now returns values near 1.0 for normal faces.',
-                ideal: 'Both ratios 0.9–1.1 (1.0 = perfect)',
+                what: 'Two Renaissance proportion rules: (1) each eye width = 1/5 bizygomatic face width, (2) intercanthal distance = 1 eye-width. Both now use corrected bizygomatic (p[1]\u2192p[15]). Previously returning 0.83 due to inflated bizygomatic \u2014 now returns values near 1.0 for normal faces.',
+                ideal: 'Both ratios 0.9\u20131.1 (1.0 = perfect)',
                 source: 'Neoclassical canons + PMC10335162 validation',
                 yourVal: `Eye ${m.neoclassicalEyeRatio.toFixed(3)} | IC ${m.neoclassicalIPDRatio.toFixed(3)}`,
                 idealVal: '1.0 each',
@@ -1313,43 +1274,43 @@ class FacialAnalyzer {
         };
 
         const FIXES = {
-            symmetry: `ROOT CAUSES: skeletal misalignment, uneven sleep posture, asymmetric muscle hypertrophy, nasal deviation.\n\nSOFTMAX:\n• Sleep exclusively on your back (most impactful, free)\n• Chew evenly on both sides — stop favouring one side\n• Mewing 24/7 — consistent tongue posture corrects jaw alignment\n\nHARDMAX:\n• Masseter Botox — reduces hypertrophied (dominant) side\n• Rhinoplasty — corrects deviated nasal axis\n• Orthognathic surgery — skeletal correction for severe asymmetry\n• Genioplasty with chin centering — for chin deviation`,
+            symmetry: `ROOT CAUSES: skeletal misalignment, uneven sleep posture, asymmetric muscle hypertrophy, nasal deviation.\n\nSOFTMAX:\n\u2022 Sleep exclusively on your back (most impactful, free)\n\u2022 Chew evenly on both sides \u2014 stop favouring one side\n\u2022 Mewing 24/7 \u2014 consistent tongue posture corrects jaw alignment\n\nHARDMAX:\n\u2022 Masseter Botox \u2014 reduces hypertrophied (dominant) side\n\u2022 Rhinoplasty \u2014 corrects deviated nasal axis\n\u2022 Orthognathic surgery \u2014 skeletal correction for severe asymmetry\n\u2022 Genioplasty with chin centering \u2014 for chin deviation`,
 
-            goldenRatio: `WHICH THIRD IS OFF? (check breakdown panel above)\n• Large lower third → mewing, orthodontics, possible chin reduction\n• Small lower third → chin implant / sliding genioplasty\n• Large upper third → surgical hairline lowering\n• Large middle third → rhinoplasty (visual shortening), LeFort I for severe VME\n• Small middle third → maxillary advancement`,
+            goldenRatio: `WHICH THIRD IS OFF? (check breakdown panel above)\n\u2022 Large lower third \u2192 mewing, orthodontics, possible chin reduction\n\u2022 Small lower third \u2192 chin implant / sliding genioplasty\n\u2022 Large upper third \u2192 surgical hairline lowering\n\u2022 Large middle third \u2192 rhinoplasty (visual shortening), LeFort I for severe VME\n\u2022 Small middle third \u2192 maxillary advancement`,
 
-            FWHR: `FWHR TOO LOW = narrow, feminine-looking face.\n\nSOFTMAX:\n• Cut body fat to 8–12% — reveals existing bizygomatic width\n• Mastic gum chewing — masseter hypertrophy increases lower FWHR\n• Contour makeup / haircut to visually widen\n\nHARDMAX:\n• Zygomatic implants — most direct upper FWHR fix\n• Cheek filler (HA/CaHA) — temporary (12–18 months)\n• Brow bone reduction — if forehead making upper face appear tall\n• Buccal fat removal — exposes underlying bone structure\n\nFWHR TOO HIGH (>2.1) = overly wide/blocky:\n• Haircut to add perceived face height`,
+            FWHR: `FWHR TOO LOW = narrow, feminine-looking face.\n\nSOFTMAX:\n\u2022 Cut body fat to 8\u201312% \u2014 reveals existing bizygomatic width\n\u2022 Mastic gum chewing \u2014 masseter hypertrophy increases lower FWHR\n\u2022 Contour makeup / haircut to visually widen\n\nHARDMAX:\n\u2022 Zygomatic implants \u2014 most direct upper FWHR fix\n\u2022 Cheek filler (HA/CaHA) \u2014 temporary (12\u201318 months)\n\u2022 Brow bone reduction \u2014 if forehead making upper face appear tall\n\u2022 Buccal fat removal \u2014 exposes underlying bone structure\n\nFWHR TOO HIGH (>2.1) = overly wide/blocky:\n\u2022 Haircut to add perceived face height`,
 
-            midfaceRatio: `MIDFACE TOO LONG (ratio < 0.95) = "horse face".\n\nFixes:\n• Rhinoplasty — shorten nasal height component\n• Maxillary impaction (surgical) — shortens vertical midface\n• Hairstyle to camouflage (bangs, etc.)\n\nMIDFACE TOO SHORT (ratio > 1.1):\n• Rhinoplasty — can lengthen nasal appearance\n• Le Fort I for vertical increase (rare)`,
+            midfaceRatio: `MIDFACE TOO LONG (ratio < 0.95) = \u201chorse face\u201d.\n\nFixes:\n\u2022 Rhinoplasty \u2014 shorten nasal height component\n\u2022 Maxillary impaction (surgical) \u2014 shortens vertical midface\n\u2022 Hairstyle to camouflage (bangs, etc.)\n\nMIDFACE TOO SHORT (ratio > 1.1):\n\u2022 Rhinoplasty \u2014 can lengthen nasal appearance\n\u2022 Le Fort I for vertical increase (rare)`,
 
-            eyeArea: `CANTHAL TILT NEGATIVE OR LOW.\n\nSOFTMAX:\n• Tape method — temporary upward pull on outer canthus\n\nHARDMAX:\n• Canthoplasty / Canthopexy — surgically lifts outer canthus (+3–5° achievable)\n• Lower eyelid retraction repair — if lids pulling down\n• Brow bone augmentation — projects orbital rim, creates hooded look\n• Orbital rim implants — frames and supports eye area\n\nEYE SPACING (ESR) OFF:\n• Too wide (>0.48): canthal surgery to reposition; hairstyle\n• Too narrow (<0.43): lateral canthoplasty to widen palpebral fissure`,
+            eyeArea: `CANTHAL TILT NEGATIVE OR LOW.\n\nSOFTMAX:\n\u2022 Tape method \u2014 temporary upward pull on outer canthus\n\nHARDMAX:\n\u2022 Canthoplasty / Canthopexy \u2014 surgically lifts outer canthus (+3\u20135\u00b0 achievable)\n\u2022 Lower eyelid retraction repair \u2014 if lids pulling down\n\u2022 Brow bone augmentation \u2014 projects orbital rim, creates hooded look\n\u2022 Orbital rim implants \u2014 frames and supports eye area\n\nEYE SPACING (ESR) OFF:\n\u2022 Too wide (>0.48): canthal surgery to reposition; hairstyle\n\u2022 Too narrow (<0.43): lateral canthoplasty to widen palpebral fissure`,
 
-            zygomatic: `CHEEKBONES UNDERDEVELOPED (below 85% prominence).\n\nSOFTMAX:\n• Body fat reduction — reveals existing cheekbone structure\n• Mewing + hard chewing — stimulates zygomatic bone remodelling over years\n• Contouring makeup\n\nHARDMAX:\n• Buccal fat removal — exposes existing cheekbone shadow\n• Zygomatic implants (silicone or porous PE) — permanent, most effective\n• Cheek filler (HA/CaHA) — 12–18 months, good starting point\n• LeFort I + zygomatic advancement — surgical, most dramatic`,
+            zygomatic: `CHEEKBONES UNDERDEVELOPED (below 85% prominence).\n\nSOFTMAX:\n\u2022 Body fat reduction \u2014 reveals existing cheekbone structure\n\u2022 Mewing + hard chewing \u2014 stimulates zygomatic bone remodelling over years\n\u2022 Contouring makeup\n\nHARDMAX:\n\u2022 Buccal fat removal \u2014 exposes existing cheekbone shadow\n\u2022 Zygomatic implants (silicone or porous PE) \u2014 permanent, most effective\n\u2022 Cheek filler (HA/CaHA) \u2014 12\u201318 months, good starting point\n\u2022 LeFort I + zygomatic advancement \u2014 surgical, most dramatic`,
 
-            jawline: `JAWLINE DEFICIENT.\n\nSOFTMAX:\n• Cut to 8–12% body fat — reveals mandible definition\n• Mastic gum 60–90 min/day — masseter hypertrophy\n• Mewing — stimulates posterior mandible / ramus development\n\nHARDMAX:\n• Custom wrap-around jaw implants (PPE/silicone) — best overall improvement\n• Mandible angle implants — isolated angularity fix\n• BSSO — if whole jaw is skeletally retruded\n• Chin + angle combo implants — cost-effective lower face overhaul`,
+            jawline: `JAWLINE DEFICIENT.\n\nSOFTMAX:\n\u2022 Cut to 8\u201312% body fat \u2014 reveals mandible definition\n\u2022 Mastic gum 60\u201390 min/day \u2014 masseter hypertrophy\n\u2022 Mewing \u2014 stimulates posterior mandible / ramus development\n\nHARDMAX:\n\u2022 Custom wrap-around jaw implants (PPE/silicone) \u2014 best overall improvement\n\u2022 Mandible angle implants \u2014 isolated angularity fix\n\u2022 BSSO \u2014 if whole jaw is skeletally retruded\n\u2022 Chin + angle combo implants \u2014 cost-effective lower face overhaul`,
 
-            bizygoBigonial: `BIZYGO/BIGONIAL RATIO OFF.\n\nRatio too high (jaw too narrow vs cheekbones):\n• Jaw implants — widen bigonial width\n• Mandible widening osteotomy\n• HA filler to jaw angle — temporary test\n\nRatio too low (jaw too wide):\n• Masseter reduction (Botox) — reduces lower face width without surgery\n• Jaw shave / mandibuloplasty (surgical)`,
+            bizygoBigonial: `BIZYGO/BIGONIAL RATIO OFF.\n\nRatio too high (jaw too narrow vs cheekbones):\n\u2022 Jaw implants \u2014 widen bigonial width\n\u2022 Mandible widening osteotomy\n\u2022 HA filler to jaw angle \u2014 temporary test\n\nRatio too low (jaw too wide):\n\u2022 Masseter reduction (Botox) \u2014 reduces lower face width without surgery\n\u2022 Jaw shave / mandibuloplasty (surgical)`,
 
-            chinPhiltrum: `CHIN/PHILTRUM RATIO SUBOPTIMAL.\n\nToo low (<2.0) = weak chin:\n• Sliding genioplasty — gold standard, advances + can change vertical height\n• Chin implant (silicone/Medpor) — simpler, direct projection increase\n• HA filler chin — temporary (6–12 months)\n\nToo high (>2.5) = Jay Leno, overprojected:\n• Chin reduction osteotomy\n• This is rare; usually ratio is too low`,
+            chinPhiltrum: `CHIN/PHILTRUM RATIO SUBOPTIMAL.\n\nToo low (<2.0) = weak chin:\n\u2022 Sliding genioplasty \u2014 gold standard, advances + can change vertical height\n\u2022 Chin implant (silicone/Medpor) \u2014 simpler, direct projection increase\n\u2022 HA filler chin \u2014 temporary (6\u201312 months)\n\nToo high (>2.5) = Jay Leno, overprojected:\n\u2022 Chin reduction osteotomy\n\u2022 This is rare; usually ratio is too low`,
 
-            nose: `NOSE PROPORTIONS SUBOPTIMAL.\n\nW/H too high (wide base):\n• Alar base reduction (alarplasty) — most direct fix\n• Rhinoplasty full — comprehensive correction\n\nMouth/nose ratio off:\n• Rhinoplasty narrows nose to match mouth\n• Corner lip lift widens effective mouth\n\nTip deviation:\n• Rhinoplasty with septal straightening\n• Septoplasty if deviated`,
+            nose: `NOSE PROPORTIONS SUBOPTIMAL.\n\nW/H too high (wide base):\n\u2022 Alar base reduction (alarplasty) \u2014 most direct fix\n\u2022 Rhinoplasty full \u2014 comprehensive correction\n\nMouth/nose ratio off:\n\u2022 Rhinoplasty narrows nose to match mouth\n\u2022 Corner lip lift widens effective mouth\n\nTip deviation:\n\u2022 Rhinoplasty with septal straightening\n\u2022 Septoplasty if deviated`,
 
-            lips: `LIP RATIO SUBOPTIMAL.\n\nSOFTMAX:\n• Lip liner to define and balance\n• Avoid over-lining upper lip (makes ratio worse)\n\nHARDMAX:\n• HA lip filler — selectively augment deficient lip\n• Lip lift — shortens philtrum, dramatically increases upper lip show\n• Corner lip lift — addresses downturned corners\n• Orthodontics — if lip position is dental in origin`,
+            lips: `LIP RATIO SUBOPTIMAL.\n\nSOFTMAX:\n\u2022 Lip liner to define and balance\n\u2022 Avoid over-lining upper lip (makes ratio worse)\n\nHARDMAX:\n\u2022 HA lip filler \u2014 selectively augment deficient lip\n\u2022 Lip lift \u2014 shortens philtrum, dramatically increases upper lip show\n\u2022 Corner lip lift \u2014 addresses downturned corners\n\u2022 Orthodontics \u2014 if lip position is dental in origin`,
 
-            maxilla: `MAXILLA RECESSION. Forward maxilla is the structural centrepiece of the face.\n\nSOFTMAX:\n• Hard mewing 24/7 — full tongue flat on palate with suction hold\n• Nose-breathe exclusively — mouth breathing collapses maxilla\n• Correct swallowing: tongue pushes up, not forward\n• Facemask + palate expander — most effective under 18, possible until ~25\n\nHARDMAX:\n• BiMax (LeFort I + BSSO) — advances entire midface and mandible forward\n• LeFort I alone — if only maxilla is recessed`,
+            maxilla: `MAXILLA RECESSION. Forward maxilla is the structural centrepiece of the face.\n\nSOFTMAX:\n\u2022 Hard mewing 24/7 \u2014 full tongue flat on palate with suction hold\n\u2022 Nose-breathe exclusively \u2014 mouth breathing collapses maxilla\n\u2022 Correct swallowing: tongue pushes up, not forward\n\u2022 Facemask + palate expander \u2014 most effective under 18, possible until ~25\n\nHARDMAX:\n\u2022 BiMax (LeFort I + BSSO) \u2014 advances entire midface and mandible forward\n\u2022 LeFort I alone \u2014 if only maxilla is recessed`,
 
-            gonion: `JAW ANGLES UNDERDEVELOPED.\n\nSOFTMAX:\n• Mewing consistently stimulates posterior mandible ramus\n• Mastic gum — masseter growth adds lower jaw visual width\n\nHARDMAX:\n• Gonial angle implants — most direct\n• Mandible widening osteotomy\n• HA filler to jaw angle — 8–14 months (test before committing to surgery)`,
+            gonion: `JAW ANGLES UNDERDEVELOPED.\n\nSOFTMAX:\n\u2022 Mewing consistently stimulates posterior mandible ramus\n\u2022 Mastic gum \u2014 masseter growth adds lower jaw visual width\n\nHARDMAX:\n\u2022 Gonial angle implants \u2014 most direct\n\u2022 Mandible widening osteotomy\n\u2022 HA filler to jaw angle \u2014 8\u201314 months (test before committing to surgery)`,
 
-            mandible: `MANDIBLE WEAK.\n\nSOFTMAX:\n• Tongue posture 24/7 prevents further recession\n• Chewing exercises\n\nHARDMAX:\n• BSSO — advances entire mandible\n• Genioplasty — advances chin specifically\n• Custom mandible implants — comprehensive depth + definition`,
+            mandible: `MANDIBLE WEAK.\n\nSOFTMAX:\n\u2022 Tongue posture 24/7 prevents further recession\n\u2022 Chewing exercises\n\nHARDMAX:\n\u2022 BSSO \u2014 advances entire mandible\n\u2022 Genioplasty \u2014 advances chin specifically\n\u2022 Custom mandible implants \u2014 comprehensive depth + definition`,
 
-            temples: `TEMPLES HOLLOW.\n\nSOFTMAX:\n• Hairstyle adjustment (longer sides) to camouflage\n• Keep face fat at healthy %, not too lean\n\nHARDMAX:\n• HA or CaHA temple filler — 12–24 months, very effective\n• Sculptra (poly-L-lactic acid) — gradual, longer-lasting\n• Autologous fat grafting — permanent, most natural`,
+            temples: `TEMPLES HOLLOW.\n\nSOFTMAX:\n\u2022 Hairstyle adjustment (longer sides) to camouflage\n\u2022 Keep face fat at healthy %, not too lean\n\nHARDMAX:\n\u2022 HA or CaHA temple filler \u2014 12\u201324 months, very effective\n\u2022 Sculptra (poly-L-lactic acid) \u2014 gradual, longer-lasting\n\u2022 Autologous fat grafting \u2014 permanent, most natural`,
 
-            eyebrows: `EYEBROWS TOO HIGH OR WRONG ANGLE.\n\nSOFTMAX:\n• Stop over-plucking/waxing — let grow thick and full\n• Minoxidil (Rogaine) on brows — increases density, lowers visual line\n• Microblading for lowering the apparent brow position\n• Fill in bottom edge of brow, not the top\n\nHARDMAX:\n• Brow bone augmentation — projects supraorbital rim, physically pushes brows down\n• Surgical brow lowering (rare)\n• Hairline lowering if forehead is large`,
+            eyebrows: `EYEBROWS TOO HIGH OR WRONG ANGLE.\n\nSOFTMAX:\n\u2022 Stop over-plucking/waxing \u2014 let grow thick and full\n\u2022 Minoxidil (Rogaine) on brows \u2014 increases density, lowers visual line\n\u2022 Microblading for lowering the apparent brow position\n\u2022 Fill in bottom edge of brow, not the top\n\nHARDMAX:\n\u2022 Brow bone augmentation \u2014 projects supraorbital rim, physically pushes brows down\n\u2022 Surgical brow lowering (rare)\n\u2022 Hairline lowering if forehead is large`,
 
-            EMEangle: `EME ANGLE SUBOPTIMAL.\n\nToo wide (>52°) = long face or wide-set eyes:\n• Facial index fix → chin implant, FWHR improvements\n• Eye spacing fix (ESR) → canthal repositioning\n\nToo narrow (<46°) = short, compact, round face:\n• Chin implant to lengthen lower face\n• Hairstyle to add perceived height`,
+            EMEangle: `EME ANGLE SUBOPTIMAL.\n\nToo wide (>52\u00b0) = long face or wide-set eyes:\n\u2022 Facial index fix \u2192 chin implant, FWHR improvements\n\u2022 Eye spacing fix (ESR) \u2192 canthal repositioning\n\nToo narrow (<46\u00b0) = short, compact, round face:\n\u2022 Chin implant to lengthen lower face\n\u2022 Hairstyle to add perceived height`,
 
-            facialIndex: `FACIAL INDEX NOT IDEAL.\n\nToo low (<1.2, round/wide face):\n• Chin implant / genioplasty — adds face height\n• Avoid wide-face-enhancing hairstyles\n\nToo high (>1.55, long/narrow face):\n• FWHR improvements (cheekbones, jaw widening)\n• Hairstyle to add width (side volume)\n• Avoid chin elongation`,
+            facialIndex: `FACIAL INDEX NOT IDEAL.\n\nToo low (<1.2, round/wide face):\n\u2022 Chin implant / genioplasty \u2014 adds face height\n\u2022 Avoid wide-face-enhancing hairstyles\n\nToo high (>1.55, long/narrow face):\n\u2022 FWHR improvements (cheekbones, jaw widening)\n\u2022 Hairstyle to add width (side volume)\n\u2022 Avoid chin elongation`,
 
-            neoclassical: `NEOCLASSICAL CANONS VIOLATED.\n\nEye width too small relative to face (ratio < 0.85):\n• Orbital rim implants for size appearance\n• Canthal lengthening surgery\n\nIntercanthal too wide (eyes too far apart, ratio > 1.1):\n• Medial canthal repositioning (surgical, aggressive)\n\nIntercanthal too narrow (ratio < 0.9):\n• Lateral canthoplasty to widen palpebral fissure`,
+            neoclassical: `NEOCLASSICAL CANONS VIOLATED.\n\nEye width too small relative to face (ratio < 0.85):\n\u2022 Orbital rim implants for size appearance\n\u2022 Canthal lengthening surgery\n\nIntercanthal too wide (eyes too far apart, ratio > 1.1):\n\u2022 Medial canthal repositioning (surgical, aggressive)\n\nIntercanthal too narrow (ratio < 0.9):\n\u2022 Lateral canthoplasty to widen palpebral fissure`,
         };
 
         const scoreColor = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
@@ -1418,12 +1379,30 @@ class FacialAnalyzer {
         </div>`;
 
         this.els.featuresBox.innerHTML = html;
-        this.els.statsSection.classList.add('active');
+
+        // Mobile: always expanded, no collapse button
+        // Desktop: start collapsed, show expand button
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            if (this.els.featuresCollapseBtn) this.els.featuresCollapseBtn.style.display = 'none';
+            this.els.featuresBox.classList.remove('collapsed');
+            this.els.statsSection.classList.add('active');
+        } else {
+            if (this.els.featuresCollapseBtn) {
+                this.els.featuresCollapseBtn.style.display = 'flex';
+                this.els.featuresCollapseBtn.classList.add('collapsed');
+                const span = this.els.featuresCollapseBtn.querySelector('span');
+                if (span) span.textContent = 'Expand';
+                this.els.featuresCollapseBtn.title = 'Expand detailed scores';
+            }
+            this.els.featuresBox.classList.add('collapsed');
+            this.els.statsSection.classList.remove('active');
+        }
 
         const rows = [
             ['Face Width (est.)',   `${m.faceWidth.toFixed(0)}px`],
             ['Outer Canthus W',    `${(m.faceWidth/1.35).toFixed(0)}px`],
-            ['Head Width (p0→p16)',`${m.headWidth.toFixed(0)}px`],
+            ['Head Width (p0\u2192p16)',`${m.headWidth.toFixed(0)}px`],
             ['Jaw Contour W',      `${m.jawContourWidth.toFixed(0)}px`],
             ['Face Height (p19\u2192p8)',`${m.faceHeight.toFixed(0)}px`],
             ['Facial Index',       `${m.facialIndex.toFixed(3)}`],
@@ -1469,6 +1448,14 @@ class FacialAnalyzer {
         this.els.statsGrid.innerHTML = rows.map(([l,v])=>
             `<div class="stat-box"><div class="stat-label">${l}</div><div class="stat-value">${v}</div></div>`
         ).join('');
+
+        // ── GENDER HOOK ────────────────────────────────────────────────────
+        // gender.js can set this._onDisplayResults to intercept after render.
+        // Called with (scores, m) after the DOM is fully built.
+        // This is the ONLY addition to this file — no other code changed.
+        if (typeof this._onDisplayResults === 'function') {
+            this._onDisplayResults(scores, m);
+        }
     }
 
     dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
@@ -1495,10 +1482,218 @@ class FacialAnalyzer {
         this.els.status.className = `status${isError?' error':''}${isSuccess?' success':''}`;
     }
 
+    toggleFeatures() {
+        const isCollapsed = this.els.featuresBox.classList.toggle('collapsed');
+        this.els.featuresCollapseBtn.classList.toggle('collapsed');
+        if (isCollapsed) {
+            this.els.statsSection.classList.remove('active');
+        } else {
+            this.els.statsSection.classList.add('active');
+        }
+        this.els.featuresCollapseBtn.title = isCollapsed ? 'Expand detailed scores' : 'Collapse detailed scores';
+        const span = this.els.featuresCollapseBtn.querySelector('span');
+        if (span) span.textContent = isCollapsed ? 'Expand' : 'Collapse';
+    }
+
     toggleStats() {
         const isCollapsed = this.els.statsGrid.classList.toggle('collapsed');
         this.els.statsCollapseBtn.classList.toggle('collapsed');
         this.els.statsCollapseBtn.title = isCollapsed ? 'Expand measurements' : 'Collapse measurements';
+    }
+
+
+    /* ══════════ DEV RAW DATA ════════════════════════════════════════════════ */
+    _showDevButton() {
+        const old = document.getElementById('_devBtn');
+        if (old) old.remove();
+        const btn = document.createElement('button');
+        btn.id = '_devBtn';
+        btn.textContent = '⚙ Dev Raw Data';
+        btn.style.cssText = `
+            position:fixed;top:14px;left:14px;z-index:900;
+            background:#1a1a1a;border:1px solid rgba(255,255,255,0.15);
+            color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;
+            padding:7px 13px;border-radius:8px;cursor:pointer;
+            font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+            letter-spacing:0.03em;transition:all 0.15s;
+        `;
+        btn.onmouseenter = () => { btn.style.color='#fff'; btn.style.borderColor='rgba(255,255,255,0.35)'; };
+        btn.onmouseleave = () => { btn.style.color='rgba(255,255,255,0.6)'; btn.style.borderColor='rgba(255,255,255,0.15)'; };
+        btn.addEventListener('click', () => this._showDevModal());
+        document.body.appendChild(btn);
+    }
+
+    _showDevModal() {
+        const old = document.getElementById('_devModal');
+        if (old) { old.remove(); return; }
+        const m = this.measurements;
+        const s = this.scores;
+        if (!m || !s) return;
+
+        const div = (n) => '─'.repeat(n);
+        const sep = '═'.repeat(62);
+        const hdr = (t) => `\n${div(3)} ${t} ${div(Math.max(0,55-t.length))}`;
+
+        // Pull feature cards directly from the rendered DOM so we always get
+        // the correct (gender-patched) name, your-value, ideal-range, description and ideal line
+        const featureCards = [];
+        const ORDER = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
+                       'jawline','bizygoBigonial','nose','lips','maxilla','gonion','mandible',
+                       'temples','eyebrows','EMEangle','facialIndex','neoclassical'];
+        this.els.featuresBox.querySelectorAll('.feature-item').forEach((item, idx) => {
+            const key   = ORDER[idx];
+            const score = s[key] ?? 0;
+            const name  = item.querySelector('.feature-name')?.textContent?.trim() ?? key;
+            // YOUR VALUE and IDEAL RANGE boxes
+            const valBoxes = item.querySelectorAll('[style*="font-size:9px"]');
+            let yourVal = '—', idealVal = '—';
+            valBoxes.forEach(box => {
+                const label = box.textContent.trim();
+                const valEl = box.nextElementSibling;
+                if (label === 'YOUR VALUE')  yourVal  = valEl?.textContent?.trim() ?? '—';
+                if (label === 'IDEAL RANGE') idealVal = valEl?.textContent?.trim() ?? '—';
+            });
+            // Description text
+            const descEl = item.querySelector('[style*="color:rgba(255,255,255,0.35)"]');
+            const desc   = descEl?.textContent?.trim() ?? '';
+            // Ideal line (contains "Ideal:")
+            const allSmall = item.querySelectorAll('[style*="font-size:10px"]');
+            let idealLine = '';
+            allSmall.forEach(el => { if (el.textContent.includes('Ideal:')) idealLine = el.textContent.trim(); });
+            featureCards.push({ key, name, score, yourVal, idealVal, desc, idealLine });
+        });
+
+        // Build text dump
+        const lines = [
+            sep,
+            '  LARP.AI \u2014 RAW ANALYSIS DUMP',
+            sep,
+            '',
+            `  Gender    : ${this._selectedGender ?? 'not set'}`,
+            `  Rating    : ${s.looksmaxxRating?.label}  (${s.looksmaxxRating?.pct})`,
+            `  Overall   : ${s.overall?.toFixed(2)} / 10`,
+            `  Image     : ${this.naturalW}\xd7${this.naturalH}px   Confidence: ${(m.detectionConfidence*100).toFixed(0)}%`,
+            '',
+        ];
+
+        // Composites
+        lines.push(hdr('COMPOSITE BREAKDOWN'));
+        lines.push(`  HARM  ${s.HARM?.toFixed(2)}  \u2014 32% (harmony & ratios)`);
+        lines.push(`  MISC  ${s.MISC?.toFixed(2)}  \u2014 26% (eyes, nose, lips, EME)`);
+        lines.push(`  ANGU  ${s.ANGU?.toFixed(2)}  \u2014 22% (jaw, zygo, gonion)`);
+        lines.push(`  DIMO  ${s.DIMO?.toFixed(2)}  \u2014 20% (dimorphism / neoteny)`);
+
+        // Facial thirds
+        lines.push('');
+        lines.push(hdr('FACIAL THIRDS'));
+        lines.push(`  Upper  : ${(m.upperThirdPct*100).toFixed(1)}%  (${m.upperThird?.toFixed(1)}px)  dev ${(m.upperThirdDev*100).toFixed(1)}%`);
+        lines.push(`  Middle : ${(m.middleThirdPct*100).toFixed(1)}%  (${m.middleThird?.toFixed(1)}px)  dev ${(m.middleThirdDev*100).toFixed(1)}%`);
+        lines.push(`  Lower  : ${(m.lowerThirdPct*100).toFixed(1)}%  (${m.lowerThird?.toFixed(1)}px)  dev ${(m.lowerThirdDev*100).toFixed(1)}%`);
+        lines.push(`  Total deviation: ${(m.facialThirdsDev*100).toFixed(2)}%  |  Hairline: ${m.usingHairline ? 'manual' : 'estimated'}`);
+
+        // Feature cards — full detail
+        lines.push('');
+        lines.push(hdr('FEATURE SCORES — FULL DETAIL'));
+
+        featureCards.forEach(({ name, score, yourVal, idealVal, desc, idealLine }) => {
+            lines.push('');
+            lines.push(`  ${'▸'} ${name.toUpperCase()}  ${score.toFixed(1)} / 10`);
+            lines.push(`    Your value : ${yourVal}`);
+            lines.push(`    Ideal range: ${idealVal}`);
+            if (desc) {
+                // Word-wrap description at ~72 chars
+                const words = desc.split(' ');
+                let line = '    ';
+                words.forEach(w => {
+                    if ((line + w).length > 74) { lines.push(line); line = '    ' + w + ' '; }
+                    else line += w + ' ';
+                });
+                if (line.trim()) lines.push(line.trimEnd());
+            }
+            if (idealLine) lines.push(`    ${idealLine}`);
+        });
+
+        // Raw measurements
+        lines.push('');
+        lines.push(hdr('RAW MEASUREMENTS'));
+        const rawRows = [
+            ['Face Width (est.)',    `${m.faceWidth?.toFixed(2)}px`],
+            ['Face Height',          `${m.faceHeight?.toFixed(2)}px`],
+            ['Head Width',           `${m.headWidth?.toFixed(2)}px`],
+            ['Jaw Contour W',        `${m.jawContourWidth?.toFixed(2)}px`],
+            ['Facial Index',         `${m.facialIndex?.toFixed(4)}`],
+            ['FWHR',                 `${m.FWHR?.toFixed(4)}`],
+            ['Canthal (avg/L/R)',     `${m.avgCanthal?.toFixed(2)}° / ${m.leftCanthal?.toFixed(2)}° / ${m.rightCanthal?.toFixed(2)}°`],
+            ['Canthal Asymmetry',    `${m.canthalAsym?.toFixed(2)}°`],
+            ['ESR',                  `${m.ESR?.toFixed(4)}`],
+            ['IPD',                  `${m.ipd?.toFixed(1)}px`],
+            ['Intercanthal',         `${m.intercanthal?.toFixed(1)}px`],
+            ['Eye Aspect Ratio',     `${m.eyeAspectRatio?.toFixed(4)}`],
+            ['Avg Eye Width',        `${m.avgEyeWidth?.toFixed(1)}px`],
+            ['Eye Width Asym',       `${(m.eyeWidthAsym*100).toFixed(2)}%`],
+            ['Neo Eye Ratio',        `${m.neoclassicalEyeRatio?.toFixed(4)}`],
+            ['Neo IPD Ratio',        `${m.neoclassicalIPDRatio?.toFixed(4)}`],
+            ['Midface Ratio',        `${m.midfaceRatio?.toFixed(4)}`],
+            ['Gonial Angle',         `${m.jawAngle?.toFixed(2)}°`],
+            ['Jaw/Face Ratio',       `${m.jawRatio?.toFixed(4)}`],
+            ['Bizygo/Bigonial',      `${m.bizygoBigonialRatio?.toFixed(4)}`],
+            ['H/Bigonial',           `${m.heightBigonialRatio?.toFixed(4)}`],
+            ['Jaw Frontal Angle',    `${m.jawFrontalAngle?.toFixed(2)}°`],
+            ['Zygo Prominence',      `${(m.zygomaticProminence*100).toFixed(2)}%`],
+            ['Gonion Prominence',    `${(m.gonionProminence*100).toFixed(2)}%`],
+            ['Mandible Prominence',  `${(m.mandibleProminence*100).toFixed(2)}%`],
+            ['Nasal W/H',            `${m.nasalHWratio?.toFixed(4)}`],
+            ['Alar/Intercanthal',    `${m.alarIntercanthal?.toFixed(4)}`],
+            ['Mouth/Nose',           `${m.mouthNoseRatio?.toFixed(4)}`],
+            ['Nose Tip Dev',         `${(m.noseTipDeviation*100).toFixed(2)}%`],
+            ['Alar Symmetry',        `${(m.alarSymmetry*100).toFixed(2)}%`],
+            ['Lower/Upper Lip',      `${m.lowerUpperLipRatio?.toFixed(4)}`],
+            ['Mouth/Face',           `${m.mouthWidthFace?.toFixed(4)}`],
+            ['Chin/Philtrum',        `${m.chinPhiltrumRatio?.toFixed(4)}`],
+            ['Chin Projection',      `${(m.chinProjection*100).toFixed(2)}%`],
+            ['Brow Lowsetness',      `${m.browLowsetness?.toFixed(4)}`],
+            ['Brow Tilt',            `${m.avgBrowTilt?.toFixed(3)}°`],
+            ['Brow Thickness',       `${m.browThickness?.toFixed(4)}`],
+            ['Temple Ratio',         `${m.templeRatio?.toFixed(4)}`],
+            ['EME Angle',            `${m.EMEangle?.toFixed(3)}°`],
+            ['Symmetry Raw',         `${(m.symmetryRaw*100).toFixed(3)}%`],
+            ['Midface Length%',      `${(m.midfaceLengthRatio*100).toFixed(2)}%`],
+            ['Mentolabial Angle',    `${m.mentolabialAngle?.toFixed(2)}°`],
+        ];
+        rawRows.forEach(([label, val]) => {
+            lines.push(`  ${label.padEnd(22)}: ${val}`);
+        });
+        lines.push('');
+        lines.push(sep);
+
+        const text = lines.join('\n');
+
+        const overlay = document.createElement('div');
+        overlay.id = '_devModal';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;';
+        overlay.innerHTML = `
+            <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.12);border-radius:16px;width:min(680px,calc(100% - 32px));max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.9);">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
+                    <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);font-family:-apple-system,sans-serif;letter-spacing:0.04em;">\u2699 DEV RAW DATA</span>
+                    <div style="display:flex;gap:8px;">
+                        <button id="_devCopy" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;cursor:pointer;font-family:-apple-system,sans-serif;">Copy</button>
+                        <button id="_devClose" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;cursor:pointer;font-family:-apple-system,sans-serif;">\u2715 Close</button>
+                    </div>
+                </div>
+                <pre id="_devPre" style="margin:0;padding:18px 20px;overflow-y:auto;font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:11px;line-height:1.7;color:rgba(255,255,255,0.75);white-space:pre;background:transparent;">${text}</pre>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#_devClose').addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+        const copyBtn = overlay.querySelector('#_devCopy');
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.textContent = 'Copied \u2713';
+                copyBtn.style.color = '#30d158';
+                setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.style.color = 'rgba(255,255,255,0.6)'; }, 2000);
+            });
+        });
     }
 
     delay(ms) { return new Promise(r => setTimeout(r, ms)); }
