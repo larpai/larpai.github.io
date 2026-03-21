@@ -501,6 +501,10 @@ class FacialAnalyzer {
             this.els.loader.classList.remove('active');
             this.els.analyzeBtn.disabled = false;
 
+            // Hide results panel before building it so user never sees a flash
+            const _rightCard = this.els.featuresBox.closest('.card') || this.els.featuresBox.parentElement;
+            if (_rightCard) _rightCard.style.visibility = 'hidden';
+
             this.displayResults(this.scores, this.measurements);
             this._showDevButton();
 
@@ -509,7 +513,10 @@ class FacialAnalyzer {
             this.setStatus('Analysis complete ✓' + hlMsg + genderMsg, false, true);
 
             // Cinematic reveal — runs after gender.js has patched the DOM (120ms grace)
-            setTimeout(() => this._showCinematicReveal(this.scores, this.measurements), 120);
+            // Pass a callback that unhides results when cinematic is dismissed
+            setTimeout(() => this._showCinematicReveal(this.scores, this.measurements, () => {
+                if (_rightCard) _rightCard.style.visibility = '';
+            }), 120);
         } catch (err) {
             console.error(err);
             this.fail('Unexpected error \u2014 please retry');
@@ -1706,7 +1713,7 @@ class FacialAnalyzer {
        Reads feature names/scores directly from the rendered .feature-item
        cards so it always reflects gender-patched content.
     ══════════════════════════════════════════════════════════════════════ */
-    _showCinematicReveal(scores, m) {
+    _showCinematicReveal(scores, m, onDone) {
         /* ── harvest feature data from rendered DOM (gender-patched) ── */
         const ORDER = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
                        'jawline','bizygoBigonial','nose','lips','maxilla','gonion','mandible',
@@ -2417,7 +2424,10 @@ class FacialAnalyzer {
             const dismiss = () => {
                 ov.style.transition = 'opacity 0.4s ease';
                 ov.style.opacity = '0';
-                setTimeout(() => ov.remove(), 400);
+                setTimeout(() => {
+                    ov.remove();
+                    if (typeof onDone === 'function') onDone();
+                }, 400);
             };
             ctaBtn.addEventListener('click', dismiss);
             ctaBtn.addEventListener('touchend', e => { e.preventDefault(); dismiss(); });
