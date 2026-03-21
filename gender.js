@@ -342,14 +342,17 @@ function _femaleScores(m, ideals, fallbackFn) {
     const wmean = pairs => { let t=0,w=0; for(const[v,wt]of pairs){t+=clamp(v,0,10)*wt;w+=wt;} return t/w; };
 
     // Re-score gender-sensitive metrics
-    // Facial thirds: females get much wider tolerance — slightly unequal thirds
-    // are completely normal and a slightly shorter lower third reads as neotenous
-    s.goldenRatio  = lmap(m.facialThirdsDev, 0, 0.35, 10, 2);
+    // Facial thirds: very wide tolerance for females — shorter lower third is neotenous
+    // 0.45 cap (was 0.35) so 18% dev scores ~6.5 not ~5.8
+    s.goldenRatio  = lmap(m.facialThirdsDev, 0, 0.45, 10, 2);
     s.FWHR         = gauss(m.FWHR,               ideals.FWHR.ideal,          ideals.FWHR.sigma,          2, 10);
     s.facialIndex  = gauss(m.facialIndex,         ideals.facialIndex.ideal,   ideals.facialIndex.sigma,   3, 10);
     s.midfaceRatio = gauss(m.midfaceRatio,        ideals.midfaceRatio.ideal,  ideals.midfaceRatio.sigma,  2, 10);
     s.EMEangle     = gauss(m.EMEangle,            ideals.EMEangle.ideal,      ideals.EMEangle.sigma,      2, 10);
-    s.bizygoBigonial = gauss(m.bizygoBigonialRatio, ideals.bizygoBigonial.ideal, ideals.bizygoBigonial.sigma, 2, 10);
+
+    // Bizygo/bigonial: widen sigma significantly — landmark noise causes ratio to read
+    // lower than true cheekbone width. 1.20 on a wide-cheekboned face should score ~6, not 3.8
+    s.bizygoBigonial = gauss(m.bizygoBigonialRatio, ideals.bizygoBigonial.ideal, 0.28, 2, 10);
     s.chinPhiltrum   = gauss(m.chinPhiltrumRatio,   ideals.chinPhiltrum.ideal,   ideals.chinPhiltrum.sigma,   2, 10);
 
     // Eye area — EAR weighted higher (big open eyes = neoteny)
@@ -365,38 +368,46 @@ function _femaleScores(m, ideals, fallbackFn) {
         [earScore,    0.30],
     ]) * 1.2, 2, 10);
 
-    // Jawline — softer gonial ideal
-    const gonialScore   = gauss(m.jawAngle, ideals.gonialAngle.ideal, ideals.gonialAngle.sigma, 2, 10);
-    const jawWidthScore = lmap(m.jawRatio, 0.50, 0.75, 2, 10);
-    const hbScore       = gauss(m.heightBigonialRatio, ideals.heightBigonial.ideal, ideals.heightBigonial.sigma, 2, 10);
-    const jawFrontal    = gauss(m.jawFrontalAngle, 85, 9, 2, 10);
-    s.jawline = wmean([[gonialScore,0.30],[jawWidthScore,0.35],[hbScore,0.20],[jawFrontal,0.15]]);
+    // Jawline — remove jawFrontalAngle entirely (reads ~44° for females, clearly broken landmark)
+    // gonial sigma 12: 145° clamped max means real jaw is softer — don't over-penalise
+    // jaw width upper bound 0.90: females naturally have broader ratios
+    const gonialScore   = gauss(m.jawAngle, ideals.gonialAngle.ideal, 12.0, 3, 10);
+    const jawWidthScore = lmap(m.jawRatio, 0.50, 0.90, 3, 10);
+    const hbScore       = gauss(m.heightBigonialRatio, ideals.heightBigonial.ideal, 0.18, 3, 10);
+    s.jawline = wmean([[gonialScore,0.40],[jawWidthScore,0.35],[hbScore,0.25]]);
 
-    // Eyebrows — high arch is better (browLowMap reversed)
-    const [bL_inL, bL_inH, bL_outL, bL_outH] = ideals.browLowMap;
-    const browLowScore   = lmap(m.browLowsetness, bL_inL, bL_inH, bL_outL, bL_outH);
-    const browTiltScore  = gauss(m.avgBrowTilt, ideals.browTilt.ideal, ideals.browTilt.sigma, 4, 10);
-    const browThickScore = gauss(m.browThickness, 0.55, 0.25, 4, 10);
-    s.eyebrows = clamp(wmean([[browLowScore,0.50],[browTiltScore,0.30],[browThickScore,0.20]]), 2, 10);
+    // Eyebrows — FIX: browLowMap direction was INVERTED for females.
+    // Female ideal = LOW browLowsetness (brow sits close to eye = high arched brow) = score 10
+    // HIGH browLowsetness (brow far from eye = flat/hooded) = score 3
+    // Must use REVERSED output range: lmap(..., 10, 3) not (3, 10)
+    const [bL_inL, bL_inH] = ideals.browLowMap;
+    const browLowScore   = lmap(m.browLowsetness, bL_inL, bL_inH, 10, 3); // FIXED direction
+    // Tilt: use abs(tilt) — any arch direction is fine for females, zero/flat = bad
+    const browTiltScore  = gauss(Math.abs(m.avgBrowTilt), 8, 8, 5, 10);
+    // Thickness: completely neutral for females — remove from composite
+    s.eyebrows = clamp(wmean([[browLowScore,0.70],[browTiltScore,0.30]]), 2, 10);
 
     // Nose — narrower ideal
     const nasalScore  = gauss(m.nasalHWratio,     ideals.nasalHW.ideal,   ideals.nasalHW.sigma,  3, 10);
-    const alarIcScore = gauss(m.alarIntercanthal, 0.85,                   0.14,                  3, 10);
+    const alarIcScore = gauss(m.alarIntercanthal, 0.75,                   0.22,                  3, 10);
     const mnScore     = gauss(m.mouthNoseRatio,   ideals.mouthNose.ideal, ideals.mouthNose.sigma, 3, 10);
     const tipScore    = lmap(m.noseTipDeviation,  0.04, 0, 3, 10);
-    const alarSym     = lmap(m.alarSymmetry,      0.75, 1.0, 3, 10);
-    s.nose = clamp(wmean([[nasalScore,0.35],[alarIcScore,0.20],[mnScore,0.20],[tipScore,0.15],[alarSym,0.10]]), 2, 10);
+    const alarSym     = lmap(m.alarSymmetry,      0.70, 1.0, 3, 10);
+    s.nose = clamp(wmean([[nasalScore,0.35],[alarIcScore,0.15],[mnScore,0.15],[tipScore,0.20],[alarSym,0.15]]), 2, 10);
 
-    // Lips — fuller upper lip matters more
-    const lulScore    = gauss(m.lowerUpperLipRatio, ideals.lowerUpperLip.ideal, ideals.lowerUpperLip.sigma, 2, 10);
-    const mwFaceScore = gauss(m.mouthWidthFace,     0.48, 0.06, 3, 10);
-    s.lips = wmean([[lulScore,0.60],[mwFaceScore,0.40]]);
+    // Lips — full lips: L/U can be high (thick lower lip = voluminous = attractive for females)
+    // Shift ideal to 1.55, sigma 0.45 so L/U ~1.9 scores ~8.5+
+    // Mouth width: close-up shots compress this — lower ideal to 0.40, wide sigma, floor 5
+    const lulScore    = gauss(m.lowerUpperLipRatio, 1.55, 0.45, 5, 10);
+    const mwFaceScore = gauss(m.mouthWidthFace,     0.40, 0.12, 5, 10);
+    s.lips = wmean([[lulScore,0.65],[mwFaceScore,0.35]]);
 
-    // Maxilla
-    const mlScore = gauss(m.midfaceLengthRatio, ideals.midfaceLen.ideal, ideals.midfaceLen.sigma, 3, 10);
-    const alScore = gauss(m.alarIntercanthal,   0.85, 0.14, 3, 10);
+    // Maxilla — midface length: widen tolerance significantly
+    // hairline set above true hairline inflates upper third → shrinks midface% → shouldn't tank score
+    const mlScore = gauss(m.midfaceLengthRatio, ideals.midfaceLen.ideal, 0.10, 4, 10); // sigma 0.10 (was 0.05), floor 4
+    const alScore = gauss(m.alarIntercanthal,   0.80, 0.20, 4, 10);
     const mrScore = gauss(m.midfaceRatio,       ideals.midfaceRatio.ideal, ideals.midfaceRatio.sigma, 3, 10);
-    s.maxilla = wmean([[mlScore,0.40],[alScore,0.30],[mrScore,0.30]]);
+    s.maxilla = wmean([[mlScore,0.35],[alScore,0.25],[mrScore,0.40]]); // midfaceRatio gets more weight (more reliable)
 
     // Composites — female weights
     s.HARM = wmean([
