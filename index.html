@@ -658,7 +658,10 @@
             </div>
             <p class="subtitle">Upload a photo for detailed biometric analysis</p>
         </header>
-
+        
+        <!-- Developer Mode Button -->
+        <button id="devModeBtn" style="position:fixed;top:10px;left:10px;z-index:9999;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);padding:8px 12px;border-radius:6px;font-size:11px;font-family:inherit;cursor:pointer;backdrop-filter:blur(10px);">Dev Mode</button>
+        
         <main class="main">
             <div class="grid">
                 <div class="left-col">
@@ -764,7 +767,54 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    <script src="gender.js?v=17"></script>
-    <script src="app.js?v=17"></script>
-</body>
-</html>
+    <script src="gender.js?v=23"></script>
+    <script src="app.js?v=23"></script>
+    <script>
+        // Developer Mode Functionality
+        document.getElementById('devModeBtn').addEventListener('click', function() {
+            const password = prompt('Enter developer password:');
+            if (password === '1933') {
+                // Get current analyzer instance
+                const analyzer = window._analyzerInstance;
+                if (analyzer && analyzer.scores && analyzer.measurements) {
+                    let rawStats = '=== RAW FACIAL ANALYSIS STATS ===\n';
+                    rawStats += 'Overall Score: ' + analyzer.scores.overall.toFixed(2) + '/10\n';
+                    rawStats += 'Facial Thirds Deviation: ' + (analyzer.measurements.facialThirdsDev * 100).toFixed(2) + '%\n';
+                    rawStats += 'FWHR: ' + analyzer.measurements.FWHR.toFixed(3) + '\n';
+                    rawStats += 'Midface Ratio: ' + analyzer.measurements.midfaceRatio.toFixed(3) + '\n';
+                    rawStats += 'Facial Index: ' + analyzer.measurements.facialIndex.toFixed(3) + '\n';
+                    rawStats += 'Canthal Tilt: ' + analyzer.measurements.canthalTilt.toFixed(2) + '°\n';
+                    rawStats += 'Interpupillary Distance: ' + analyzer.measurements.IPD.toFixed(2) + 'mm\n';
+                    rawStats += 'Face Width: ' + analyzer.measurements.faceWidth.toFixed(0) + 'px\n';
+                    rawStats += 'Face Height: ' + analyzer.measurements.faceHeight.toFixed(0) + 'px\n';
+                    rawStats += 'Jaw Contour Width: ' + analyzer.measurements.jawContourWidth.toFixed(0) + 'px\n';
+                    rawStats += 'Head Width: ' + analyzer.measurements.headWidth.toFixed(0) + 'px\n';
+                    rawStats += 'Symmetry: ' + (analyzer.measurements.symmetryRaw * 100).toFixed(2) + '%\n';
+                    rawStats += 'Confidence: ' + (analyzer.measurements.detectionConfidence * 100).toFixed(0) + '%\n';
+                    
+                    // Add gender info if available
+                    if (analyzer._genderResult) {
+                        rawStats += '\n=== GENDER DETECTION ===\n';
+                        rawStats += 'Gender: ' + analyzer._genderResult.gender + '\n';
+                        rawStats += 'Gender Probability: ' + (analyzer._genderResult.genderProbability * 100).toFixed(0) + '%\n';
+                        rawStats += 'Estimated Age: ' + analyzer._genderResult.age + '\n';
+                    }
+                    
+                    // Add individual feature scores
+                    if (analyzer.scores) {
+                        rawStats += '\n=== INDIVIDUAL FEATURE SCORES ===\n';
+                        for (const [feature, score] of Object.entries(analyzer.scores)) {
+                            if (feature !== 'overall' && feature !== 'looksmaxxRating') {
+                                rawStats += feature + ': ' + score.toFixed(2) + '/10\n';
+                            }
+                        }
+                    }
+                    
+                    // Display in alert
+                    alert(rawStats);
+                }
+                } else {
+                    alert('Incorrect password');
+                }
+            });
+        </script>
