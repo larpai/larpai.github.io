@@ -2113,89 +2113,199 @@ class FacialAnalyzer {
         };
 
         /* ══════════════════════════════════════════════════
-           PHASE 3 — DETAILED FIX GUIDE (per weak feature)
+           PHASE 3 — ONE PAGE PER FLAW
         ══════════════════════════════════════════════════ */
-        const phase3 = async () => {
-            await clearContent();
-            content.style.paddingTop = '40px';
 
-            const h = bigHeading('Complete Fix Guide', 'Softmax · Medmax · Hardmax', '#ff9f0a');
+        // Build list of flawed features to page through
+        // Include any feature scoring under 7.5, sorted worst first, max 6
+        const flawList = sorted
+            .filter(f => f.score < 7.5)
+            .slice(0, 6);
+
+        // If no flaws (high scorer), still show foundation page
+        let flawPageIdx = 0;
+
+        const buildFlawPage = (f, pageNum, total, onNext) => {
+            content.innerHTML = '';
+            content.style.display = 'block';
+            content.style.alignItems = '';
+            content.style.justifyContent = '';
+            content.style.minHeight = '';
+            content.style.paddingTop = '36px';
+            content.style.textAlign = 'left';
+            ov.scrollTop = 0;
+
+            const kb   = KB[f.key];
+            const sc   = scoreColor(f.score);
+
+            // ── Top bar: page counter + feature name ──
+            const topBar = document.createElement('div');
+            topBar.style.cssText = `display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;`;
+            topBar.innerHTML = `
+                <div style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.25);">Fix ${pageNum} of ${total}</div>
+                <div style="display:flex;gap:5px;">
+                    ${Array.from({length:total},(_,i)=>`<div style="width:${i===pageNum-1?'18':'6'}px;height:4px;border-radius:2px;background:${i===pageNum-1?sc:'rgba(255,255,255,0.12)'}; transition:all 0.3s;"></div>`).join('')}
+                </div>
+            `;
+            fadeInEl(topBar, 0, 300);
+            content.appendChild(topBar);
+
+            // ── Feature name + score ──
+            const hero = document.createElement('div');
+            hero.style.cssText = `margin-bottom:6px;`;
+            hero.innerHTML = `
+                <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:${sc};margin-bottom:8px;">Fix Your ${f.name}</div>
+                <div style="display:flex;align-items:flex-end;gap:14px;margin-bottom:10px;">
+                    <div style="font-size:44px;font-weight:800;color:${sc};line-height:1;">${f.score.toFixed(1)}</div>
+                    <div style="padding-bottom:6px;">
+                        <div style="font-size:12px;color:rgba(255,255,255,0.35);">out of 10</div>
+                        <div style="width:120px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:4px;overflow:hidden;">
+                            <div style="height:100%;width:${f.score*10}%;background:${sc};border-radius:2px;transition:width 0.8s ease 300ms;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            fadeInEl(hero, 80, 400);
+            content.appendChild(hero);
+
+            // ── Why this matters ──
+            if (kb && kb.why) {
+                const why = document.createElement('div');
+                why.style.cssText = `font-size:12px;color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:22px;padding:12px 14px;background:rgba(255,255,255,0.03);border-radius:10px;border-left:2px solid ${sc}40;`;
+                why.textContent = kb.why;
+                fadeInEl(why, 200, 350);
+                content.appendChild(why);
+            }
+
+            // ── Gender note if present ──
+            const gNote = gender === 'female' ? kb?.female_note : kb?.male_note;
+            if (gNote) {
+                const noteEl = document.createElement('div');
+                noteEl.style.cssText = `font-size:11px;color:rgba(255,255,255,0.45);line-height:1.65;padding:10px 13px;background:rgba(255,255,255,0.04);border-radius:9px;border-left:2px solid rgba(255,255,255,0.15);margin-bottom:18px;`;
+                noteEl.innerHTML = `<span style="color:rgba(255,255,255,0.6);font-weight:600;">Note: </span>${gNote}`;
+                fadeInEl(noteEl, 260, 350);
+                content.appendChild(noteEl);
+            }
+
+            // ── KB sections ──
+            const makeSect = (icon, label, items, col, baseDelay) => {
+                if (!items || items.length === 0) return;
+                const wrap = document.createElement('div');
+                wrap.style.cssText = `margin-bottom:18px;`;
+
+                const lbl = document.createElement('div');
+                lbl.style.cssText = `display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:${col};margin-bottom:10px;`;
+                lbl.innerHTML = `<span style="font-size:14px;">${icon}</span> ${label}`;
+                wrap.appendChild(lbl);
+
+                items.forEach((item, i) => {
+                    const card = document.createElement('div');
+                    card.style.cssText = `
+                        background:${col}0d;border:1px solid ${col}28;
+                        border-radius:11px;padding:12px 15px;margin-bottom:8px;
+                        opacity:0;transform:translateY(10px);
+                        transition:opacity 350ms ease ${baseDelay + i*80}ms, transform 350ms ease ${baseDelay + i*80}ms;
+                    `;
+                    card.innerHTML = `
+                        <div style="font-size:12px;font-weight:700;color:${col};margin-bottom:4px;">${item.label}</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.65;">${item.detail}</div>
+                    `;
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }));
+                    wrap.appendChild(card);
+                });
+                content.appendChild(wrap);
+            };
+
+            if (kb) {
+                makeSect('🥗', 'Diet & Supplements', kb.diet,    '#7ee787', 320);
+                makeSect('✦',  'Softmax',            kb.softmax, '#ff9f0a', 400);
+                makeSect('⚕',  'Medmax',             kb.medmax,  '#5ac8fa', 500);
+                makeSect('⚡', 'Hardmax',             kb.hardmax, '#ff453a', 580);
+            } else if (f.fix) {
+                // Fallback: use the fix text from the DOM
+                const fixEl = document.createElement('div');
+                fixEl.style.cssText = `font-size:11px;color:rgba(255,255,255,0.45);line-height:1.7;white-space:pre-line;background:rgba(255,159,10,0.06);border:1px solid rgba(255,159,10,0.2);border-radius:10px;padding:13px 16px;margin-bottom:18px;`;
+                fixEl.textContent = f.fix;
+                fadeInEl(fixEl, 320);
+                content.appendChild(fixEl);
+            }
+
+            // ── Next button ──
+            const isLast = (pageNum === total);
+            const nb = nextBtn(isLast ? 'See Your Score →' : `Next: Fix Your ${flawList[pageNum]?.name || 'Score'} →`, onNext);
+            fadeInEl(nb, 650);
+            content.appendChild(nb);
+        };
+
+        const buildFoundationPage = (onNext) => {
+            content.innerHTML = '';
+            content.style.paddingTop = '36px';
+            ov.scrollTop = 0;
+
+            const h = bigHeading('Universal Foundation', 'Do These Regardless', 'rgba(255,255,255,0.85)');
             fadeInEl(h, 0);
             content.appendChild(h);
 
             const sub = document.createElement('div');
-            sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
-            sub.textContent = `Every option from free lifestyle changes to surgical interventions — ordered by cost, risk, and impact.`;
+            sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:24px;line-height:1.6;`;
+            sub.textContent = 'These apply to every person regardless of their specific flaws. The baseline that unlocks every other improvement.';
             fadeInEl(sub, 150);
             content.appendChild(sub);
 
-            bottomN.slice(0, 4).forEach((f, i) => {
-                const kb = KB[f.key];
-                if (!kb && !f.fix) return;
-
-                const sectionHead = document.createElement('div');
-                sectionHead.style.cssText = `
-                    display:flex;align-items:center;gap:10px;
-                    margin-bottom:14px;padding:12px 16px;
-                    background:rgba(255,255,255,0.04);border-radius:12px;
-                    border-left:3px solid ${scoreColor(f.score)};
-                `;
-                sectionHead.innerHTML = `
-                    <div style="flex:1;">
-                        <div style="font-size:14px;font-weight:700;color:#fff;">${f.name}</div>
-                        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;">Current score: ${f.score.toFixed(1)} / 10</div>
-                    </div>
-                    <div style="font-size:24px;font-weight:700;color:${scoreColor(f.score)};">${f.score.toFixed(1)}</div>
-                `;
-                fadeInEl(sectionHead, 200 + i * 80);
-                content.appendChild(sectionHead);
-
-                if (kb) {
-                    const kbContent = kbSection(f.key, true);
-                    if (kbContent) {
-                        fadeInEl(kbContent, 300 + i * 80);
-                        content.appendChild(kbContent);
-                    }
-                } else if (f.fix) {
-                    const fixEl = document.createElement('div');
-                    fixEl.style.cssText = `font-size:11px;color:rgba(255,255,255,0.45);line-height:1.7;white-space:pre-line;background:rgba(255,159,10,0.06);border:1px solid rgba(255,159,10,0.2);border-radius:10px;padding:13px 16px;margin-bottom:14px;`;
-                    fixEl.textContent = f.fix;
-                    content.appendChild(fixEl);
-                }
-
-                if (i < 3) content.appendChild(divider());
-            });
-
-            // Universal foundation stack
             if (FDN) {
-                content.appendChild(divider());
-                const fndTitle = document.createElement('div');
-                fndTitle.style.cssText = `font-size:16px;font-weight:700;color:rgba(255,255,255,0.8);margin-bottom:16px;`;
-                fndTitle.textContent = '⬛ Universal Foundation Stack';
-                fadeInEl(fndTitle, 500);
-                content.appendChild(fndTitle);
-
-                FDN.items.forEach((group, gi) => {
+                const cats = [
+                    { cat: FDN.items[0], icon: '🧴', col: '#5ac8fa' },
+                    { cat: FDN.items[1], icon: '💊', col: '#7ee787' },
+                    { cat: FDN.items[2], icon: '🏋️', col: '#ff9f0a' },
+                ];
+                cats.forEach(({ cat, icon, col }, gi) => {
                     const groupEl = document.createElement('div');
-                    groupEl.style.cssText = `margin-bottom:16px;`;
-                    const groupLabel = document.createElement('div');
-                    groupLabel.style.cssText = `font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:8px;`;
-                    groupLabel.textContent = group.category;
-                    groupEl.appendChild(groupLabel);
-                    group.items.forEach(item => {
-                        const itemEl = document.createElement('div');
-                        itemEl.style.cssText = `font-size:11px;color:rgba(255,255,255,0.45);padding:7px 12px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:5px;line-height:1.5;border-left:2px solid rgba(255,255,255,0.08);`;
-                        itemEl.textContent = item;
-                        groupEl.appendChild(itemEl);
+                    groupEl.style.cssText = `margin-bottom:20px;`;
+
+                    const lbl = document.createElement('div');
+                    lbl.style.cssText = `display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:${col};margin-bottom:10px;`;
+                    lbl.innerHTML = `<span style="font-size:14px;">${icon}</span> ${cat.category}`;
+                    groupEl.appendChild(lbl);
+
+                    cat.items.forEach((item, ii) => {
+                        const el = document.createElement('div');
+                        el.style.cssText = `font-size:11px;color:rgba(255,255,255,0.5);padding:9px 13px;background:${col}08;border:1px solid ${col}20;border-radius:9px;margin-bottom:6px;line-height:1.55;`;
+                        el.textContent = item;
+                        groupEl.appendChild(el);
                     });
-                    fadeInEl(groupEl, 600 + gi * 100);
+                    fadeInEl(groupEl, 200 + gi * 120);
                     content.appendChild(groupEl);
                 });
             }
 
-            const nb = nextBtn('See Your Score →', phase4);
-            fadeInEl(nb, 800);
+            const nb = nextBtn('See Your Score →', onNext);
+            fadeInEl(nb, 700);
             content.appendChild(nb);
+        };
+
+        const phase3 = async () => {
+            await clearContent();
+
+            if (flawList.length === 0) {
+                // No real flaws — skip straight to foundation then score
+                buildFoundationPage(phase4);
+                return;
+            }
+
+            // Page through each flaw one at a time
+            const showFlaw = (idx) => {
+                const f = flawList[idx];
+                const isLast = idx === flawList.length - 1;
+                const onNext = isLast
+                    ? () => { clearContent().then(() => buildFoundationPage(phase4)); }
+                    : () => { clearContent().then(() => showFlaw(idx + 1)); };
+                buildFlawPage(f, idx + 1, flawList.length, onNext);
+            };
+
+            showFlaw(0);
         };
 
         /* ══════════════════════════════════════════════════
