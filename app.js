@@ -501,6 +501,13 @@ class FacialAnalyzer {
             this.els.loader.classList.remove('active');
             this.els.analyzeBtn.disabled = false;
 
+            // BLACKOUT: slam a full-screen black cover over everything RIGHT NOW,
+            // before displayResults touches the DOM. Nothing can peek through.
+            const _blackout = document.createElement('div');
+            _blackout.id = '_resultsBlackout';
+            _blackout.style.cssText = 'position:fixed;inset:0;background:#000;z-index:3999;pointer-events:none;';
+            document.body.appendChild(_blackout);
+
             this.displayResults(this.scores, this.measurements);
             this._showDevButton();
 
@@ -508,8 +515,13 @@ class FacialAnalyzer {
             const genderMsg = this._selectedGender ? ` · gender: ${this._selectedGender}` : '';
             this.setStatus('Analysis complete ✓' + hlMsg + genderMsg, false, true);
 
-            // Cinematic reveal — results panel hidden until cinematic dismissed
+            // Cinematic sits on top at z-index 4000. When it dismisses, remove
+            // blackout and fade in results panel.
             setTimeout(() => this._showCinematicReveal(this.scores, this.measurements, () => {
+                // Remove blackout
+                const bo = document.getElementById('_resultsBlackout');
+                if (bo) bo.remove();
+                // Show results panel
                 const panel = document.getElementById('resultsPanel');
                 if (panel) {
                     panel.style.display = 'block';
@@ -522,6 +534,9 @@ class FacialAnalyzer {
             }), 120);
         } catch (err) {
             console.error(err);
+            // Clean up blackout if it exists
+            const bo = document.getElementById('_resultsBlackout');
+            if (bo) bo.remove();
             this.fail('Unexpected error \u2014 please retry');
         }
     }
