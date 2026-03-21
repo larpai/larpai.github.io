@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In &mdash; larp.ai</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; background:#080808; color:#fff; min-height:100vh; display:flex; flex-direction:column; }
+
+        .topbar { padding:20px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06); }
+        .topbar-brand { font-size:18px;font-weight:800;letter-spacing:-.03em;color:#fff;text-decoration:none; }
+        .topbar-brand em { font-weight:300;font-style:italic;color:rgba(255,255,255,0.25);font-size:12px;margin-left:4px; }
+        .topbar-back { font-size:13px;color:rgba(255,255,255,0.38);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .15s; }
+        .topbar-back:hover { color:#fff; }
+
+        .center { flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px; }
+
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        .card { background:#111;border:1px solid rgba(255,255,255,0.09);border-radius:24px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,0.7);animation:fadeUp .4s ease; }
+
+        .card-icon { font-size:32px;margin-bottom:18px;line-height:1; }
+        .card-title { font-size:26px;font-weight:800;letter-spacing:-.03em;margin-bottom:8px; }
+        .card-sub { font-size:14px;color:rgba(255,255,255,0.38);line-height:1.55;margin-bottom:36px; }
+
+        .field { margin-bottom:16px; }
+        .field label { display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.32);margin-bottom:8px; }
+        .field input { width:100%;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;font-size:15px;font-family:inherit;transition:border-color .2s,background .2s;outline:none; }
+        .field input:focus { border-color:rgba(255,255,255,0.32);background:rgba(255,255,255,0.07); }
+        .field input::placeholder { color:rgba(255,255,255,0.2); }
+
+        .error-box { background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.3);border-radius:10px;padding:11px 14px;font-size:13px;color:#ff453a;margin-bottom:18px;display:none; }
+
+        .submit-btn { width:100%;padding:15px;border-radius:13px;border:none;background:#fff;color:#000;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;transition:all .2s;letter-spacing:-.01em; }
+        .submit-btn:hover { background:rgba(255,255,255,0.88);transform:translateY(-1px); }
+        .submit-btn:disabled { opacity:.45;cursor:not-allowed;transform:none; }
+
+        .divider-line { height:1px;background:rgba(255,255,255,0.07);margin:28px 0; }
+        .switch { text-align:center;font-size:13px;color:rgba(255,255,255,0.32); }
+        .switch a { color:rgba(255,255,255,0.65);text-decoration:none;font-weight:600;transition:color .15s; }
+        .switch a:hover { color:#fff; }
+
+        @media(max-width:480px){ .card{padding:32px 22px;} .topbar{padding:15px 18px;} }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <a href="home.html" class="topbar-brand">larp.ai <em>v4.4</em></a>
+    <a href="home.html" class="topbar-back">&#8592; Back to home</a>
+</div>
+
+<div class="center">
+    <div class="card">
+        <div class="card-icon">&#128100;</div>
+        <div class="card-title">Welcome back</div>
+        <div class="card-sub">Log in to view your saved results and track your progress over time.</div>
+
+        <div class="error-box" id="errorBox"></div>
+
+        <div class="field">
+            <label>Username / Email</label>
+            <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="Your password" autocomplete="current-password">
+        </div>
+
+        <button class="submit-btn" id="loginBtn">Log In</button>
+
+        <div class="divider-line"></div>
+        <div class="switch">No account? <a href="signup.html">Sign up</a></div>
+    </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const auth = window.LarpAuth;
+    if (auth.isLoggedIn()) { window.location.href = 'home.html'; return; }
+
+    const emailEl = document.getElementById('email');
+    const passEl  = document.getElementById('password');
+    const btn     = document.getElementById('loginBtn');
+    const errBox  = document.getElementById('errorBox');
+
+    const showErr = msg => { errBox.textContent = msg; errBox.style.display = 'block'; };
+    const hideErr = ()  => { errBox.style.display = 'none'; };
+
+    const doLogin = () => {
+        hideErr();
+        const email = emailEl.value.trim();
+        const pass  = passEl.value;
+        if (!email || !pass) { showErr('Please fill in all fields.'); return; }
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+        setTimeout(() => {
+            const res = auth.login(email, pass);
+            if (res.ok) {
+                sessionStorage.setItem('larp_login_success', res.name.split(' ')[0]);
+                window.location.href = 'home.html';
+            } else {
+                showErr(res.error);
+                btn.disabled = false;
+                btn.textContent = 'Log In';
+            }
+        }, 300);
+    };
+
+    btn.addEventListener('click', doLogin);
+    passEl.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+    emailEl.addEventListener('keydown', e => { if(e.key==='Enter') passEl.focus(); });
+});
+</script>
+</body>
+</html>

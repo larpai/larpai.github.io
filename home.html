@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>larp.ai</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root { --bg:#080808; --card:#111; --border:rgba(255,255,255,0.08); --green:#30d158; --dim:rgba(255,255,255,0.38); }
+        body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; background:var(--bg); color:#fff; min-height:100vh; overflow-x:hidden; }
+
+        nav { position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:18px 32px;background:rgba(8,8,8,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.05); }
+        .nav-brand { font-size:19px;font-weight:800;letter-spacing:-.03em;color:#fff;text-decoration:none; }
+        .nav-brand em { font-weight:300;font-style:italic;color:rgba(255,255,255,0.25);font-size:12px;margin-left:5px; }
+        .nav-right { display:flex;gap:10px;align-items:center; }
+        .nav-btn { padding:9px 22px;border-radius:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;text-decoration:none;display:inline-flex;align-items:center;letter-spacing:-.01em;border:none; }
+        .nav-login { background:transparent;border:1px solid rgba(255,255,255,0.14)!important;color:rgba(255,255,255,0.65); }
+        .nav-login:hover { background:rgba(255,255,255,0.07);color:#fff; }
+        .nav-signup { background:#fff;color:#000; }
+        .nav-signup:hover { background:rgba(255,255,255,0.88);transform:translateY(-1px); }
+        .nav-username { font-size:13px;color:rgba(255,255,255,0.45);font-weight:500; }
+        .nav-username b { color:#fff; }
+        .nav-logout { background:transparent;border:1px solid rgba(255,255,255,0.1)!important;color:rgba(255,255,255,0.4);font-size:12px;padding:7px 16px; }
+        .nav-logout:hover { color:#fff; }
+
+        @keyframes fu { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+        .fu1{opacity:0;animation:fu .65s ease .15s forwards}
+        .fu2{opacity:0;animation:fu .65s ease .32s forwards}
+        .fu3{opacity:0;animation:fu .65s ease .50s forwards}
+        .fu4{opacity:0;animation:fu .65s ease .68s forwards}
+        .fu5{opacity:0;animation:fu .65s ease .86s forwards}
+
+        .hero { min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;position:relative; }
+        .hero-glow { position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(255,255,255,0.032) 0%,transparent 65%);top:50%;left:50%;transform:translate(-50%,-55%);pointer-events:none; }
+        .hero-eyebrow { font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,0.22);margin-bottom:22px; }
+        .hero-title { font-size:clamp(72px,14vw,120px);font-weight:800;letter-spacing:-.05em;line-height:.9;margin-bottom:28px; }
+        .hero-title .dim { color:rgba(255,255,255,0.14); }
+        .hero-sub { font-size:clamp(14px,2vw,16px);color:var(--dim);max-width:420px;line-height:1.7;margin-bottom:52px; }
+        .hero-btns { display:flex;gap:14px;justify-content:center;flex-wrap:wrap; }
+        .hbtn { padding:16px 44px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;border:none;letter-spacing:-.01em; }
+        .hbtn-p { background:#fff;color:#000; }
+        .hbtn-p:hover { transform:translateY(-2px);box-shadow:0 10px 36px rgba(255,255,255,0.14); }
+        .hbtn-s { background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.72); }
+        .hbtn-s:hover { background:rgba(255,255,255,0.12);color:#fff;transform:translateY(-2px); }
+
+        .chips { display:flex;justify-content:center;gap:24px;flex-wrap:wrap;padding:14px 24px 68px; }
+        .chip { font-size:11px;color:rgba(255,255,255,0.25);font-weight:500;display:flex;align-items:center;gap:6px; }
+        .chip::before { content:'\2713';color:var(--green);font-weight:700;font-size:10px; }
+
+        .div-line { height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent); }
+
+        .section { padding:80px 32px;max-width:840px;margin:0 auto;text-align:center; }
+        .sec-label { font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,0.2);margin-bottom:14px; }
+        .sec-title { font-size:clamp(24px,4vw,38px);font-weight:800;letter-spacing:-.03em;margin-bottom:12px; }
+        .sec-sub { font-size:14px;color:var(--dim);line-height:1.65;max-width:480px;margin:0 auto 48px; }
+        .steps { display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px; }
+        .step { background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px 20px;text-align:left;transition:border-color .2s; }
+        .step:hover { border-color:rgba(255,255,255,0.15); }
+        .step-n { font-size:10px;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,0.18);margin-bottom:14px; }
+        .step-i { font-size:24px;margin-bottom:10px; }
+        .step-t { font-size:13px;font-weight:700;margin-bottom:6px; }
+        .step-d { font-size:12px;color:rgba(255,255,255,0.35);line-height:1.6; }
+
+        .stats { display:flex;justify-content:center;gap:52px;flex-wrap:wrap;padding:56px 32px;border-top:1px solid var(--border);border-bottom:1px solid var(--border); }
+        .stat { text-align:center; }
+        .stat-n { font-size:38px;font-weight:800;letter-spacing:-.03em;margin-bottom:5px; }
+        .stat-l { font-size:11px;color:rgba(255,255,255,0.3);font-weight:500; }
+
+        .cta { text-align:center;padding:80px 32px 100px; }
+        .cta-t { font-size:clamp(26px,5vw,46px);font-weight:800;letter-spacing:-.03em;margin-bottom:14px;line-height:1.1; }
+        .cta-s { font-size:14px;color:var(--dim);margin-bottom:36px;line-height:1.6; }
+
+        footer { border-top:1px solid var(--border);padding:22px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px; }
+        .foot-l { font-size:13px;font-weight:700;color:rgba(255,255,255,0.3); }
+        .foot-r { font-size:11px;color:rgba(255,255,255,0.15); }
+
+        .ov { position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:5000;display:none;align-items:center;justify-content:center;font-family:inherit;padding:20px; }
+        .ov.show { display:flex; }
+        @keyframes popIn { from{opacity:0;transform:scale(0.91) translateY(16px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        .pb { background:#141414;border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:36px 30px;max-width:380px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,0.9);animation:popIn .25s cubic-bezier(.34,1.56,.64,1); }
+        .pb-icon { font-size:32px;margin-bottom:16px;line-height:1; }
+        .pb-title { font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px; }
+        .pb-sub { font-size:13px;color:rgba(255,255,255,0.38);line-height:1.65;margin-bottom:28px; }
+        .pb-sub-gray { display:block;margin-top:8px;font-size:12px;color:rgba(255,255,255,0.22); }
+        .pb-row { display:flex;gap:10px; }
+        .btn-w { flex:1;padding:14px;border-radius:12px;border:none;background:#fff;color:#000;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s; }
+        .btn-w:hover { opacity:.88; }
+        .btn-g { flex:1;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.13);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.65);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s; }
+        .btn-g:hover { background:rgba(255,255,255,0.1);color:#fff; }
+        .pb-wide { max-width:500px;text-align:left;max-height:82vh;overflow-y:auto;padding:28px 26px; }
+
+        @media(max-width:600px){
+            nav{padding:14px 18px;}
+            .hero{padding:90px 20px 50px;}
+            .hero-btns{flex-direction:column;align-items:stretch;max-width:260px;margin:0 auto;}
+            .stats{gap:28px;}
+            footer{flex-direction:column;text-align:center;}
+            .chips{gap:14px;}
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html" class="nav-brand">larp.ai <em>v4.4</em></a>
+    <div class="nav-right" id="navRight"></div>
+</nav>
+
+<section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-eyebrow fu1">AI-Powered Facial Analysis</div>
+    <h1 class="hero-title fu2">larp<span class="dim">.ai</span></h1>
+    <p class="hero-sub fu3">Biometric scoring of your facial structure. 18 metrics, a full improvement guide &mdash; personalised by gender.</p>
+    <div class="hero-btns fu4">
+        <button class="hbtn hbtn-p" id="btnAnalysis">Analysis</button>
+        <button class="hbtn hbtn-s" id="btnResults">Results</button>
+    </div>
+</section>
+
+<div class="chips fu5">
+    <div class="chip">18 facial metrics</div>
+    <div class="chip">Softmax &amp; Hardmax fixes</div>
+    <div class="chip">Diet &amp; supplement guide</div>
+    <div class="chip">Gender-adaptive scoring</div>
+    <div class="chip">PSL / HB scale</div>
+    <div class="chip">Cinematic reveal</div>
+</div>
+
+<div class="div-line"></div>
+
+<div class="section">
+    <div class="sec-label">How it works</div>
+    <h2 class="sec-title">From photo to full report</h2>
+    <p class="sec-sub">Upload a front-facing photo. 68 landmarks are mapped and every feature scored against research-backed ideals.</p>
+    <div class="steps">
+        <div class="step"><div class="step-n">01</div><div class="step-i">&#128248;</div><div class="step-t">Upload Your Photo</div><div class="step-d">Front-facing, neutral expression. Set your hairline for maximum precision.</div></div>
+        <div class="step"><div class="step-n">02</div><div class="step-i">&#128302;</div><div class="step-t">68-Point Detection</div><div class="step-d">face-api.js maps 68 landmarks. Symmetry, ratios, angles, and proportions all measured.</div></div>
+        <div class="step"><div class="step-n">03</div><div class="step-i">&#127916;</div><div class="step-t">Cinematic Reveal</div><div class="step-d">Your strengths and weaknesses revealed one by one, then a full fix guide per flaw.</div></div>
+        <div class="step"><div class="step-n">04</div><div class="step-i">&#128200;</div><div class="step-t">Track Progress</div><div class="step-d">Sign up to save every analysis. Come back to track how your score changes over time.</div></div>
+    </div>
+</div>
+
+<div class="stats">
+    <div class="stat"><div class="stat-n">18</div><div class="stat-l">Facial metrics scored</div></div>
+    <div class="stat"><div class="stat-n">68</div><div class="stat-l">Landmark points mapped</div></div>
+    <div class="stat"><div class="stat-n">4</div><div class="stat-l">Composite dimensions</div></div>
+    <div class="stat"><div class="stat-n">&infin;</div><div class="stat-l">Results saved per account</div></div>
+</div>
+
+<div class="cta">
+    <h2 class="cta-t">Know your face.<br>Fix what matters.</h2>
+    <p class="cta-s">Free analysis. Sign up to save your results and track your progress over time.</p>
+    <button class="hbtn hbtn-p" id="btnAnalysisCta" style="font-size:16px;padding:18px 52px;">Start Your Analysis</button>
+</div>
+
+<footer>
+    <div class="foot-l">larp.ai</div>
+    <div class="foot-r">For entertainment purposes. Not medical advice.</div>
+</footer>
+
+<!-- POPUP: Analysis — recommend login -->
+<div class="ov" id="suggestPopup">
+    <div class="pb">
+        <div class="pb-icon">&#129516;</div>
+        <div class="pb-title">We recommend you log in</div>
+        <div class="pb-sub">
+            This is so your results are saved and you can always come back to them.
+            <span class="pb-sub-gray">If you don&rsquo;t log in, your data will be deleted after this session.</span>
+        </div>
+        <div class="pb-row">
+            <button class="btn-w" id="suggestLogin">Login</button>
+            <button class="btn-g" id="suggestContinue">Continue</button>
+        </div>
+    </div>
+</div>
+
+<!-- POPUP: Results — login required -->
+<div class="ov" id="loginRequiredPopup">
+    <div class="pb">
+        <div class="pb-icon">&#128274;</div>
+        <div class="pb-title">You need to login for this</div>
+        <div class="pb-sub">
+            We need you to be logged in so we can actually store your data and show you your history.
+            <span class="pb-sub-gray">All data is stored locally on your device &mdash; we never send it to a server.</span>
+        </div>
+        <div class="pb-row">
+            <button class="btn-g" id="lrpBack">Back</button>
+            <button class="btn-w" id="lrpLogin">Log In</button>
+        </div>
+    </div>
+</div>
+
+<!-- POPUP: Results history (logged in) -->
+<div class="ov" id="resultsPopup">
+    <div class="pb pb-wide">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+            <div style="font-size:17px;font-weight:800;letter-spacing:-.02em;">Your Analysis History</div>
+            <button id="closeResultsPopup" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.45);font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit;">Close</button>
+        </div>
+        <div id="resultsHistoryList"></div>
+        <button id="newAnalysisBtn" style="width:100%;margin-top:16px;padding:14px;border-radius:12px;border:none;background:#fff;color:#000;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">+ New Analysis</button>
+    </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const auth    = window.LarpAuth;
+    const session = auth.currentUser();
+
+    // Nav
+    const navRight = document.getElementById('navRight');
+    if (session) {
+        navRight.innerHTML = '<span class="nav-username">Hi, <b>' + session.name.split(' ')[0] + '</b></span><button class="nav-btn nav-logout" id="logoutBtn">Log Out</button>';
+        document.getElementById('logoutBtn').addEventListener('click', () => auth.logout());
+    } else {
+        navRight.innerHTML = '<a href="login.html" class="nav-btn nav-login">Log In</a><a href="signup.html" class="nav-btn nav-signup">Sign Up</a>';
+    }
+
+    // Toasts
+    if (sessionStorage.getItem('larp_signup_success')) {
+        sessionStorage.removeItem('larp_signup_success');
+        auth.showToast('Account created — please log in now', 'success', 5000);
+    }
+    if (sessionStorage.getItem('larp_login_success')) {
+        const n = sessionStorage.getItem('larp_login_success');
+        sessionStorage.removeItem('larp_login_success');
+        auth.showToast('Welcome back, ' + n, 'success', 3500);
+    }
+
+    // Overlay helpers
+    const showOv = id => document.getElementById(id).classList.add('show');
+    const hideOv = id => document.getElementById(id).classList.remove('show');
+    ['suggestPopup','loginRequiredPopup','resultsPopup'].forEach(id => {
+        document.getElementById(id).addEventListener('click', function(e){ if(e.target===this) hideOv(id); });
+    });
+
+    // Analysis
+    const goAnalysis = () => {
+        if (auth.isLoggedIn()) { window.location.href = 'app.html'; }
+        else { showOv('suggestPopup'); }
+    };
+    document.getElementById('btnAnalysis').addEventListener('click', goAnalysis);
+    document.getElementById('btnAnalysisCta').addEventListener('click', goAnalysis);
+    document.getElementById('suggestLogin').addEventListener('click', () => window.location.href = 'login.html');
+    document.getElementById('suggestContinue').addEventListener('click', () => window.location.href = 'app.html');
+
+    // Results
+    document.getElementById('btnResults').addEventListener('click', () => {
+        if (!auth.isLoggedIn()) { showOv('loginRequiredPopup'); return; }
+        const results = auth.getResults();
+        const list    = document.getElementById('resultsHistoryList');
+        const sc = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
+        if (results.length === 0) {
+            list.innerHTML = '<div style="text-align:center;padding:40px 0;color:rgba(255,255,255,0.28);font-size:13px;line-height:1.7;">No analyses yet.<br>Run your first one to see results here.</div>';
+        } else {
+            list.innerHTML = results.map((r,i) => {
+                const d = new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+                const t = new Date(r.date).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+                const label = r.rating&&r.rating.label ? r.rating.label : '-';
+                const pct   = r.rating&&r.rating.pct   ? r.rating.pct   : '';
+                const tip   = r.rating&&r.rating.tooltip ? r.rating.tooltip : '';
+                return '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px 16px;margin-bottom:9px;display:flex;align-items:center;gap:14px;">' +
+                    '<div style="font-size:30px;font-weight:800;color:'+sc(r.overall)+';min-width:52px;">' + r.overall.toFixed(1) + '</div>' +
+                    '<div style="flex:1;">' +
+                        '<div style="font-size:13px;font-weight:700;color:'+sc(r.overall)+';">' + label + '</div>' +
+                        '<div style="font-size:11px;color:rgba(255,255,255,0.28);margin-top:3px;">' + r.gender + ' &middot; ' + d + ' at ' + t + '</div>' +
+                        '<div style="font-size:10px;color:rgba(255,255,255,0.16);margin-top:2px;">' + pct + (tip ? ' &middot; '+tip : '') + '</div>' +
+                    '</div>' +
+                    '<div style="font-size:11px;color:rgba(255,255,255,0.15);">#'+(results.length-i)+'</div>' +
+                    '</div>';
+            }).join('');
+        }
+        showOv('resultsPopup');
+    });
+
+    document.getElementById('lrpBack').addEventListener('click',  () => hideOv('loginRequiredPopup'));
+    document.getElementById('lrpLogin').addEventListener('click', () => window.location.href = 'login.html');
+    document.getElementById('closeResultsPopup').addEventListener('click', () => hideOv('resultsPopup'));
+    document.getElementById('newAnalysisBtn').addEventListener('click', () => window.location.href = 'app.html');
+});
+</script>
+</body>
+</html>
