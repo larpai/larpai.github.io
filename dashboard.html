@@ -39,7 +39,7 @@
         .score-ring-wrap{width:200px;height:200px;margin:0 auto 24px;position:relative;}
         .score-ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg);}
         .ring-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:8;}
-        .ring-old{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:565;stroke-dashoffset:565;transition:stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1);}
+        .ring-old{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:541;stroke-dashoffset:541;transition:stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1);overflow:visible;}
         .ring-new{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:565;stroke-dashoffset:565;transition:stroke-dashoffset 2s cubic-bezier(.4,0,.2,1) .3s;opacity:0;}
         .ring-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
         .score-num-big{font-size:56px;font-weight:200;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em;}
@@ -90,8 +90,8 @@
         .fix-name{font-size:13px;font-weight:600;color:rgba(255,255,255,0.8);}
         .fix-chevron{font-size:12px;color:rgba(255,255,255,0.25);transition:transform .25s;}
         .fix-chevron.open{transform:rotate(180deg);}
-        .fix-body{max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1);}
-        .fix-body.open{max-height:600px;}
+        .fix-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.4,0,.2,1);}
+        .fix-body.open{max-height:9999px;}
         .fix-content{padding:0 18px 16px;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.7;white-space:pre-line;}
 
         /* HISTORY */
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ringOld   = document.getElementById('ringOld');
     const ringNew   = document.getElementById('ringNew');
     const scoreNum  = document.getElementById('scoreNum');
-    const C = 565;
+    const C = 541;
 
     if (isFirst) {
         // First analysis: particles → score counts up
@@ -366,7 +366,7 @@ function buildEmpty() {
 
 function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc) {
     const color  = sc(latest.overall);
-    const C      = 565;
+    const C      = 541;
     const hasPrev = prev !== null;
 
     const deltaStr  = delta > 0 ? '+' + delta.toFixed(3) : delta.toFixed(3);
@@ -415,9 +415,9 @@ function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc) {
             <div class="sec-label" style="margin-bottom:18px;">${isFirst ? 'Your First Score' : 'Latest Score'}</div>
 
             <div class="score-ring-wrap">
-                <svg viewBox="0 0 180 180">
-                    <circle class="ring-bg" cx="90" cy="90" r="90"/>
-                    <circle class="ring-old" id="ringOld" cx="90" cy="90" r="90"
+                <svg viewBox="0 0 200 200" style="overflow:visible;">
+                    <circle class="ring-bg" cx="100" cy="100" r="86"/>
+                    <circle class="ring-old" id="ringOld" cx="100" cy="100" r="86"
                         stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
                 </svg>
                 <div class="ring-center">
