@@ -537,6 +537,7 @@ class FacialAnalyzer {
                 // Show results panel
                 const panel = document.getElementById('resultsPanel');
                 if (panel) {
+                    panel.classList.add('revealed');
                     panel.style.display = 'block';
                     panel.style.opacity = '0';
                     requestAnimationFrame(() => {
@@ -544,6 +545,9 @@ class FacialAnalyzer {
                         panel.style.opacity = '1';
                     });
                 }
+                // Reset score number color now that real score is shown
+                const sn = document.getElementById('scoreNum');
+                if (sn) sn.style.color = '';
             }), 120);
         } catch (err) {
             console.error(err);

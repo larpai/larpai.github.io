@@ -51,7 +51,7 @@
         
         .brand {
             font-size: 48px;
-            font-weight: 200;
+            font-weight: 800;
             letter-spacing: -0.02em;
             margin-bottom: 4px;
             background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.8) 100%);
@@ -79,6 +79,7 @@
         .subtitle {
             font-size: 16px;
             color: var(--text-secondary);
+            font-weight: 500;
         }
         
         .main {
@@ -98,6 +99,9 @@
         @media (max-width: 900px) {
             .grid { grid-template-columns: 1fr; }
             h1 { font-size: 32px; }
+            /* Hide right panel on mobile until analysis completes */
+            #resultsPanel { display: none; }
+            #resultsPanel.revealed { display: block !important; opacity: 1 !important; }
         }
         
         .card {
@@ -233,7 +237,7 @@
             text-align: center;
         }
         
-        .score-num { font-size: 44px; font-weight: 300; line-height: 1; }
+        .score-num { font-size: 44px; font-weight: 700; line-height: 1; }
         .score-max { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
         
         .features { margin-top: 20px; }
@@ -695,20 +699,20 @@
                     </div>
                 </div>
 
-                <div class="right-col" id="resultsPanel" style="display:none;">
+                <div class="right-col" id="resultsPanel">
                     <div class="card">
                         <div class="score-header">
                             <p class="score-label">Overall Rating</p>
                             <div class="score-ring">
                                 <svg viewBox="0 0 140 140">
-                                    <circle class="score-bg" cx="70" cy="70" r="62"/>
+                                    <circle class="score-bg" cx="70" cy="70" r="62" style="stroke:rgba(255,255,255,0.08);"/>
                                     <circle class="score-bar" cx="70" cy="70" r="62" 
                                         stroke-dasharray="389.6" 
                                         stroke-dashoffset="389.6"
                                         id="scoreCircle"/>
                                 </svg>
                                 <div class="score-center">
-                                    <div class="score-num" id="scoreNum">--</div>
+                                    <div class="score-num" id="scoreNum" style="color:rgba(255,255,255,0.2);">--</div>
                                     <div class="score-max">out of 10</div>
                                 </div>
                             </div>
