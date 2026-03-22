@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // BUILD PAGE HTML
     // ─────────────────────────────────────────────
     page.innerHTML = `
-        ${buildScoreHero(latest, prev, delta, didImprove, isFirst, sc)}
+        ${buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialScore)}
         ${buildDailyTip(latest, sc)}
         ${showImprove && improved.length > 0 ? buildImprovedCarousel(improved, sc) : ''}
         ${buildComposites(latest, sc)}
@@ -392,7 +392,7 @@ function buildEmpty() {
     </div>`;
 }
 
-function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc) {
+function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialScore) {
     const color  = sc(latest.overall);
     const C      = 541;
     const hasPrev = prev !== null;
