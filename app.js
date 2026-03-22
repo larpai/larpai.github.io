@@ -1780,6 +1780,31 @@ class FacialAnalyzer {
         const isFirstAnalysis = _prevResults.length === 0;
         const prevResult      = _prevResults[0] || null; // most recent previous result
 
+        // POTENTIAL SCORE — estimate of achievable score with softmax/medmax
+        // For each feature, softmax can typically recover 40-60% of the gap to ideal
+        // Hardmax can get to ~85% of ideal. We estimate "realistic max" = current + 55% of gap
+        const calcPotential = (s) => {
+            const ORDER_P = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
+                'jawline','bizygoBigonial','nose','lips','maxilla','gonion','mandible',
+                'temples','eyebrows','EMEangle','facialIndex','neoclassical'];
+            const WEIGHTS = { HARM:0.32, MISC:0.26, ANGU:0.22, DIMO:0.20 };
+            // Simple approach: each feature gains 55% of gap to 9.5 (not 10, genetics ceiling)
+            const CEILING = 9.5;
+            let potScores = {};
+            ORDER_P.forEach(k => {
+                const cur = s[k] ?? 5;
+                potScores[k] = cur + (CEILING - cur) * 0.55;
+            });
+            // Rebuild composites
+            const w = (pairs) => { let t=0,wt=0; pairs.forEach(([v,w])=>{t+=Math.min(10,Math.max(0,v))*w;wt+=w;}); return t/wt; };
+            const pH = w([[potScores.symmetry,0.28],[potScores.goldenRatio,0.18],[potScores.FWHR,0.18],[potScores.midfaceRatio,0.18],[potScores.bizygoBigonial,0.18]]);
+            const pA = w([[potScores.jawline,0.33],[potScores.zygomatic,0.27],[potScores.gonion,0.22],[potScores.mandible,0.18]]);
+            const pD = w([[potScores.jawline,0.30],[potScores.FWHR,0.25],[potScores.eyebrows,0.20],[potScores.gonion,0.15],[potScores.eyeArea,0.10]]);
+            const pM = w([[potScores.eyeArea,0.25],[potScores.nose,0.20],[potScores.lips,0.15],[potScores.temples,0.10],[potScores.EMEangle,0.15],[potScores.neoclassical,0.15]]);
+            return Math.min(9.8, pH*0.32 + pM*0.26 + pA*0.22 + pD*0.20);
+        };
+        const potentialScore = calcPotential(scores);
+
         /* ── build overlay ── */
         const ov = document.createElement('div');
         ov.id = '_cinematicOv';
@@ -2593,6 +2618,58 @@ class FacialAnalyzer {
             ctaWrap.appendChild(ctaSub);
             fadeInEl(ctaWrap, ctaDelay, 600);
             content.appendChild(ctaWrap);
+
+            // ── POTENTIAL widget — first analysis only ──────────────────
+            if (isFirstAnalysis) {
+                const potDelay = ctaDelay + 700;
+                const potGap   = +(potentialScore - overall).toFixed(2);
+                const potColor = '#5ac8fa';
+
+                const potWrap = document.createElement('div');
+                potWrap.style.cssText = `width:100%;max-width:380px;margin:18px auto 0;`;
+
+                const potCard = document.createElement('div');
+                potCard.style.cssText = `
+                    background:rgba(90,200,250,0.07);border:1px solid rgba(90,200,250,0.22);
+                    border-radius:16px;padding:20px 22px;text-align:left;
+                `;
+                potCard.innerHTML = `
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:${potColor};margin-bottom:12px;">Your Potential</div>
+                    <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:14px;">
+                        <div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:2px;">Current</div>
+                            <div style="font-size:28px;font-weight:800;color:${scoreColor(overall)};">${overall.toFixed(2)}</div>
+                        </div>
+                        <div style="font-size:20px;color:rgba(255,255,255,0.2);padding-bottom:4px;">→</div>
+                        <div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:2px;">Potential</div>
+                            <div style="font-size:36px;font-weight:800;color:${potColor};" id="_potNum">${potentialScore.toFixed(2)}</div>
+                        </div>
+                        <div style="padding-bottom:4px;">
+                            <div style="font-size:12px;font-weight:700;color:${potColor};background:rgba(90,200,250,0.12);padding:3px 8px;border-radius:6px;">+${potGap}</div>
+                        </div>
+                    </div>
+                    <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;margin-bottom:10px;">
+                        <div style="height:100%;width:${(overall/10*100).toFixed(1)}%;background:${scoreColor(overall)};border-radius:3px;position:relative;">
+                            <div id="_potBar" style="position:absolute;top:0;right:-${((potentialScore-overall)/10*100).toFixed(1)}%;height:100%;width:${((potentialScore-overall)/10*100).toFixed(1)}%;background:${potColor};border-radius:0 3px 3px 0;transition:width 1.2s ease 300ms;opacity:0.7;"></div>
+                        </div>
+                    </div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;">
+                        With consistent softmax (mewing, diet, sleep posture) and selective medmax, reaching <span style="color:${potColor};font-weight:600;">${potentialScore.toFixed(2)}</span> is realistic. This is saved to your dashboard.
+                    </div>
+                `;
+                potWrap.appendChild(potCard);
+                fadeInEl(potWrap, potDelay, 600);
+                content.appendChild(potWrap);
+
+                // Save potential to localStorage for dashboard
+                if (window.LarpAuth && window.LarpAuth.isLoggedIn()) {
+                    try {
+                        const sess = window.LarpAuth.currentUser();
+                        localStorage.setItem('larp_potential_' + sess.email, potentialScore.toFixed(4));
+                    } catch(e) {}
+                }
+            }
         };
 
         /* ══════════════════════════════════════════════════

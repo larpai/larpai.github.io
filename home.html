@@ -67,6 +67,21 @@
         .stat-l { font-size:11px;color:rgba(255,255,255,0.3);font-weight:500; }
 
         .cta { text-align:center;padding:80px 32px 100px; }
+
+        /* LEADERBOARD */
+        .lb-section { max-width:840px;margin:0 auto;padding:0 32px 72px; }
+        .lb-item { display:flex;align-items:center;gap:14px;padding:13px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:8px;transition:border-color .2s; }
+        .lb-item:hover { border-color:rgba(255,255,255,0.15); }
+        .lb-rank { font-size:13px;font-weight:700;color:rgba(255,255,255,0.2);min-width:24px;text-align:center; }
+        .lb-rank.top1 { color:#ffd60a;font-size:18px; }
+        .lb-rank.top2 { color:#c0c0c0;font-size:16px; }
+        .lb-rank.top3 { color:#cd7f32;font-size:16px; }
+        .lb-name { flex:1;font-size:13px;font-weight:600;color:rgba(255,255,255,0.75); }
+        .lb-name .lb-you { font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);margin-left:7px; }
+        .lb-score { font-size:18px;font-weight:800;font-variant-numeric:tabular-nums; }
+        .lb-label { font-size:10px;color:rgba(255,255,255,0.25);margin-top:1px; }
+        .lb-bar-bg { width:80px;height:3px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden; }
+        .lb-bar-fill { height:100%;border-radius:2px; }
         .cta-t { font-size:clamp(26px,5vw,46px);font-weight:800;letter-spacing:-.03em;margin-bottom:14px;line-height:1.1; }
         .cta-s { font-size:14px;color:var(--dim);margin-bottom:36px;line-height:1.6; }
 
@@ -114,6 +129,7 @@
         <button class="hbtn hbtn-p" id="btnAnalysis">Analysis</button>
         <button class="hbtn hbtn-s" id="btnResults">Results</button>
         <button class="hbtn hbtn-s" id="btnDashboard" style="display:none;">Dashboard</button>
+        <button class="hbtn hbtn-s" id="btnLeaderboard">Leaderboard</button>
     </div>
 </section>
 
@@ -151,6 +167,15 @@
     <h2 class="cta-t">Know your face.<br>Fix what matters.</h2>
     <p class="cta-s">Free analysis. Sign up to save your results and track your progress over time.</p>
     <button class="hbtn hbtn-p" id="btnAnalysisCta" style="font-size:16px;padding:18px 52px;">Start Your Analysis</button>
+</div>
+
+<div class="div-line"></div>
+<div class="lb-section" id="leaderboardSection">
+    <div class="sec-label" style="text-align:center;margin-bottom:18px;">Top Scorers</div>
+    <div id="leaderboardList">
+        <div style="text-align:center;padding:32px 0;color:rgba(255,255,255,0.2);font-size:13px;">Loading leaderboard...</div>
+    </div>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(255,255,255,0.15);">Best analysis per user · logged-in accounts only</div>
 </div>
 
 <footer>
@@ -236,6 +261,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnDashboard')?.addEventListener('click', () => {
         window.location.href = 'dashboard.html';
     });
+    document.getElementById('btnLeaderboard')?.addEventListener('click', () => {
+        document.getElementById('leaderboardSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 
     // Overlay helpers
     const showOv = id => document.getElementById(id).classList.add('show');
@@ -290,6 +318,64 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('lrpLogin').addEventListener('click', () => window.location.href = 'login.html');
     document.getElementById('closeResultsPopup').addEventListener('click', () => hideOv('resultsPopup'));
     document.getElementById('newAnalysisBtn').addEventListener('click', () => window.location.href = 'app.html');
+
+    // ── LEADERBOARD ──────────────────────────────────────────────────────
+    // Collect best result per user from localStorage (all larp_results_* keys)
+    const buildLeaderboard = () => {
+        const lbEl = document.getElementById('leaderboardList');
+        if (!lbEl) return;
+        const entries = [];
+        const currentEmail = session ? session.email : null;
+
+        // Scan all localStorage keys for larp_results_
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key || !key.startsWith('larp_results_')) continue;
+            const email = key.replace('larp_results_', '');
+            if (email === 'guest') continue; // skip guests
+            try {
+                const results = JSON.parse(localStorage.getItem(key) || '[]');
+                if (!results.length) continue;
+                // Best result = highest overall
+                const best = results.reduce((a,b) => a.overall > b.overall ? a : b);
+                // Get display name from users store
+                const users = JSON.parse(localStorage.getItem('larp_users') || '{}');
+                const user  = users[email];
+                if (!user) continue;
+                const firstName = user.name.split(' ')[0];
+                entries.push({ name: firstName, email, score: best.overall, rating: best.rating, gender: best.gender });
+            } catch {}
+        }
+
+        entries.sort((a,b) => b.score - a.score);
+
+        if (entries.length === 0) {
+            lbEl.innerHTML = '<div style="text-align:center;padding:32px 0;color:rgba(255,255,255,0.18);font-size:13px;">No logged-in users yet. Be the first!</div>';
+            return;
+        }
+
+        const sc2 = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
+        lbEl.innerHTML = entries.slice(0, 10).map((e, i) => {
+            const rankClass = i===0?'top1':i===1?'top2':i===2?'top3':'';
+            const rankIcon  = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+            const isYou     = e.email === currentEmail;
+            const barW      = (e.score / 10 * 100).toFixed(1);
+            return `<div class="lb-item">
+                <div class="lb-rank ${rankClass}">${rankIcon}</div>
+                <div style="flex:1;">
+                    <div class="lb-name">${e.name}${isYou ? '<span class="lb-you">You</span>' : ''}</div>
+                    <div class="lb-bar-bg" style="margin-top:5px;">
+                        <div class="lb-bar-fill" style="width:${barW}%;background:${sc2(e.score)};"></div>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="lb-score" style="color:${sc2(e.score)};">${e.score.toFixed(3)}</div>
+                    <div class="lb-label">${e.rating?.label || '—'}</div>
+                </div>
+            </div>`;
+        }).join('');
+    };
+    buildLeaderboard();
 });
 </script>
 </body>

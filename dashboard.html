@@ -68,6 +68,17 @@
         .carousel-wrap{position:relative;overflow:hidden;}
         .carousel-track{display:flex;gap:12px;transition:transform .5s cubic-bezier(.4,0,.2,1);}
         .carousel-slide{min-width:calc(50% - 6px);background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:18px;}
+        /* SCORE GRAPH */
+        .graph-wrap{position:relative;width:100%;height:180px;margin-top:8px;}
+        .graph-wrap canvas{width:100%;height:100%;}
+        .graph-tooltip{position:absolute;background:#1a1a1a;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;color:#fff;pointer-events:none;white-space:nowrap;display:none;z-index:10;}
+
+        /* FEATURE GRAPH */
+        .feat-graph-wrap{position:relative;width:100%;height:220px;margin-top:8px;overflow:hidden;}
+        .feat-legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;}
+        .feat-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(255,255,255,0.45);cursor:pointer;}
+        .feat-legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
         @media(max-width:600px){.carousel-slide{min-width:calc(100% - 0px);}}
         .slide-feature{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;}
         .slide-scores{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
@@ -182,6 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const latest  = results[0];
+    // Load saved potential score
+    const potentialScore = (() => {
+        try {
+            const v = localStorage.getItem('larp_potential_' + session.email);
+            return v ? parseFloat(v) : null;
+        } catch { return null; }
+    })();
     const prev    = results[1] || null;
     const isFirst = results.length === 1;
 
@@ -234,8 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─────────────────────────────────────────────
     page.innerHTML = `
         ${buildScoreHero(latest, prev, delta, didImprove, isFirst, sc)}
+        ${buildDailyTip(latest, sc)}
         ${showImprove && improved.length > 0 ? buildImprovedCarousel(improved, sc) : ''}
         ${buildComposites(latest, sc)}
+        ${buildWeeklyReport(results, sc)}
+        ${buildScoreGraph(results, sc)}
+        ${buildFeatureGraph(results, sc)}
         ${buildFixGuide(fixItems, sc)}
         ${buildHistory(results, sc)}
     `;
@@ -249,6 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Wire carousel
     if (showImprove && improved.length > 0) initCarousel();
+
+    // Wire graphs (after DOM renders)
+    setTimeout(() => {
+        initScoreGraph(results, sc);
+        initFeatureGraph(results);
+    }, 100);
 
     // Wire accordion
     page.querySelectorAll('.fix-header').forEach(h => {
@@ -432,6 +460,26 @@ function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc) {
 
             ${compareStrip}
             ${noImprove}
+            ${potentialScore ? `
+            <div style="margin-top:16px;padding:14px 18px;background:rgba(90,200,250,0.07);border:1px solid rgba(90,200,250,0.2);border-radius:12px;text-align:left;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#5ac8fa;margin-bottom:10px;">Potential vs Reality</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="flex:1;">
+                        <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:5px;">
+                            <span>Current: <b style="color:${sc(latest.overall)}">${latest.overall.toFixed(3)}</b></span>
+                            <span>Potential: <b style="color:#5ac8fa">${potentialScore.toFixed(3)}</b></span>
+                        </div>
+                        <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+                            <div style="height:100%;width:${(latest.overall/potentialScore*100).toFixed(1)}%;background:${sc(latest.overall)};border-radius:3px;transition:width 1.2s ease .6s;"></div>
+                        </div>
+                        <div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:5px;">${((latest.overall/potentialScore)*100).toFixed(0)}% of your potential reached</div>
+                    </div>
+                    <div style="text-align:center;min-width:52px;">
+                        <div style="font-size:20px;font-weight:800;color:#5ac8fa;">+${(potentialScore-latest.overall).toFixed(2)}</div>
+                        <div style="font-size:9px;color:rgba(255,255,255,0.25);">to unlock</div>
+                    </div>
+                </div>
+            </div>` : ''}
         </div>
     </div>`;
 }
@@ -550,6 +598,389 @@ function buildHistory(results, sc) {
         <div class="sec-label" style="margin-bottom:14px;">Analysis History</div>
         ${items}
     </div>`;
+}
+
+// ─── DAILY TIP ───────────────────────────────────────────────────────────
+function buildDailyTip(latest, sc) {
+    const TIPS = {
+        symmetry: ["Sleep on your back tonight — side sleeping causes asymmetry over time.", "Chew equally on both sides at every meal today.", "Check your posture in the mirror — head tilt causes perceived asymmetry."],
+        goldenRatio: ["Try mewing consistently today — full tongue on roof of mouth 24/7.", "Avoid mouth breathing — it lengthens the lower face over time.", "Stay lean: body fat distorts your facial thirds proportions."],
+        FWHR: ["Mastic gum 60 min today — masseter growth increases lower FWHR.", "Cut to 10-12% body fat to reveal your true bizygomatic width.", "Wide hairstyles visually reduce FWHR — try a tighter style."],
+        eyeArea: ["Look up and open your eyes wide in the mirror — practise your eye openness.", "Avoid squinting in bright light — it trains the eyes closed over time.", "8+ hours sleep: under-eye bags crush your canthal tilt score."],
+        zygomatic: ["Buccal fat naturally reduces with age — staying lean accelerates this.", "Mewing develops the palate which pushes cheekbones forward over years.", "Contouring under the cheekbone creates immediate visual improvement."],
+        jawline: ["60-90 min of hard chewing today — mastic gum or falim.", "Mew 24/7: posterior tongue posture develops the jaw angle over time.", "Stay at 10-12% body fat to reveal your mandible definition."],
+        nose: ["Nose breathing only — mouth breathing flattens the midface and widens the nose.", "Check nose tip deviation in photos — small positional changes help."],
+        lips: ["Stay hydrated — dehydration makes lips appear thinner and less defined.", "Lip balm with SPF protects vermillion definition.", "Avoid over-lining the upper lip — it worsens your lower/upper ratio."],
+        maxilla: ["Mewing: full tongue suction hold for 10 minutes today.", "Nose breathe exclusively — mouth breathing collapses the maxilla.", "Chew hard foods — stimulates maxillary bone density."],
+        temples: ["Don't over-diet — losing facial fat hollows the temples fast.", "Temple fullness peaks at moderate body fat — 15-18% for males."],
+        eyebrows: ["Stop over-plucking. Let brows grow thick for 4 weeks.", "Apply minoxidil to brow tails — increases density in 8-12 weeks.", "Fill in the bottom edge of brows only — never the top."],
+        EMEangle: ["EME angle improves as your overall proportions improve — focus on FWHR and chin.", "Wider face = better EME angle — cheekbone work helps."],
+        goldenRatio: ["The 1:1:1 thirds rule: lower third is the most fixable with mewing and diet.", "Check your thirds in a photo today — which third is longest?"],
+        default: ["Drink 3L of water today — skin quality directly affects perceived facial scores.", "8-9 hours of sleep: HGH release during deep sleep promotes bone and tissue health.", "Get 20 min of sunlight — Vitamin D3 supports facial bone density.", "Check your posture — forward head posture adds a perceived double chin.", "Reduce sodium intake this week — facial puffiness masks your true bone structure."]
+    };
+
+    // Pick tip based on lowest feature and day of year
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+    const FEAT_ORDER = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
+        'jawline','nose','lips','maxilla','temples','eyebrows','EMEangle'];
+    const worstFeature = FEAT_ORDER
+        .map(k => ({ k, v: latest.scores?.[k] ?? 5 }))
+        .sort((a,b) => a.v - b.v)[0]?.k || 'default';
+
+    const tipPool = TIPS[worstFeature] || TIPS.default;
+    const tip     = tipPool[dayOfYear % tipPool.length];
+    const color   = sc(latest.scores?.[worstFeature] ?? 5);
+
+    return `<div class="card fade-up d2" style="margin-bottom:14px;background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%);">
+        <div style="display:flex;align-items:flex-start;gap:14px;">
+            <div style="font-size:28px;line-height:1;flex-shrink:0;">💡</div>
+            <div>
+                <div style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:6px;">Daily Tip</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.7);line-height:1.65;">${tip}</div>
+                <div style="font-size:10px;color:${color};margin-top:8px;font-weight:600;">Based on your ${worstFeature === 'default' ? 'profile' : 'lowest feature'}</div>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ─── WEEKLY REPORT CARD ──────────────────────────────────────────────────
+function buildWeeklyReport(results, sc) {
+    if (results.length < 2) return '';
+    const now = Date.now();
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const thisWeek = results.filter(r => r.date >= weekAgo);
+    const prevWeek = results.filter(r => r.date < weekAgo && r.date >= weekAgo - 7*24*60*60*1000);
+
+    // Need at least one result this week
+    if (thisWeek.length === 0) return '';
+
+    const latest  = thisWeek[0];
+    const oldest  = thisWeek[thisWeek.length - 1];
+    const weekDelta = thisWeek.length > 1 ? +(latest.overall - oldest.overall).toFixed(3) : null;
+
+    // Best/worst features this week vs last week
+    const FEAT_KEYS_W = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
+        'jawline','bizygoBigonial','nose','lips','maxilla','gonion','mandible',
+        'temples','eyebrows','EMEangle','facialIndex','neoclassical'];
+    const FEAT_NAMES_W = {
+        symmetry:'Symmetry',goldenRatio:'Facial Thirds',FWHR:'FWHR',midfaceRatio:'Midface',
+        eyeArea:'Eye Area',zygomatic:'Zygomatic',jawline:'Jawline',bizygoBigonial:'Bizygo/Bigonial',
+        nose:'Nose',lips:'Lips',maxilla:'Maxilla',gonion:'Gonion',mandible:'Mandible',
+        temples:'Temples',eyebrows:'Eyebrows',EMEangle:'EME Angle',facialIndex:'Facial Index',
+        neoclassical:'Neoclassical',
+    };
+
+    // Compare latest this week vs best of prev week
+    const prevBest = prevWeek.length > 0
+        ? prevWeek.reduce((a,b) => a.overall > b.overall ? a : b)
+        : null;
+
+    const improved = [];
+    const declined = [];
+    if (prevBest) {
+        FEAT_KEYS_W.forEach(k => {
+            const nv = latest.scores?.[k] ?? 0;
+            const pv = prevBest.scores?.[k] ?? 0;
+            const d  = nv - pv;
+            if (d > 0.05)  improved.push({ name: FEAT_NAMES_W[k], d: +d.toFixed(2) });
+            if (d < -0.05) declined.push({ name: FEAT_NAMES_W[k], d: +d.toFixed(2) });
+        });
+        improved.sort((a,b) => b.d - a.d);
+        declined.sort((a,b) => a.d - b.d);
+    }
+
+    const deltaStr   = weekDelta !== null ? (weekDelta >= 0 ? '+'+weekDelta : ''+weekDelta) : null;
+    const deltaColor = weekDelta > 0 ? '#30d158' : weekDelta < 0 ? '#ff453a' : '#ff9f0a';
+    const grade      = latest.overall >= 8 ? 'S' : latest.overall >= 7 ? 'A' : latest.overall >= 6 ? 'B' : latest.overall >= 5 ? 'C' : 'D';
+    const gradeColor = latest.overall >= 7 ? '#30d158' : latest.overall >= 5 ? '#ff9f0a' : '#ff453a';
+
+    const improvStr = improved.slice(0,3).map(f =>
+        `<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span style="color:rgba(255,255,255,0.55);">${f.name}</span>
+            <span style="color:#30d158;font-weight:700;">+${f.d}</span>
+        </div>`).join('');
+
+    const declineStr = declined.slice(0,2).map(f =>
+        `<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span style="color:rgba(255,255,255,0.55);">${f.name}</span>
+            <span style="color:#ff453a;font-weight:700;">${f.d}</span>
+        </div>`).join('');
+
+    const weekStr = thisWeek.length === 1 ? '1 analysis' : thisWeek.length + ' analyses';
+
+    return `<div class="card fade-up d5" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div class="sec-label" style="margin-bottom:0;">This Week's Report</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="font-size:10px;color:rgba(255,255,255,0.25);">${weekStr}</div>
+                <div style="width:40px;height:40px;border-radius:10px;background:${gradeColor}18;border:2px solid ${gradeColor};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:${gradeColor};">${grade}</div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div style="text-align:center;background:rgba(255,255,255,0.03);border-radius:10px;padding:10px;">
+                <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:4px;text-transform:uppercase;letter-spacing:.1em;">Best</div>
+                <div style="font-size:18px;font-weight:800;color:${sc(latest.overall)};">${latest.overall.toFixed(3)}</div>
+            </div>
+            <div style="text-align:center;background:rgba(255,255,255,0.03);border-radius:10px;padding:10px;">
+                <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:4px;text-transform:uppercase;letter-spacing:.1em;">Analyses</div>
+                <div style="font-size:18px;font-weight:800;color:rgba(255,255,255,0.7);">${thisWeek.length}</div>
+            </div>
+            <div style="text-align:center;background:rgba(255,255,255,0.03);border-radius:10px;padding:10px;">
+                <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:4px;text-transform:uppercase;letter-spacing:.1em;">Week Δ</div>
+                <div style="font-size:18px;font-weight:800;color:${deltaColor};">${deltaStr !== null ? deltaStr : '—'}</div>
+            </div>
+        </div>
+
+        ${improved.length > 0 ? `
+        <div style="margin-bottom:12px;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#30d158;margin-bottom:6px;">↑ Improved vs Last Week</div>
+            ${improvStr}
+        </div>` : ''}
+
+        ${declined.length > 0 ? `
+        <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#ff453a;margin-bottom:6px;">↓ Declined vs Last Week</div>
+            ${declineStr}
+        </div>` : ''}
+
+        ${prevWeek.length === 0 ? `<div style="font-size:12px;color:rgba(255,255,255,0.25);text-align:center;padding:8px 0;">No previous week data to compare yet.</div>` : ''}
+    </div>`;
+}
+
+// ─── SCORE GRAPH ─────────────────────────────────────────────────────────
+function buildScoreGraph(results, sc) {
+    if (results.length < 2) return '';
+    return `<div class="card fade-up d6" style="margin-bottom:14px;">
+        <div class="sec-label" style="margin-bottom:4px;">Score Over Time</div>
+        <div class="graph-wrap">
+            <canvas id="scoreGraphCanvas"></canvas>
+            <div class="graph-tooltip" id="scoreGraphTooltip"></div>
+        </div>
+    </div>`;
+}
+
+function initScoreGraph(results, sc) {
+    const canvas = document.getElementById('scoreGraphCanvas');
+    if (!canvas || results.length < 2) return;
+    const tooltip = document.getElementById('scoreGraphTooltip');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.parentElement.offsetWidth;
+    const H = 180;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    // results newest first — reverse for chronological
+    const pts = [...results].reverse();
+    const scores = pts.map(r => r.overall);
+    const minS = Math.max(0, Math.min(...scores) - 0.5);
+    const maxS = Math.min(10, Math.max(...scores) + 0.5);
+    const pad = { t:16, r:16, b:32, l:36 };
+    const gW = W - pad.l - pad.r;
+    const gH = H - pad.t - pad.b;
+
+    const px = (i) => pad.l + (i / (pts.length - 1)) * gW;
+    const py = (v) => pad.t + (1 - (v - minS) / (maxS - minS)) * gH;
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = pad.t + (i / 4) * gH;
+        ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+        const val = maxS - (i / 4) * (maxS - minS);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.font = '9px -apple-system,sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(val.toFixed(1), pad.l - 4, y + 3);
+    }
+
+    // Gradient fill under line
+    const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + gH);
+    grad.addColorStop(0, 'rgba(48,209,88,0.25)');
+    grad.addColorStop(1, 'rgba(48,209,88,0)');
+    ctx.beginPath();
+    ctx.moveTo(px(0), py(scores[0]));
+    for (let i = 1; i < pts.length; i++) {
+        const cpx = (px(i-1) + px(i)) / 2;
+        ctx.bezierCurveTo(cpx, py(scores[i-1]), cpx, py(scores[i]), px(i), py(scores[i]));
+    }
+    ctx.lineTo(px(pts.length-1), pad.t + gH);
+    ctx.lineTo(px(0), pad.t + gH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(px(0), py(scores[0]));
+    for (let i = 1; i < pts.length; i++) {
+        const cpx = (px(i-1) + px(i)) / 2;
+        ctx.bezierCurveTo(cpx, py(scores[i-1]), cpx, py(scores[i]), px(i), py(scores[i]));
+    }
+    ctx.strokeStyle = '#30d158';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Dots + date labels
+    pts.forEach((r, i) => {
+        const x = px(i), y = py(scores[i]);
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI*2);
+        ctx.fillStyle = sc(scores[i]);
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Date label
+        const d = new Date(r.date);
+        const label = d.getDate() + '/' + (d.getMonth()+1);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '9px -apple-system,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, x, H - 6);
+    });
+
+    // Hover tooltip
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        let closest = 0, minDist = Infinity;
+        pts.forEach((_, i) => {
+            const dist = Math.abs(mx - px(i));
+            if (dist < minDist) { minDist = dist; closest = i; }
+        });
+        if (minDist < 30) {
+            const r = pts[closest];
+            const d = new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+            tooltip.style.display = 'block';
+            tooltip.style.left = (px(closest) - 40) + 'px';
+            tooltip.style.top  = (py(scores[closest]) - 36) + 'px';
+            tooltip.innerHTML = `<span style="color:${sc(scores[closest])}">${scores[closest].toFixed(3)}</span> <span style="color:rgba(255,255,255,0.35);font-weight:400">${d}</span>`;
+        } else {
+            tooltip.style.display = 'none';
+        }
+    });
+    canvas.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+}
+
+// ─── FEATURE GRAPH ────────────────────────────────────────────────────────
+const FEAT_KEYS = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
+    'jawline','bizygoBigonial','nose','lips','maxilla','gonion','mandible',
+    'temples','eyebrows','EMEangle','facialIndex','neoclassical'];
+const FEAT_NAMES = {
+    symmetry:'Symmetry',goldenRatio:'Thirds',FWHR:'FWHR',midfaceRatio:'Midface',
+    eyeArea:'Eyes',zygomatic:'Zygomatic',jawline:'Jawline',bizygoBigonial:'Bizygo/Big',
+    nose:'Nose',lips:'Lips',maxilla:'Maxilla',gonion:'Gonion',mandible:'Mandible',
+    temples:'Temples',eyebrows:'Brows',EMEangle:'EME',facialIndex:'Facial Idx',neoclassical:'Neoclassical',
+};
+const FEAT_COLORS = [
+    '#30d158','#5ac8fa','#ff9f0a','#ff453a','#bf5af2','#ff6b35','#ffd60a',
+    '#0af5a0','#ff375f','#00c7be','#32ade6','#ff6961','#ffb340','#30b0c7',
+    '#ac8e68','#636366','#aeaeb2','#e5e5ea'
+];
+
+function buildFeatureGraph(results, sc) {
+    if (results.length < 2) return '';
+    return `<div class="card fade-up d7" style="margin-bottom:14px;">
+        <div class="sec-label" style="margin-bottom:4px;">Feature Progress</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-bottom:8px;">Each line = one feature. Tap legend to toggle.</div>
+        <div class="feat-graph-wrap">
+            <canvas id="featGraphCanvas"></canvas>
+        </div>
+        <div class="feat-legend" id="featLegend"></div>
+    </div>`;
+}
+
+function initFeatureGraph(results) {
+    const canvas = document.getElementById('featGraphCanvas');
+    if (!canvas || results.length < 2) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.parentElement.offsetWidth;
+    const H = 220;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+
+    const pts = [...results].reverse();
+    const hidden = new Set();
+
+    const draw = () => {
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+
+        const pad = { t:12, r:12, b:28, l:28 };
+        const gW = W - pad.l - pad.r;
+        const gH = H - pad.t - pad.b;
+        const px = (i) => pad.l + (i / (pts.length - 1)) * gW;
+        const py = (v) => pad.t + (1 - v / 10) * gH;
+
+        // Grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 5; i++) {
+            const y = pad.t + (i/5)*gH;
+            ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.font = '8px -apple-system,sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText((10 - i*2).toString(), pad.l-3, y+3);
+        }
+        // Date labels
+        pts.forEach((r, i) => {
+            const d = new Date(r.date);
+            const label = d.getDate() + '/' + (d.getMonth()+1);
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.font = '8px -apple-system,sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, px(i), H - 6);
+        });
+
+        // Feature lines
+        FEAT_KEYS.forEach((k, fi) => {
+            if (hidden.has(k)) return;
+            const col = FEAT_COLORS[fi];
+            ctx.beginPath();
+            ctx.strokeStyle = col;
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.8;
+            pts.forEach((r, i) => {
+                const v = r.scores?.[k] ?? 0;
+                if (i === 0) ctx.moveTo(px(i), py(v));
+                else {
+                    const cpx = (px(i-1)+px(i))/2;
+                    ctx.bezierCurveTo(cpx, py(pts[i-1].scores?.[k]??0), cpx, py(v), px(i), py(v));
+                }
+            });
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        });
+    };
+
+    draw();
+
+    // Legend
+    const legend = document.getElementById('featLegend');
+    if (legend) {
+        FEAT_KEYS.forEach((k, fi) => {
+            const item = document.createElement('div');
+            item.className = 'feat-legend-item';
+            item.innerHTML = `<div class="feat-legend-dot" style="background:${FEAT_COLORS[fi]};"></div><span>${FEAT_NAMES[k]}</span>`;
+            item.addEventListener('click', () => {
+                if (hidden.has(k)) { hidden.delete(k); item.style.opacity='1'; }
+                else { hidden.add(k); item.style.opacity='0.3'; }
+                draw();
+            });
+            legend.appendChild(item);
+        });
+    }
 }
 
 // ─── UTILITIES ───────────────────────────────────────────────────────────
