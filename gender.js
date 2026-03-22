@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * gender.js — Manual gender selection for FacialAnalyzer
  *

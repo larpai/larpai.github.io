@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * FacialAnalyzer v4.4 — Mobile hairline drag fixed edition
  *
@@ -519,8 +520,8 @@ class FacialAnalyzer {
             // blackout and fade in results panel.
             setTimeout(() => this._showCinematicReveal(this.scores, this.measurements, () => {
                 // Save result to Auth storage
-                if (typeof LarpAuth !== 'undefined') {
-                    LarpAuth.saveResult({
+                if (typeof Auth !== 'undefined') {
+                    Auth.saveResult({
                         overall: this.scores.overall,
                         label:   this.scores.looksmaxxRating?.label,
                         gender:  this._selectedGender,
@@ -1928,6 +1929,24 @@ class FacialAnalyzer {
             return wrapper;
         };
 
+        // safeTap: only fires onClick if the finger didn't scroll (moved < 8px).
+        // Prevents touchend after scrolling from triggering button actions on mobile.
+        const safeTap = (el, onClick) => {
+            let startY = 0, startX = 0;
+            el.addEventListener('touchstart', e => {
+                startY = e.touches[0].clientY;
+                startX = e.touches[0].clientX;
+            }, { passive: true });
+            el.addEventListener('touchend', e => {
+                const dy = Math.abs(e.changedTouches[0].clientY - startY);
+                const dx = Math.abs(e.changedTouches[0].clientX - startX);
+                if (dy < 8 && dx < 8) {
+                    e.preventDefault();
+                    onClick();
+                }
+            });
+        };
+
         const nextBtn = (label, onClick) => {
             const btn = document.createElement('button');
             btn.style.cssText = `
@@ -1941,7 +1960,7 @@ class FacialAnalyzer {
             btn.onmouseenter = () => { btn.style.background='rgba(255,255,255,0.1)'; btn.style.color='#fff'; };
             btn.onmouseleave = () => { btn.style.background='rgba(255,255,255,0.06)'; btn.style.color='rgba(255,255,255,0.8)'; };
             btn.addEventListener('click', onClick);
-            btn.addEventListener('touchend', e => { e.preventDefault(); onClick(); });
+            safeTap(btn, onClick);
             return btn;
         };
 
@@ -2000,7 +2019,7 @@ class FacialAnalyzer {
             }, 1800);
             const goPhase1 = () => phase1();
             continueBtn.addEventListener('click', goPhase1);
-            continueBtn.addEventListener('touchend', e => { e.preventDefault(); goPhase1(); });
+            safeTap(continueBtn, goPhase1);
 
             wrap.appendChild(larpLabel);
             wrap.appendChild(title);
@@ -2475,7 +2494,7 @@ class FacialAnalyzer {
                 }, 400);
             };
             ctaBtn.addEventListener('click', dismiss);
-            ctaBtn.addEventListener('touchend', e => { e.preventDefault(); dismiss(); });
+            safeTap(ctaBtn, dismiss);
 
             const ctaSub = document.createElement('div');
             ctaSub.style.cssText = `font-size:11px;color:rgba(255,255,255,0.2);margin-top:10px;`;
@@ -2501,19 +2520,19 @@ class FacialAnalyzer {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-window._analyzerInstance = new FacialAnalyzer();
+    window._analyzerInstance = new FacialAnalyzer();
 
-// Show auth status pill
-if (typeof LarpAuth !== 'undefined') {
-const pill = document.getElementById('_authPill');
-if (pill) {
-const user = LarpAuth.currentUser();
-if (user) {
-pill.textContent = '✓ ' + user.name;
-pill.style.color = 'rgba(48,209,88,0.6)';
-} else {
-pill.innerHTML = '<a href="login.html" style="color:rgba(255,255,255,0.2);text-decoration:none;" onmouseover="this.style.color=\'rgba(255,255,255,0.5)\'" onmouseout="this.style.color=\'rgba(255,255,255,0.2)\'">Log in to save results</a>';
-}
-}
-}
+    // Show auth status pill
+    if (typeof Auth !== 'undefined') {
+        const pill = document.getElementById('_authPill');
+        if (pill) {
+            const user = Auth.currentUser();
+            if (user) {
+                pill.textContent = '\u2713 ' + user.username;
+                pill.style.color = 'rgba(48,209,88,0.6)';
+            } else {
+                pill.innerHTML = '<a href="login.html" style="color:rgba(255,255,255,0.2);text-decoration:none;">Log in to save results</a>';
+            }
+        }
+    }
 });

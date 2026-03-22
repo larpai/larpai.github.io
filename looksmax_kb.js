@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * looksmax_kb.js — Comprehensive Looksmaxxing Knowledge Base
  * Sources: looksmax.org threads, PSL community consensus, aesthetic surgery literature
