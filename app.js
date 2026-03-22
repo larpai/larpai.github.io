@@ -518,6 +518,18 @@ class FacialAnalyzer {
             // Cinematic sits on top at z-index 4000. When it dismisses, remove
             // blackout and fade in results panel.
             setTimeout(() => this._showCinematicReveal(this.scores, this.measurements, () => {
+                // Save result to Auth storage
+                if (typeof LarpAuth !== 'undefined') {
+                    LarpAuth.saveResult({
+                        overall: this.scores.overall,
+                        label:   this.scores.looksmaxxRating?.label,
+                        gender:  this._selectedGender,
+                        HARM:    this.scores.HARM,
+                        ANGU:    this.scores.ANGU,
+                        DIMO:    this.scores.DIMO,
+                        MISC:    this.scores.MISC,
+                    });
+                }
                 // Remove blackout
                 const bo = document.getElementById('_resultsBlackout');
                 if (bo) bo.remove();
@@ -1772,7 +1784,7 @@ class FacialAnalyzer {
         ov.innerHTML = `
             <div id="_cBg" style="position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 30%, rgba(${glowColor},0.15) 0%, #000 65%);pointer-events:none;z-index:0;opacity:0;transition:opacity 1.2s ease;"></div>
             <div id="_cContent" style="position:relative;z-index:1;width:100%;max-width:560px;padding:0 20px 60px;min-height:100vh;box-sizing:border-box;"></div>
-            <div id="_cSkipHint" style="position:fixed;bottom:20px;right:20px;font-size:11px;color:rgba(255,255,255,0.2);z-index:10;pointer-events:none;">Tap to skip</div>
+
         `;
         document.body.appendChild(ov);
 
@@ -1970,16 +1982,31 @@ class FacialAnalyzer {
             sub.textContent = 'Detailed biometric facial analysis complete';
             fadeInEl(sub, 1200, 400);
 
-            const tapHint = document.createElement('div');
-            tapHint.style.cssText = `font-size:11px;color:rgba(255,255,255,0.2);margin-top:40px;`;
-            tapHint.textContent = 'tap anywhere to continue';
-            fadeInEl(tapHint, 1800, 500);
+            const continueBtn = document.createElement('button');
+            continueBtn.style.cssText = `
+                margin-top:44px;padding:14px 40px;border-radius:13px;border:1px solid rgba(255,255,255,0.18);
+                background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);
+                font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+                letter-spacing:-.01em;transition:all 0.15s;touch-action:manipulation;
+                opacity:0;
+            `;
+            continueBtn.textContent = 'See Your Results →';
+            continueBtn.onmouseenter = () => { continueBtn.style.background='rgba(255,255,255,0.12)'; continueBtn.style.color='#fff'; };
+            continueBtn.onmouseleave = () => { continueBtn.style.background='rgba(255,255,255,0.07)'; continueBtn.style.color='rgba(255,255,255,0.8)'; };
+            // Fade in the button after the title animation completes
+            setTimeout(() => {
+                continueBtn.style.transition = 'opacity 500ms ease, background 0.15s, color 0.15s';
+                continueBtn.style.opacity = '1';
+            }, 1800);
+            const goPhase1 = () => phase1();
+            continueBtn.addEventListener('click', goPhase1);
+            continueBtn.addEventListener('touchend', e => { e.preventDefault(); goPhase1(); });
 
             wrap.appendChild(larpLabel);
             wrap.appendChild(title);
             wrap.appendChild(line);
             wrap.appendChild(sub);
-            wrap.appendChild(tapHint);
+            wrap.appendChild(continueBtn);
             content.appendChild(wrap);
         };
 
@@ -2466,33 +2493,27 @@ class FacialAnalyzer {
         ══════════════════════════════════════════════════ */
         phase0();
 
-        // Phase 0 advances on tap after 1.5s (prevents accidental skip)
-        let phase0Tappable = false;
-        setTimeout(() => { phase0Tappable = true; }, 1500);
-
-        const phase0Handler = (e) => {
-            if (!phase0Tappable) return;
-            if (e.target.tagName === 'BUTTON') return;
-            // Check still on phase 0
-            if (!ov.querySelector('#_cinematicOv') && !document.getElementById('_cinematicOv')) return;
-            if (content.querySelector('.feature-item') === null && !content.querySelector('[data-phase]')) {
-                ov.removeEventListener('click', phase0Handler);
-                ov.removeEventListener('touchend', phase0Handler);
-                phase1();
-            }
-        };
-        ov.addEventListener('click', phase0Handler);
-        ov.addEventListener('touchend', e => { if (!phase0Tappable || e.target.tagName==='BUTTON') return; phase0Handler(e); });
-
-        // Hide skip hint after phase 0
-        setTimeout(() => {
-            const hint = ov.querySelector('#_cSkipHint');
-            if (hint) hint.style.display = 'none';
-        }, 4000);
+        // Phase 0 has its own "tap to continue" button injected into the content.
+        // NO ambient tap/click listeners on the overlay — scrolling must never trigger phase changes.
+        // The _phase0ContinueBtn is added by phase0() after a short delay.
     }
     delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window._analyzerInstance = new FacialAnalyzer();
+window._analyzerInstance = new FacialAnalyzer();
+
+// Show auth status pill
+if (typeof LarpAuth !== 'undefined') {
+const pill = document.getElementById('_authPill');
+if (pill) {
+const user = LarpAuth.currentUser();
+if (user) {
+pill.textContent = '✓ ' + user.name;
+pill.style.color = 'rgba(48,209,88,0.6)';
+} else {
+pill.innerHTML = '<a href="login.html" style="color:rgba(255,255,255,0.2);text-decoration:none;" onmouseover="this.style.color=\'rgba(255,255,255,0.5)\'" onmouseout="this.style.color=\'rgba(255,255,255,0.2)\'">Log in to save results</a>';
+}
+}
+}
 });
