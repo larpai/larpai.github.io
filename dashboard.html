@@ -193,11 +193,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const latest  = results[0];
-    // Load saved potential score
+    // Load saved potential score — fallback: calculate from oldest result's scores
     const potentialScore = (() => {
         try {
             const v = localStorage.getItem('larp_potential_' + session.email);
-            return v ? parseFloat(v) : null;
+            if (v) return parseFloat(v);
+            // Fallback: calculate from latest scores if not saved
+            const s = latest.scores;
+            if (!s) return null;
+            const CEILING = 9.5;
+            const ORDER_P = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
+                'jawline','bizygoBigonial','nose','lips','maxilla','gonion','mandible',
+                'temples','eyebrows','EMEangle','facialIndex','neoclassical'];
+            let p = {};
+            ORDER_P.forEach(k => { const c = s[k]??5; p[k] = c + (CEILING-c)*0.55; });
+            const w = (pairs) => { let t=0,wt=0; pairs.forEach(([v,wt2])=>{t+=Math.min(10,Math.max(0,v))*wt2;wt+=wt2;}); return t/wt; };
+            const pH = w([[p.symmetry,0.28],[p.goldenRatio,0.18],[p.FWHR,0.18],[p.midfaceRatio,0.18],[p.bizygoBigonial,0.18]]);
+            const pA = w([[p.jawline,0.33],[p.zygomatic,0.27],[p.gonion,0.22],[p.mandible,0.18]]);
+            const pD = w([[p.jawline,0.30],[p.FWHR,0.25],[p.eyebrows,0.20],[p.gonion,0.15],[p.eyeArea,0.10]]);
+            const pM = w([[p.eyeArea,0.25],[p.nose,0.20],[p.lips,0.15],[p.temples,0.10],[p.EMEangle,0.15],[p.neoclassical,0.15]]);
+            const calc = Math.min(9.8, pH*0.32 + pM*0.26 + pA*0.22 + pD*0.20);
+            // Save it for next time
+            localStorage.setItem('larp_potential_' + session.email, calc.toFixed(4));
+            return calc;
         } catch { return null; }
     })();
     const prev    = results[1] || null;
