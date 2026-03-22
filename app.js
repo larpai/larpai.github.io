@@ -1774,6 +1774,12 @@ class FacialAnalyzer {
         const FDN      = window.LOOKSMAX_FOUNDATION || null;
         const scoreColor = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
 
+        // Determine if this is the user's first analysis (result not yet saved)
+        const _prevResults = (window.LarpAuth && window.LarpAuth.isLoggedIn())
+            ? window.LarpAuth.getResults() : [];
+        const isFirstAnalysis = _prevResults.length === 0;
+        const prevResult      = _prevResults[0] || null; // most recent previous result
+
         /* ── build overlay ── */
         const ov = document.createElement('div');
         ov.id = '_cinematicOv';
@@ -2021,7 +2027,10 @@ class FacialAnalyzer {
                 continueBtn.style.transition = 'opacity 500ms ease, background 0.15s, color 0.15s';
                 continueBtn.style.opacity = '1';
             }, 1800);
-            const goPhase1 = () => phase1();
+            const goPhase1 = () => {
+                if (isFirstAnalysis) phase1();
+                else phase4();
+            };
             continueBtn.addEventListener('click', goPhase1);
             safeTap(continueBtn, goPhase1);
 
@@ -2476,6 +2485,82 @@ class FacialAnalyzer {
             }, 500);
 
             // CTA
+            // ── Feature deltas (only for return users) ──────────────────
+            if (!isFirstAnalysis && prevResult) {
+                const deltaWrap = document.createElement('div');
+                deltaWrap.style.cssText = `width:100%;max-width:380px;margin:0 auto 24px;`;
+
+                const deltaLabel = document.createElement('div');
+                deltaLabel.style.cssText = `font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:14px;text-align:left;`;
+                deltaLabel.textContent = 'Feature Changes';
+                deltaWrap.appendChild(deltaLabel);
+
+                const ORDER_FEAT = ['symmetry','goldenRatio','FWHR','midfaceRatio','eyeArea','zygomatic',
+                    'jawline','bizygoBigonial','nose','lips','maxilla','gonion','mandible',
+                    'temples','eyebrows','EMEangle','facialIndex','neoclassical'];
+                const FEAT_NAMES = {
+                    symmetry:'Symmetry',goldenRatio:'Facial Thirds',FWHR:'FWHR',
+                    midfaceRatio:'Midface Ratio',eyeArea:'Eye Area',zygomatic:'Zygomatic',
+                    jawline:'Jawline',bizygoBigonial:'Bizygo/Bigonial',nose:'Nose',
+                    lips:'Lips',maxilla:'Maxilla',gonion:'Gonion',mandible:'Mandible',
+                    temples:'Temples',eyebrows:'Eyebrows',EMEangle:'EME Angle',
+                    facialIndex:'Facial Index',neoclassical:'Neoclassical',
+                };
+
+                const deltas = ORDER_FEAT.map(k => ({
+                    k,
+                    name: FEAT_NAMES[k] || k,
+                    nv: scores[k] ?? 0,
+                    pv: prevResult.scores?.[k] ?? 0,
+                    d:  (scores[k] ?? 0) - (prevResult.scores?.[k] ?? 0),
+                })).filter(f => Math.abs(f.d) > 0.01)
+                  .sort((a,b) => b.d - a.d);
+
+                deltas.forEach((f, i) => {
+                    const col = f.d > 0 ? '#30d158' : '#ff453a';
+                    const sign = f.d > 0 ? '+' : '';
+                    const row = document.createElement('div');
+                    row.style.cssText = `
+                        display:flex;align-items:center;gap:10px;margin-bottom:7px;
+                        opacity:0;transform:translateX(-12px);
+                        transition:opacity 350ms ease ${2800 + i*80}ms, transform 350ms ease ${2800 + i*80}ms;
+                    `;
+                    row.innerHTML = `
+                        <span style="font-size:11px;color:rgba(255,255,255,0.5);min-width:106px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</span>
+                        <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+                            <div style="height:100%;width:0%;background:${col};border-radius:2px;transition:width 0.7s ease ${3000 + i*80}ms;" data-fw="${Math.min(10,Math.max(0,f.nv))*10}"></div>
+                        </div>
+                        <span style="font-size:11px;font-weight:700;color:${col};min-width:44px;text-align:right;font-variant-numeric:tabular-nums;">${sign}${f.d.toFixed(2)}</span>
+                    `;
+                    deltaWrap.appendChild(row);
+                    // Trigger animation
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateX(0)';
+                    }));
+                });
+
+                if (deltas.length === 0) {
+                    const none = document.createElement('div');
+                    none.style.cssText = `font-size:12px;color:rgba(255,255,255,0.25);text-align:center;padding:12px 0;`;
+                    none.textContent = 'No significant changes from last analysis';
+                    deltaWrap.appendChild(none);
+                }
+
+                fadeInEl(deltaWrap, 2600, 500);
+                content.appendChild(deltaWrap);
+
+                // Animate delta bars after they appear
+                setTimeout(() => {
+                    deltaWrap.querySelectorAll('[data-fw]').forEach(bar => {
+                        bar.style.width = bar.dataset.fw + '%';
+                    });
+                }, 3000);
+            }
+
+            // ── CTA button ──────────────────────────────────────────────
+            const ctaDelay = isFirstAnalysis ? 2200 : 3200 + (prevResult ? Math.min(18, Object.keys(scores).length) * 80 : 0);
+
             const ctaWrap = document.createElement('div');
             ctaWrap.style.cssText = `width:100%;max-width:320px;margin:0 auto;`;
             const ctaBtn = document.createElement('button');
@@ -2486,7 +2571,7 @@ class FacialAnalyzer {
                 transition:transform 0.15s,box-shadow 0.15s;
                 touch-action:manipulation;
             `;
-            ctaBtn.textContent = 'See Full Analysis →';
+            ctaBtn.textContent = isFirstAnalysis ? 'See Full Analysis →' : 'Go to Dashboard →';
             ctaBtn.onmouseenter = () => { ctaBtn.style.transform='translateY(-2px)'; ctaBtn.style.boxShadow='0 8px 24px rgba(255,255,255,0.2)'; };
             ctaBtn.onmouseleave = () => { ctaBtn.style.transform=''; ctaBtn.style.boxShadow=''; };
             const dismiss = () => {
@@ -2502,23 +2587,90 @@ class FacialAnalyzer {
 
             const ctaSub = document.createElement('div');
             ctaSub.style.cssText = `font-size:11px;color:rgba(255,255,255,0.2);margin-top:10px;`;
-            ctaSub.textContent = 'All 18 scores, measurements & improvement guides';
+            ctaSub.textContent = isFirstAnalysis ? 'All 18 scores, measurements & improvement guides' : 'See your full score breakdown & improvement guide';
 
             ctaWrap.appendChild(ctaBtn);
             ctaWrap.appendChild(ctaSub);
-            fadeInEl(ctaWrap, 2200, 600);
+            fadeInEl(ctaWrap, ctaDelay, 600);
             content.appendChild(ctaWrap);
         };
 
         /* ══════════════════════════════════════════════════
-           TAP-TO-ADVANCE from phase 0 only
-           (phases 1-3 have explicit next buttons)
+           PHASE 0 SHORT — return user title screen
+           Same look as phase0 but subtitle says "New results in"
         ══════════════════════════════════════════════════ */
-        phase0();
+        const phase0_short = () => {
+            content.innerHTML = '';
+            ov.scrollTop = 0;
+            content.style.display = 'flex';
+            content.style.flexDirection = 'column';
+            content.style.alignItems = 'center';
+            content.style.justifyContent = 'center';
+            content.style.minHeight = '100vh';
+            content.style.textAlign = 'center';
+            content.style.paddingTop = '0';
+            bg.style.opacity = '1';
 
-        // Phase 0 has its own "tap to continue" button injected into the content.
-        // NO ambient tap/click listeners on the overlay — scrolling must never trigger phase changes.
-        // The _phase0ContinueBtn is added by phase0() after a short delay.
+            const wrap = document.createElement('div');
+            wrap.style.cssText = `padding:20px;width:100%;max-width:400px;`;
+
+            const larpLabel = document.createElement('div');
+            larpLabel.style.cssText = `font-size:11px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:20px;`;
+            larpLabel.textContent = 'larp.ai';
+            fadeInEl(larpLabel, 200);
+
+            const title = document.createElement('div');
+            title.style.cssText = `font-size:52px;font-weight:800;color:#fff;line-height:1.05;letter-spacing:-.03em;margin-bottom:12px;`;
+            title.innerHTML = `Your<br>Results<br><span style="color:rgba(255,255,255,0.4);">Are In</span>`;
+            fadeInEl(title, 500, 600, 30);
+
+            const line = document.createElement('div');
+            line.style.cssText = `width:36px;height:2px;background:rgba(255,255,255,0.25);margin:20px auto;`;
+            fadeInEl(line, 1000, 400);
+
+            const sub = document.createElement('div');
+            sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);line-height:1.6;`;
+            sub.textContent = 'Let’s see how you did this time';
+            fadeInEl(sub, 1200, 400);
+
+            const continueBtn = document.createElement('button');
+            continueBtn.style.cssText = `
+                margin-top:44px;padding:14px 40px;border-radius:13px;border:1px solid rgba(255,255,255,0.18);
+                background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);
+                font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+                letter-spacing:-.01em;transition:all 0.15s;touch-action:manipulation;
+                opacity:0;
+            `;
+            continueBtn.textContent = 'See Your Score →';
+            continueBtn.onmouseenter = () => { continueBtn.style.background='rgba(255,255,255,0.12)'; continueBtn.style.color='#fff'; };
+            continueBtn.onmouseleave = () => { continueBtn.style.background='rgba(255,255,255,0.07)'; continueBtn.style.color='rgba(255,255,255,0.8)'; };
+            setTimeout(() => {
+                continueBtn.style.transition = 'opacity 500ms ease, background 0.15s, color 0.15s';
+                continueBtn.style.opacity = '1';
+            }, 1800);
+            const go = () => phase4();
+            continueBtn.addEventListener('click', go);
+            safeTap(continueBtn, go);
+
+            wrap.appendChild(larpLabel);
+            wrap.appendChild(title);
+            wrap.appendChild(line);
+            wrap.appendChild(sub);
+            wrap.appendChild(continueBtn);
+            content.appendChild(wrap);
+        };
+
+        /* ══════════════════════════════════════════════════
+           LAUNCH: first analysis = full cinematic
+                   subsequent     = title → score only
+        ══════════════════════════════════════════════════ */
+        if (isFirstAnalysis) {
+            // Full flow: title → strengths → weaknesses → flaw pages → foundation → score
+            phase0();
+        } else {
+            // Return user: title → score + feature deltas → dashboard
+            phase0_short();
+        }
     }
     delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 }
