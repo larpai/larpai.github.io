@@ -113,6 +113,7 @@
     <div class="hero-btns fu4">
         <button class="hbtn hbtn-p" id="btnAnalysis">Analysis</button>
         <button class="hbtn hbtn-s" id="btnResults">Results</button>
+        <button class="hbtn hbtn-s" id="btnDashboard" style="display:none;">Dashboard</button>
     </div>
 </section>
 
@@ -226,6 +227,15 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem('larp_login_success');
         auth.showToast('Welcome back, ' + n, 'success', 3500);
     }
+
+    // Show dashboard button if logged in
+    if (auth.isLoggedIn()) {
+        const db = document.getElementById('btnDashboard');
+        if (db) db.style.display = '';
+    }
+    document.getElementById('btnDashboard')?.addEventListener('click', () => {
+        window.location.href = 'dashboard.html';
+    });
 
     // Overlay helpers
     const showOv = id => document.getElementById(id).classList.add('show');
