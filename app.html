@@ -794,19 +794,34 @@
         }
     })();
 
-    // Save result after cinematic dismisses — hook into the onDone callback
-    // We patch LarpAuth.saveResult to be called from the cinematic onDone
+    // After cinematic "See Full Analysis" is dismissed:
+    // 1. Save result to localStorage
+    // 2. Set flag so dashboard knows to animate
+    // 3. If logged in → redirect to dashboard
     document.addEventListener('DOMContentLoaded', () => {
-        const origShowCinematic = FacialAnalyzer.prototype._showCinematicReveal;
-        // The save is done inside the analyze() flow via a patched onDone
-        // We patch analyze() to also save the result
         const origAnalyze = FacialAnalyzer.prototype.analyze;
         FacialAnalyzer.prototype.analyze = async function() {
             await origAnalyze.call(this);
-            // After analyze resolves, scores and measurements are set
             if (this.scores && this.scores.overall && window.LarpAuth) {
                 window.LarpAuth.saveResult(this.scores, this.measurements, this._selectedGender);
+                // Flag for dashboard animation
+                sessionStorage.setItem('larp_just_analysed', '1');
             }
+        };
+
+        // Patch the cinematic onDone to redirect to dashboard if logged in
+        const origCinematic = FacialAnalyzer.prototype._showCinematicReveal;
+        FacialAnalyzer.prototype._showCinematicReveal = function(scores, m, onDone) {
+            const wrappedOnDone = () => {
+                if (onDone) onDone();
+                // After results panel fades in, redirect logged-in users to dashboard
+                if (window.LarpAuth && window.LarpAuth.isLoggedIn()) {
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1200);
+                }
+            };
+            origCinematic.call(this, scores, m, wrappedOnDone);
         };
     });
     </script>

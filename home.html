@@ -247,6 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Results
     document.getElementById('btnResults').addEventListener('click', () => {
         if (!auth.isLoggedIn()) { showOv('loginRequiredPopup'); return; }
+        // Logged in — go to dashboard
+        window.location.href = 'dashboard.html';
+        return;
         const results = auth.getResults();
         const list    = document.getElementById('resultsHistoryList');
         const sc = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
