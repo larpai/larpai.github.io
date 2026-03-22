@@ -1553,7 +1553,7 @@ class FacialAnalyzer {
         if (old) old.remove();
         const btn = document.createElement('button');
         btn.id = '_devBtn';
-        btn.textContent = '⚙ Dev Raw Data';
+        btn.textContent = '← Home';
         btn.style.cssText = `
             position:fixed;top:14px;left:14px;z-index:900;
             background:#1a1a1a;border:1px solid rgba(255,255,255,0.15);
@@ -1564,7 +1564,7 @@ class FacialAnalyzer {
         `;
         btn.onmouseenter = () => { btn.style.color='#fff'; btn.style.borderColor='rgba(255,255,255,0.35)'; };
         btn.onmouseleave = () => { btn.style.color='rgba(255,255,255,0.6)'; btn.style.borderColor='rgba(255,255,255,0.15)'; };
-        btn.addEventListener('click', () => this._showDevModal());
+        btn.addEventListener('click', () => window.location.href = 'home.html');
         document.body.appendChild(btn);
     }
 
