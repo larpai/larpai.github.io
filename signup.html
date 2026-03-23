@@ -1,148 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up &mdash; larp.ai</title>
+    <title>Sign Up — larp.ai</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; background:#080808; color:#fff; min-height:100vh; display:flex; flex-direction:column; }
-
-        .topbar { padding:20px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06); }
-        .topbar-brand { font-size:18px;font-weight:800;letter-spacing:-.03em;color:#fff;text-decoration:none; }
-        .topbar-brand em { font-weight:300;font-style:italic;color:rgba(255,255,255,0.25);font-size:12px;margin-left:4px; }
-        .topbar-back { font-size:13px;color:rgba(255,255,255,0.38);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .15s; }
-        .topbar-back:hover { color:#fff; }
-
-        .center { flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px; }
-
-        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        .card { background:#111;border:1px solid rgba(255,255,255,0.09);border-radius:24px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,0.7);animation:fadeUp .4s ease; }
-
-        .card-icon { font-size:32px;margin-bottom:18px;line-height:1; }
-        .card-title { font-size:26px;font-weight:800;letter-spacing:-.03em;margin-bottom:8px; }
-        .card-sub { font-size:14px;color:rgba(255,255,255,0.38);line-height:1.55;margin-bottom:24px; }
-
-        .benefits { display:flex;flex-direction:column;gap:7px;margin-bottom:30px; }
-        .benefit { display:flex;align-items:center;gap:9px;font-size:12px;color:rgba(255,255,255,0.42); }
-        .benefit::before { content:'\2713';color:#30d158;font-weight:700;font-size:11px;flex-shrink:0; }
-
-        .field { margin-bottom:14px; }
-        .field label { display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.32);margin-bottom:8px; }
-        .field input { width:100%;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;font-size:15px;font-family:inherit;transition:border-color .2s,background .2s;outline:none; }
-        .field input:focus { border-color:rgba(255,255,255,0.32);background:rgba(255,255,255,0.07); }
-        .field input::placeholder { color:rgba(255,255,255,0.2); }
-        .field-hint { font-size:11px;color:rgba(255,255,255,0.2);margin-top:5px; }
-
-        .error-box { background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.3);border-radius:10px;padding:11px 14px;font-size:13px;color:#ff453a;margin-bottom:18px;display:none; }
-
-        .submit-btn { width:100%;padding:15px;border-radius:13px;border:none;background:#fff;color:#000;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;transition:all .2s;letter-spacing:-.01em; }
-        .submit-btn:hover { background:rgba(255,255,255,0.88);transform:translateY(-1px); }
-        .submit-btn:disabled { opacity:.45;cursor:not-allowed;transform:none; }
-
-        .divider-line { height:1px;background:rgba(255,255,255,0.07);margin:28px 0; }
-        .switch { text-align:center;font-size:13px;color:rgba(255,255,255,0.32); }
-        .switch a { color:rgba(255,255,255,0.65);text-decoration:none;font-weight:600;transition:color .15s; }
-        .switch a:hover { color:#fff; }
-
-        @media(max-width:480px){ .card{padding:32px 22px;} .topbar{padding:15px 18px;} }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        :root{
+            --bg:#060608;--bg2:#0d0d10;
+            --card:rgba(255,255,255,0.03);--card-border:rgba(255,255,255,0.08);
+            --text:#f0f0f2;--text2:rgba(240,240,242,0.55);--text3:rgba(240,240,242,0.28);
+            --accent:#30d158;--nav-bg:rgba(6,6,8,0.9);
+            --input-bg:rgba(255,255,255,0.05);--input-border:rgba(255,255,255,0.1);
+            --btn-bg:#f0f0f2;--btn-text:#060608;
+        }
+        [data-theme="light"]{
+            --bg:#f5f5f0;--bg2:#ebebE6;
+            --card:rgba(0,0,0,0.03);--card-border:rgba(0,0,0,0.09);
+            --text:#0a0a0c;--text2:rgba(10,10,12,0.55);--text3:rgba(10,10,12,0.3);
+            --accent:#1a8c38;--nav-bg:rgba(245,245,240,0.9);
+            --input-bg:rgba(0,0,0,0.04);--input-border:rgba(0,0,0,0.12);
+            --btn-bg:#0a0a0c;--btn-text:#f5f5f0;
+        }
+        body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;transition:background 0.3s ease,color 0.3s ease;}
+        body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:0.025;pointer-events:none;z-index:0;}
+        .bg-grid{position:fixed;inset:0;background-image:linear-gradient(var(--card-border) 1px,transparent 1px),linear-gradient(90deg,var(--card-border) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 60% 80% at 50% 0%,black 0%,transparent 70%);-webkit-mask-image:radial-gradient(ellipse 60% 80% at 50% 0%,black 0%,transparent 70%);pointer-events:none;z-index:0;}
+        .topbar{position:relative;z-index:10;padding:0 clamp(16px,4vw,32px);height:60px;display:flex;align-items:center;justify-content:space-between;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--card-border);}
+        .topbar-brand{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.04em;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:6px;}
+        .brand-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+        .topbar-brand em{font-family:'DM Sans',sans-serif;font-weight:300;font-style:italic;color:var(--text3);font-size:11px;}
+        .topbar-back{font-size:13px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.2s ease;}
+        .topbar-back:hover{color:var(--text);}
+        .center{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 20px;position:relative;z-index:1;}
+        .card-glow{position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(48,209,88,0.06) 0%,transparent 70%);border-radius:50%;pointer-events:none;top:50%;left:50%;transform:translate(-50%,-60%);}
+        [data-theme="light"] .card-glow{background:radial-gradient(circle,rgba(26,140,56,0.04) 0%,transparent 70%);}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+        .card{background:var(--bg2);border:1px solid var(--card-border);border-radius:24px;padding:40px;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(0,0,0,0.4);animation:fadeUp 0.45s cubic-bezier(0.4,0,0.2,1);position:relative;}
+        [data-theme="light"] .card{box-shadow:0 32px 80px rgba(0,0,0,0.08);}
+        .card-icon-wrap{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,rgba(48,209,88,0.15),rgba(48,209,88,0.05));border:1px solid rgba(48,209,88,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px;}
+        [data-theme="light"] .card-icon-wrap{background:linear-gradient(135deg,rgba(26,140,56,0.12),rgba(26,140,56,0.04));border-color:rgba(26,140,56,0.18);}
+        .card-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em;margin-bottom:6px;}
+        .card-sub{font-size:14px;color:var(--text2);line-height:1.6;font-weight:300;margin-bottom:20px;}
+        .benefits{display:flex;flex-direction:column;gap:6px;margin-bottom:24px;}
+        .benefit{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--text2);font-weight:400;}
+        .benefit-dot{width:18px;height:18px;border-radius:6px;background:rgba(48,209,88,0.12);border:1px solid rgba(48,209,88,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:var(--accent);font-weight:700;}
+        [data-theme="light"] .benefit-dot{background:rgba(26,140,56,0.1);border-color:rgba(26,140,56,0.2);}
+        .field{margin-bottom:12px;}
+        .field label{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;}
+        .field input{width:100%;padding:12px 16px;border-radius:12px;background:var(--input-bg);border:1px solid var(--input-border);color:var(--text);font-size:15px;font-family:inherit;transition:all 0.2s ease;outline:none;}
+        .field input:focus{border-color:var(--accent);background:rgba(48,209,88,0.04);box-shadow:0 0 0 3px rgba(48,209,88,0.1);}
+        [data-theme="light"] .field input:focus{background:rgba(26,140,56,0.04);box-shadow:0 0 0 3px rgba(26,140,56,0.1);}
+        .field input::placeholder{color:var(--text3);}
+        .field-hint{font-size:11px;color:var(--text3);margin-top:4px;}
+        .error-box{background:rgba(255,69,58,0.08);border:1px solid rgba(255,69,58,0.25);border-radius:10px;padding:11px 14px;font-size:13px;color:#ff453a;margin-bottom:14px;display:none;}
+        .submit-btn{width:100%;padding:14px;border-radius:13px;border:none;background:var(--btn-bg);color:var(--btn-text);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:6px;transition:all 0.2s ease;letter-spacing:-.01em;position:relative;overflow:hidden;}
+        .submit-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.08) 100%);opacity:0;transition:opacity 0.2s;}
+        .submit-btn:hover::after{opacity:1;}
+        .submit-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+        [data-theme="light"] .submit-btn:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .submit-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+        .divider{height:1px;background:var(--card-border);margin:22px 0;}
+        .switch{text-align:center;font-size:13px;color:var(--text3);}
+        .switch a{color:var(--text2);text-decoration:none;font-weight:600;transition:color 0.15s;}
+        .switch a:hover{color:var(--text);}
+        @media(max-width:480px){.card{padding:28px 20px;}.topbar{padding:0 16px;}}
     </style>
 </head>
 <body>
-
+<div class="bg-grid"></div>
 <div class="topbar">
-    <a href="home.html" class="topbar-brand">larp.ai <em>v4.4</em></a>
-    <a href="home.html" class="topbar-back">&#8592; Back to home</a>
+    <a href="home.html" class="topbar-brand"><span class="brand-dot"></span>larp.ai <em>v4.4</em></a>
+    <a href="home.html" class="topbar-back">← Back</a>
 </div>
-
 <div class="center">
+    <div class="card-glow"></div>
     <div class="card">
-        <div class="card-icon">&#10022;</div>
-        <div class="card-title">Create your account</div>
-        <div class="card-sub">Free forever. Your results are saved so you can track your progress.</div>
-
+        <div class="card-icon-wrap">✦</div>
+        <div class="card-title">Create account</div>
+        <div class="card-sub">Free forever. Your results are saved so you can track your progress over time.</div>
         <div class="benefits">
-            <div class="benefit">Save every analysis result</div>
-            <div class="benefit">Track your score over time</div>
-            <div class="benefit">Access your full improvement guide anytime</div>
+            <div class="benefit"><div class="benefit-dot">✓</div>Save every analysis result</div>
+            <div class="benefit"><div class="benefit-dot">✓</div>Track your score over time</div>
+            <div class="benefit"><div class="benefit-dot">✓</div>Access full improvement guide anytime</div>
         </div>
-
         <div class="error-box" id="errorBox"></div>
-
-        <div class="field">
-            <label>Full Name</label>
-            <input type="text" id="name" placeholder="Your name" autocomplete="name">
-        </div>
-        <div class="field">
-            <label>Username / Email</label>
-            <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
-        </div>
-        <div class="field">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password">
-            <div class="field-hint">Minimum 6 characters</div>
-        </div>
-        <div class="field">
-            <label>Confirm Password</label>
-            <input type="password" id="confirm" placeholder="Repeat your password" autocomplete="new-password">
-        </div>
-
+        <div class="field"><label>Full Name</label><input type="text" id="name" placeholder="Your name" autocomplete="name"></div>
+        <div class="field"><label>Email</label><input type="email" id="email" placeholder="you@example.com" autocomplete="email"></div>
+        <div class="field"><label>Password</label><input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password"><div class="field-hint">Minimum 6 characters</div></div>
+        <div class="field"><label>Confirm Password</label><input type="password" id="confirm" placeholder="Repeat your password" autocomplete="new-password"></div>
         <button class="submit-btn" id="signupBtn">Create Account</button>
-
-        <div class="divider-line"></div>
+        <div class="divider"></div>
         <div class="switch">Already have an account? <a href="login.html">Log in</a></div>
     </div>
 </div>
-
 <script src="auth.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const t = localStorage.getItem('larp_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+
     const auth = window.LarpAuth;
     if (auth.isLoggedIn()) { window.location.href = 'home.html'; return; }
-
-    const nameEl    = document.getElementById('name');
-    const emailEl   = document.getElementById('email');
-    const passEl    = document.getElementById('password');
-    const confirmEl = document.getElementById('confirm');
-    const btn       = document.getElementById('signupBtn');
-    const errBox    = document.getElementById('errorBox');
-
-    const showErr = msg => { errBox.textContent = msg; errBox.style.display = 'block'; };
-    const hideErr = ()  => { errBox.style.display = 'none'; };
-
-    const doSignup = () => {
+    const nameEl=document.getElementById('name'),emailEl=document.getElementById('email'),
+          passEl=document.getElementById('password'),confirmEl=document.getElementById('confirm'),
+          btn=document.getElementById('signupBtn'),errBox=document.getElementById('errorBox');
+    const showErr=msg=>{errBox.textContent=msg;errBox.style.display='block';};
+    const hideErr=()=>{errBox.style.display='none';};
+    const doSignup=()=>{
         hideErr();
-        const name  = nameEl.value.trim();
-        const email = emailEl.value.trim();
-        const pass  = passEl.value;
-        const conf  = confirmEl.value;
-
-        if (!name) { showErr('Please enter your name.'); nameEl.focus(); return; }
-        if (!email) { showErr('Please enter your email.'); emailEl.focus(); return; }
-        if (!pass) { showErr('Please enter a password.'); passEl.focus(); return; }
-        if (pass !== conf) { showErr('Passwords do not match.'); confirmEl.focus(); return; }
-
-        btn.disabled = true;
-        btn.textContent = 'Creating account...';
-
-        setTimeout(() => {
-            const res = auth.signup(name, email, pass);
-            if (res.ok) {
-                sessionStorage.setItem('larp_signup_success', '1');
-                window.location.href = 'login.html';
-            } else {
-                showErr(res.error);
-                btn.disabled = false;
-                btn.textContent = 'Create Account';
-            }
-        }, 300);
+        const name=nameEl.value.trim(),email=emailEl.value.trim(),pass=passEl.value,conf=confirmEl.value;
+        if(!name){showErr('Please enter your name.');nameEl.focus();return;}
+        if(!email){showErr('Please enter your email.');emailEl.focus();return;}
+        if(!pass){showErr('Please enter a password.');passEl.focus();return;}
+        if(pass!==conf){showErr('Passwords do not match.');confirmEl.focus();return;}
+        btn.disabled=true;btn.textContent='Creating account...';
+        setTimeout(()=>{
+            const res=auth.signup(name,email,pass);
+            if(res.ok){sessionStorage.setItem('larp_signup_success','1');window.location.href='login.html';}
+            else{showErr(res.error);btn.disabled=false;btn.textContent='Create Account';}
+        },300);
     };
-
-    btn.addEventListener('click', doSignup);
-    confirmEl.addEventListener('keydown', e => { if(e.key==='Enter') doSignup(); });
-    passEl.addEventListener('keydown', e => { if(e.key==='Enter') confirmEl.focus(); });
-    emailEl.addEventListener('keydown', e => { if(e.key==='Enter') passEl.focus(); });
-    nameEl.addEventListener('keydown', e => { if(e.key==='Enter') emailEl.focus(); });
+    btn.addEventListener('click',doSignup);
+    confirmEl.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
+    passEl.addEventListener('keydown',e=>{if(e.key==='Enter')confirmEl.focus();});
+    emailEl.addEventListener('keydown',e=>{if(e.key==='Enter')passEl.focus();});
+    nameEl.addEventListener('keydown',e=>{if(e.key==='Enter')emailEl.focus();});
 });
 </script>
 </body>

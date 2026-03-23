@@ -1,18 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard — larp.ai</title>
     <style>
         /* @ts-nocheck */
         *{margin:0;padding:0;box-sizing:border-box;}
         :root{--bg:#080808;--card:#111;--card2:#161616;--border:rgba(255,255,255,0.08);--green:#30d158;--orange:#ff9f0a;--red:#ff453a;--blue:#5ac8fa;--dim:rgba(255,255,255,0.38);--faint:rgba(255,255,255,0.18);}
-        body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:#fff;min-height:100vh;overflow-x:hidden;}
+        [data-theme="light"]{
+            --bg:#f5f5f0;--card:#e8e8e4;--card2:#dededA;
+            --border:rgba(0,0,0,0.08);--green:#1a8c38;--orange:#b8960a;
+            --red:#d63329;--blue:#0077a8;--dim:rgba(10,10,12,0.5);--faint:rgba(10,10,12,0.2);
+        }
+        [data-theme="light"] body{color:#0a0a0c;}
+        body{
+            font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+            background:var(--bg);color:#fff;min-height:100vh;overflow-x:hidden;
+            transition:background 0.3s ease,color 0.3s ease;
+        }
+        [data-theme="light"] body{color:#0a0a0c;}
+        body::before{content:"";position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:0.02;pointer-events:none;z-index:0;}
 
         /* NAV */
         nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:rgba(8,8,8,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
-        .nav-brand{font-size:17px;font-weight:800;letter-spacing:-.03em;color:#fff;text-decoration:none;}
+        .nav-brand{font-family:"Syne",sans-serif;font-size:17px;font-weight:800;letter-spacing:-.04em;color:#fff;text-decoration:none;}
         .nav-brand em{font-weight:300;font-style:italic;color:rgba(255,255,255,0.25);font-size:11px;margin-left:4px;}
         .nav-right{display:flex;gap:8px;align-items:center;}
         .nav-name{font-size:13px;color:rgba(255,255,255,0.4);font-weight:500;}
@@ -27,7 +40,7 @@
         .page{max-width:900px;margin:0 auto;padding:88px 20px 60px;}
 
         /* SECTION LABEL */
-        .sec-label{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,0.2);margin-bottom:14px;}
+        .sec-label{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:14px;}
 
         /* CARD */
         .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;}
@@ -42,9 +55,9 @@
         .ring-old{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:541;stroke-dashoffset:541;transition:stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1);overflow:visible;}
         .ring-new{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:565;stroke-dashoffset:565;transition:stroke-dashoffset 2s cubic-bezier(.4,0,.2,1) .3s;opacity:0;}
         .ring-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
-        .score-num-big{font-size:56px;font-weight:200;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em;}
+        .score-num-big{font-family:"Syne",sans-serif;font-size:56px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.05em;}
         .score-denom{font-size:12px;color:rgba(255,255,255,0.3);margin-top:3px;}
-        .score-label-big{font-size:28px;font-weight:900;letter-spacing:.04em;margin-bottom:6px;}
+        .score-label-big{font-family:"Syne",sans-serif;font-size:28px;font-weight:800;letter-spacing:.02em;margin-bottom:6px;}
         .score-pct{font-size:13px;font-weight:600;margin-bottom:4px;}
         .score-tip{font-size:12px;color:rgba(255,255,255,0.35);}
 
@@ -159,6 +172,7 @@
     <a href="home.html" class="nav-brand">larp.ai <em>v4.4</em></a>
     <div class="nav-right">
         <span class="nav-name" id="navName"></span>
+        <button id="dashThemeToggle" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,0.05);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;color:rgba(255,255,255,0.5);" title="Toggle theme">🌙</button>
         <a href="app.html" class="nbtn nbtn-solid">+ New Analysis</a>
         <button class="nbtn nbtn-ghost" onclick="LarpAuth.logout()">Log Out</button>
     </div>
@@ -173,6 +187,21 @@
 <script>
 // @ts-nocheck
 document.addEventListener('DOMContentLoaded', () => {
+    // Apply theme
+    const savedTheme = localStorage.getItem('larp_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    const dTBtn = document.getElementById('dashThemeToggle');
+    if (dTBtn) {
+        dTBtn.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+        dTBtn.addEventListener('click', () => {
+            const cur  = document.documentElement.getAttribute('data-theme');
+            const next = cur === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('larp_theme', next);
+            dTBtn.textContent = next === 'dark' ? '🌙' : '☀️';
+        });
+    }
+
     const auth = window.LarpAuth;
 
     // Guard: must be logged in

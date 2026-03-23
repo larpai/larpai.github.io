@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -15,19 +16,28 @@
         }
         
         :root {
-            --bg: #0a0a0a;
-            --bg-card: #141414;
-            --border: rgba(255,255,255,0.08);
-            --text: #ffffff;
-            --text-secondary: rgba(255,255,255,0.6);
-            --text-tertiary: rgba(255,255,255,0.4);
-            --success: #30d158;
-            --error: #ff453a;
-            --warning: #ff9f0a;
+            --bg:#060608;--bg-card:#0d0d10;
+            --border:rgba(255,255,255,0.08);
+            --text:#f0f0f2;
+            --text-secondary:rgba(240,240,242,0.6);
+            --text-tertiary:rgba(240,240,242,0.38);
+            --success:#30d158;--error:#ff453a;--warning:#ff9f0a;
+            --accent:#30d158;
+            --nav-bg:rgba(6,6,8,0.92);
+        }
+        [data-theme="light"]{
+            --bg:#f5f5f0;--bg-card:#ebebE6;
+            --border:rgba(0,0,0,0.09);
+            --text:#0a0a0c;
+            --text-secondary:rgba(10,10,12,0.6);
+            --text-tertiary:rgba(10,10,12,0.38);
+            --success:#1a8c38;--error:#d63329;--warning:#b8960a;
+            --accent:#1a8c38;
+            --nav-bg:rgba(245,245,240,0.92);
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
@@ -50,6 +60,7 @@
         }
         
         .brand {
+            font-family: "Syne", sans-serif;
             font-size: 48px;
             font-weight: 800;
             letter-spacing: -0.02em;
@@ -143,7 +154,7 @@
         
         .preview-box {
             display: none;
-            background: #000;
+            background: var(--bg);
             border-radius: 16px;
             overflow: hidden;
             position: relative;
@@ -490,7 +501,7 @@
         .loader {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.97);
             display: none;
             align-items: center;
             justify-content: center;
@@ -520,7 +531,7 @@
         .welcome {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.97);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -587,7 +598,7 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.7);
             width: 320px;
             max-width: calc(100% - 40px);
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         .hairline-popup.active {
@@ -653,10 +664,15 @@
     </style>
 </head>
 <body>
+    <!-- Noise + grid -->
+    <style>
+        body::before{content:"";position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:0.02;pointer-events:none;z-index:0;}
+        #appNav{font-family:"DM Sans",sans-serif!important;}
+    </style>
     <!-- Auth nav bar -->
     <div id="appNav" style="position:fixed;top:0;left:0;right:0;z-index:800;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,10,10,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.05);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;">
         <a href="index.html" style="font-size:16px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:-.02em;">larp.ai</a>
-        <div id="appNavRight" style="display:flex;align-items:center;gap:10px;font-size:13px;"></div>
+        <div style="display:flex;align-items:center;gap:8px;"><button id="appThemeToggle" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,0.05);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;color:var(--text-secondary);" title="Toggle theme">🌙</button><div id="appNavRight" style="display:flex;align-items:center;gap:10px;font-size:13px;"></div></div>
     </div>
     <div style="height:56px;"></div>
 
@@ -783,6 +799,20 @@
     <script>
     // Auth nav bar
     (function() {
+        // Apply theme
+        const t = localStorage.getItem('larp_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+        const tBtn = document.getElementById('appThemeToggle');
+        if(tBtn){
+            tBtn.textContent = t === 'dark' ? '🌙' : '☀️';
+            tBtn.addEventListener('click', () => {
+                const cur = document.documentElement.getAttribute('data-theme');
+                const next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('larp_theme', next);
+                tBtn.textContent = next === 'dark' ? '🌙' : '☀️';
+            });
+        }
         const auth = window.LarpAuth;
         if (!auth) return;
         const navRight = document.getElementById('appNavRight');
