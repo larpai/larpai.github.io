@@ -4,6 +4,10 @@
  */
 
 window.LarpAuth = (() => {
+    const navigate = (url) => {
+        if (window.larpNavigate) return window.larpNavigate(url);
+        window.location.href = url;
+    };
 
     const hashPassword = (pw) => {
         let hash = 0;
@@ -47,7 +51,7 @@ window.LarpAuth = (() => {
         return { ok: true, name: user.name };
     };
 
-    const logout = () => { clearSession(); window.location.href = 'home.html'; };
+    const logout = () => { clearSession(); navigate('home.html'); };
 
     const saveResult = (scores, measurements, gender) => {
         const result = { date: Date.now(), gender: gender || 'unknown', overall: scores.overall, rating: scores.looksmaxxRating, scores: { ...scores }, measurements: { ...measurements } };
@@ -93,7 +97,7 @@ window.LarpAuth = (() => {
         overlay.innerHTML = `<div style="background:#141414;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px 32px;max-width:360px;width:calc(100% - 40px);text-align:center;animation:_popIn 0.25s ease;box-shadow:0 24px 64px rgba(0,0,0,0.8);"><style>@keyframes _popIn{from{opacity:0;transform:scale(0.92) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}</style><div style="font-size:32px;margin-bottom:16px;">🔒</div><div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;">Login Required</div><div style="font-size:13px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:28px;">${message}</div><div style="display:flex;gap:10px;"><button id="_lrpClose" style="flex:1;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button><button id="_lrpLogin" style="flex:1;padding:13px;border-radius:12px;border:none;background:#fff;color:#000;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Log In / Sign Up</button></div></div>`;
         document.body.appendChild(overlay);
         overlay.querySelector('#_lrpClose').onclick = () => overlay.remove();
-        overlay.querySelector('#_lrpLogin').onclick = () => { window.location.href = 'login.html'; };
+        overlay.querySelector('#_lrpLogin').onclick = () => { navigate('login.html'); };
         overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
     };
 

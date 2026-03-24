@@ -57,7 +57,9 @@
             font-family:'Syne',sans-serif;font-size:17px;font-weight:800;
             letter-spacing:-.04em;color:var(--text);text-decoration:none;
             display:flex;align-items:center;gap:6px;
+            transition:transform .22s ease,color .22s ease;
         }
+        .topbar-brand:hover{transform:translateY(-1px) scale(1.01);}
         .brand-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
         .topbar-brand em{font-family:'DM Sans',sans-serif;font-weight:300;font-style:italic;color:var(--text3);font-size:11px;}
         .topbar-back{
@@ -81,6 +83,8 @@
         .side-copy{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:22px;}
         .side-grid{display:grid;gap:10px;}
         .side-item{padding:14px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid var(--card-border);}
+        .side-item{transition:transform .22s ease,border-color .22s ease,background .22s ease,box-shadow .22s ease;}
+        .side-item:hover{transform:translateY(-3px);border-color:rgba(48,209,88,0.18);background:rgba(255,255,255,0.045);box-shadow:0 14px 34px rgba(0,0,0,0.18);}
         .side-item strong{display:block;font-size:13px;margin-bottom:5px;}
         .side-item span{font-size:12px;color:var(--text2);line-height:1.55;}
 
@@ -102,7 +106,9 @@
             box-shadow:0 32px 80px rgba(0,0,0,0.4);
             animation:fadeUp 0.45s cubic-bezier(0.4,0,0.2,1);
             position:relative;
+            transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;
         }
+        .card:hover{transform:translateY(-3px);border-color:rgba(48,209,88,0.16);box-shadow:0 40px 90px rgba(0,0,0,0.46);}
         [data-theme="light"] .card{box-shadow:0 32px 80px rgba(0,0,0,0.08);}
         .card-top{margin-bottom:28px;}
         .card-icon-wrap{
@@ -127,6 +133,7 @@
             font-size:15px;font-family:inherit;
             transition:all 0.2s ease;outline:none;
         }
+        .field input:hover{border-color:rgba(255,255,255,0.18);background:rgba(255,255,255,0.06);}
         .field input:focus{
             border-color:var(--accent);
             background:rgba(48,209,88,0.04);
@@ -150,6 +157,12 @@
             background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.08) 100%);
             opacity:0;transition:opacity 0.2s;
         }
+        .submit-btn::before{
+            content:'';position:absolute;top:-120%;left:-30%;width:44%;height:320%;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent);
+            transform:rotate(18deg);opacity:0;transition:transform .55s ease,opacity .25s ease;
+        }
+        .submit-btn:hover::before{opacity:1;transform:translateX(260%) rotate(18deg);}
         .submit-btn:hover::after{opacity:1;}
         .submit-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,0.2);}
         [data-theme="light"] .submit-btn:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
@@ -162,9 +175,16 @@
 
         @media(max-width:900px){.auth-shell{grid-template-columns:1fr;max-width:460px;}.side-panel{order:2;padding:24px 22px;}.side-title{font-size:32px;}}
         @media(max-width:480px){.card{padding:32px 22px;}.topbar{padding:0 16px;}}
+        body.page-preload{opacity:0;transform:translateY(10px);}
+        body.page-live{opacity:1;transform:none;transition:opacity .42s cubic-bezier(.22,1,.36,1),transform .42s cubic-bezier(.22,1,.36,1);}
+        body.page-exit{opacity:0;transform:translateY(-10px);}
+        .page-transition{position:fixed;inset:0;z-index:9999;pointer-events:none;background:radial-gradient(circle at 25% 20%, rgba(48,209,88,0.14), transparent 30%),linear-gradient(180deg,#060608,#060608);opacity:0;transform:translateY(100%);transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .2s ease;}
+        .page-transition.active{opacity:1;transform:translateY(0);}
+        @media(max-width:720px){body.page-live{transition-duration:.3s;}.page-transition{transition:transform .38s cubic-bezier(.22,1,.36,1),opacity .2s ease;}}
     </style>
 </head>
-<body>
+<body class="page-preload">
+<div class="page-transition" id="pageTransition"></div>
 <div class="bg-grid"></div>
 
 <div class="topbar">
@@ -218,13 +238,43 @@
 
 <script src="auth.js"></script>
 <script>
+(() => {
+    const ROUTES = new Set(['index.html','home.html','login.html','signup.html','app.html','dashboard.html']);
+    const getFile = (url) => new URL(url, window.location.href).pathname.split('/').pop() || 'index.html';
+    window.larpNavigate = (url) => {
+        const file = getFile(url);
+        if (!ROUTES.has(file)) { window.location.href = url; return; }
+        document.getElementById('pageTransition')?.classList.add('active');
+        document.body.classList.add('page-exit');
+        setTimeout(() => { window.location.href = new URL(url, window.location.href).href; }, window.matchMedia('(max-width: 720px)').matches ? 320 : 420);
+    };
+    document.addEventListener('DOMContentLoaded', () => {
+        requestAnimationFrame(() => {
+            document.body.classList.remove('page-preload');
+            document.body.classList.add('page-live');
+        });
+    });
+    document.addEventListener('click', e => {
+        const a = e.target.closest('a[href]');
+        if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (a.target && a.target !== '_self') return;
+        const href = a.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+        const file = getFile(href);
+        if (!ROUTES.has(file)) return;
+        e.preventDefault();
+        window.larpNavigate(href);
+    });
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
+    const nav = url => window.larpNavigate ? window.larpNavigate(url) : (window.location.href = url);
     // Apply saved theme
     const t = localStorage.getItem('larp_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', t);
 
     const auth = window.LarpAuth;
-    if (auth.isLoggedIn()) { window.location.href = 'home.html'; return; }
+    if (auth.isLoggedIn()) { nav('home.html'); return; }
 
     const emailEl = document.getElementById('email');
     const passEl  = document.getElementById('password');
@@ -244,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = auth.login(email, pass);
             if (res.ok) {
                 sessionStorage.setItem('larp_login_success', res.name.split(' ')[0]);
-                window.location.href = 'home.html';
+                nav('home.html');
             } else {
                 showErr(res.error);
                 btn.disabled = false; btn.textContent = 'Log In';

@@ -30,7 +30,9 @@
         .nav-right{display:flex;gap:8px;align-items:center;}
         .nav-name{font-size:13px;color:rgba(255,255,255,0.4);font-weight:500;}
         .nav-name b{color:#fff;}
-        .nbtn{padding:7px 16px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;border:none;white-space:nowrap;}
+        .nbtn{padding:7px 16px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;border:none;white-space:nowrap;position:relative;overflow:hidden;}
+        .nbtn::after{content:'';position:absolute;top:-120%;left:-30%;width:44%;height:320%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);transform:rotate(18deg);opacity:0;transition:transform .55s ease,opacity .25s ease;}
+        .nbtn:hover::after{opacity:1;transform:translateX(250%) rotate(18deg);}
         .nbtn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.12)!important;color:rgba(255,255,255,0.5);}
         .nbtn-ghost:hover{color:#fff;border-color:rgba(255,255,255,0.25)!important;}
         .nbtn-solid{background:#fff;color:#000;}
@@ -39,14 +41,16 @@
         /* LAYOUT */
         .page{max-width:900px;margin:0 auto;padding:88px 20px 60px;}
         .dash-hero{max-width:900px;margin:0 auto;padding:92px 20px 20px;position:relative;z-index:1;}
-        .dash-hero-card{background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));border:1px solid var(--border);border-radius:24px;padding:28px 26px;position:relative;overflow:hidden;}
+        .dash-hero-card{background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));border:1px solid var(--border);border-radius:24px;padding:28px 26px;position:relative;overflow:hidden;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;}
+        .dash-hero-card:hover{transform:translateY(-3px);border-color:rgba(48,209,88,0.14);box-shadow:0 26px 72px rgba(0,0,0,0.28);}
         .dash-hero-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(48,209,88,0.08),transparent 45%,rgba(90,200,250,0.05));pointer-events:none;}
         .dash-hero-card>*{position:relative;z-index:1;}
         .dash-eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:14px;}
         .dash-title{font-family:"Syne",sans-serif;font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;line-height:.95;margin-bottom:10px;}
         .dash-copy{font-size:14px;color:rgba(255,255,255,0.55);line-height:1.75;max-width:620px;}
         .dash-mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:20px;}
-        .dash-mini{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:16px;padding:14px;}
+        .dash-mini{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:16px;padding:14px;transition:transform .22s ease,border-color .22s ease,background .22s ease;}
+        .dash-mini:hover{transform:translateY(-3px);border-color:rgba(90,200,250,0.18);background:rgba(255,255,255,0.045);}
         .dash-mini-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px;}
         .dash-mini-value{font-size:14px;font-weight:700;color:#fff;}
         .dash-mini-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-top:5px;line-height:1.45;}
@@ -55,7 +59,8 @@
         .sec-label{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:14px;}
 
         /* CARD */
-        .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;}
+        .card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,0.12);box-shadow:0 22px 64px rgba(0,0,0,0.24);}
         .card+.card{margin-top:14px;}
 
         /* SCORE HERO WIDGET */
@@ -93,7 +98,8 @@
         /* IMPROVED FEATURES CAROUSEL */
         .carousel-wrap{position:relative;overflow:hidden;}
         .carousel-track{display:flex;gap:12px;transition:transform .5s cubic-bezier(.4,0,.2,1);}
-        .carousel-slide{min-width:calc(50% - 6px);background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:18px;}
+        .carousel-slide{min-width:calc(50% - 6px);background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:18px;transition:transform .22s ease,border-color .22s ease;}
+        .carousel-slide:hover{transform:translateY(-3px);border-color:rgba(48,209,88,0.18);}
         /* SCORE GRAPH */
         .graph-wrap{position:relative;width:100%;height:180px;margin-top:8px;}
         .graph-wrap canvas{width:100%;height:100%;}
@@ -132,7 +138,8 @@
         .fix-content{padding:0 18px 16px;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.7;white-space:pre-line;}
 
         /* HISTORY */
-        .hist-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card2);border:1px solid var(--border);border-radius:14px;margin-bottom:8px;}
+        .hist-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card2);border:1px solid var(--border);border-radius:14px;margin-bottom:8px;transition:transform .22s ease,border-color .22s ease,background .22s ease;}
+        .hist-item:hover{transform:translateX(4px);border-color:rgba(255,255,255,0.14);background:rgba(255,255,255,0.04);}
         .hist-score{font-size:26px;font-weight:800;min-width:52px;font-variant-numeric:tabular-nums;}
         .hist-info{flex:1;}
         .hist-label{font-size:13px;font-weight:700;}
@@ -141,7 +148,8 @@
 
         /* COMPOSITES GRID */
         .comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-        .comp-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+        .comp-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;transition:transform .22s ease,border-color .22s ease,background .22s ease;}
+        .comp-card:hover{transform:translateY(-3px);border-color:rgba(48,209,88,0.16);background:rgba(255,255,255,0.04);}
         .comp-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
         .comp-name{font-size:12px;font-weight:700;color:rgba(255,255,255,0.6);}
         .comp-val{font-size:16px;font-weight:800;}
@@ -151,7 +159,9 @@
 
         /* ACTION BUTTONS */
         .action-row{display:flex;gap:12px;margin-bottom:14px;}
-        .action-btn{flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;border:none;letter-spacing:-.01em;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;}
+        .action-btn{flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;border:none;letter-spacing:-.01em;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;}
+        .action-btn::after{content:'';position:absolute;top:-120%;left:-30%;width:44%;height:320%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);transform:rotate(18deg);opacity:0;transition:transform .55s ease,opacity .25s ease;}
+        .action-btn:hover::after{opacity:1;transform:translateX(250%) rotate(18deg);}
         .action-primary{background:#fff;color:#000;}
         .action-primary:hover{background:rgba(255,255,255,0.88);transform:translateY(-1px);}
         .action-secondary{background:rgba(255,255,255,0.07);border:1px solid var(--border)!important;color:rgba(255,255,255,0.7);}
@@ -179,9 +189,16 @@
             .action-row{flex-direction:column;}
             .score-num-big{font-size:44px;}
         }
+        body.page-preload{opacity:0;transform:translateY(10px);}
+        body.page-live{opacity:1;transform:none;transition:opacity .42s cubic-bezier(.22,1,.36,1),transform .42s cubic-bezier(.22,1,.36,1);}
+        body.page-exit{opacity:0;transform:translateY(-10px);}
+        .page-transition{position:fixed;inset:0;z-index:9999;pointer-events:none;background:radial-gradient(circle at 25% 20%, rgba(48,209,88,0.14), transparent 30%),radial-gradient(circle at 75% 30%, rgba(90,200,250,0.12), transparent 32%),linear-gradient(180deg,#080808,#080808);opacity:0;transform:translateY(100%);transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .2s ease;}
+        .page-transition.active{opacity:1;transform:translateY(0);}
+        @media(max-width:720px){body.page-live{transition-duration:.3s;}.page-transition{transition:transform .38s cubic-bezier(.22,1,.36,1),opacity .2s ease;}}
     </style>
 </head>
-<body>
+<body class="page-preload">
+<div class="page-transition" id="pageTransition"></div>
 
 <nav>
     <a href="home.html" class="nav-brand">larp.ai <em>v4.4</em></a>
@@ -226,7 +243,37 @@
 <script src="auth.js"></script>
 <script>
 // @ts-nocheck
+(() => {
+    const ROUTES = new Set(['index.html','home.html','login.html','signup.html','app.html','dashboard.html']);
+    const getFile = (url) => new URL(url, window.location.href).pathname.split('/').pop() || 'index.html';
+    window.larpNavigate = (url) => {
+        const file = getFile(url);
+        if (!ROUTES.has(file)) { window.location.href = url; return; }
+        document.getElementById('pageTransition')?.classList.add('active');
+        document.body.classList.add('page-exit');
+        setTimeout(() => { window.location.href = new URL(url, window.location.href).href; }, window.matchMedia('(max-width: 720px)').matches ? 320 : 420);
+    };
+    document.addEventListener('DOMContentLoaded', () => {
+        requestAnimationFrame(() => {
+            document.body.classList.remove('page-preload');
+            document.body.classList.add('page-live');
+        });
+    });
+    document.addEventListener('click', e => {
+        const a = e.target.closest('a[href]');
+        if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (a.target && a.target !== '_self') return;
+        const href = a.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+        const file = getFile(href);
+        if (!ROUTES.has(file)) return;
+        e.preventDefault();
+        window.larpNavigate(href);
+    });
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
+    const nav = url => window.larpNavigate ? window.larpNavigate(url) : (window.location.href = url);
     // Apply theme
     const savedTheme = localStorage.getItem('larp_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -246,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Guard: must be logged in
     if (!auth.isLoggedIn()) {
-        window.location.href = 'login.html';
+        nav('login.html');
         return;
     }
 
@@ -275,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const latest  = results[0];
+    const isBestScore = results.length === 1 || latest.overall >= Math.max(...results.map(r => r.overall));
     // Load saved potential score — fallback: calculate from oldest result's scores
     const potentialScore = (() => {
         try {
@@ -351,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // BUILD PAGE HTML
     // ─────────────────────────────────────────────
     page.innerHTML = `
-        ${buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialScore)}
+        ${buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialScore, isBestScore)}
         ${buildDailyTip(latest, sc)}
         ${showImprove && improved.length > 0 ? buildImprovedCarousel(improved, sc) : ''}
         ${buildComposites(latest, sc)}
@@ -392,6 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ringOld   = document.getElementById('ringOld');
     const ringNew   = document.getElementById('ringNew');
     const scoreNum  = document.getElementById('scoreNum');
+    const bestBadge = document.getElementById('bestScoreBadge');
     const C = 541;
 
     if (isFirst) {
@@ -440,6 +489,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('scoreHeroGlow').style.background =
                     `radial-gradient(ellipse 80% 60% at 50% 50%, ${newColor}22 0%, transparent 70%)`;
 
+                if (bestBadge) {
+                    bestBadge.style.transition = 'opacity .55s cubic-bezier(.22,1,.36,1), transform .55s cubic-bezier(.22,1,.36,1)';
+                    bestBadge.style.opacity = '1';
+                    bestBadge.style.transform = 'translateY(0) scale(1)';
+                }
+
                 // Show compare strip after animation
                 setTimeout(() => {
                     const cs = document.getElementById('compareStrip');
@@ -473,6 +528,14 @@ document.addEventListener('DOMContentLoaded', () => {
             `radial-gradient(ellipse 80% 60% at 50% 50%, ${color}20 0%, transparent 70%)`;
         document.getElementById('scoreHeroGlow').style.opacity = '1';
 
+        if (bestBadge) {
+            setTimeout(() => {
+                bestBadge.style.transition = 'opacity .55s cubic-bezier(.22,1,.36,1), transform .55s cubic-bezier(.22,1,.36,1)';
+                bestBadge.style.opacity = '1';
+                bestBadge.style.transform = 'translateY(0) scale(1)';
+            }, 800);
+        }
+
         if (prev) {
             setTimeout(() => {
                 const cs = document.getElementById('compareStrip');
@@ -492,7 +555,7 @@ function buildEmpty() {
     </div>`;
 }
 
-function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialScore) {
+function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialScore, isBestScore) {
     const color  = sc(latest.overall);
     const C      = 541;
     const hasPrev = prev !== null;
@@ -526,6 +589,11 @@ function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialS
             <span style="font-size:12px;">Diet, mewing, sleep posture. Consistency compounds.</span>
         </div>` : '';
 
+    const bestBadge = isBestScore ? `
+        <div id="bestScoreBadge" style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid rgba(48,209,88,0.22);background:rgba(48,209,88,0.10);color:#30d158;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px;opacity:0;transform:translateY(8px) scale(.96);">
+            New Best Score
+        </div>` : '';
+
     return `
     <div class="fade-up d1">
         <div class="sec-label">Your PSL Dashboard</div>
@@ -541,6 +609,7 @@ function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialS
 
         <div style="position:relative;z-index:1;">
             <div class="sec-label" style="margin-bottom:18px;">${isFirst ? 'Your First Score' : 'Latest Score'}</div>
+            ${bestBadge}
 
             <div class="score-ring-wrap">
                 <svg viewBox="0 0 200 200" style="overflow:visible;">

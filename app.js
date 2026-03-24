@@ -52,6 +52,7 @@
  */
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const navigate = url => window.larpNavigate ? window.larpNavigate(url) : (window.location.href = url);
 
 const lmap = (v, inL, inH, outL, outH) => {
     const t = (v - inL) / (inH - inL);
@@ -469,6 +470,7 @@ class FacialAnalyzer {
 
     async analyze() {
         if (!this.currentImage || !this.isModelLoaded) return;
+        this._isGuestView = !(window.LarpAuth && window.LarpAuth.isLoggedIn && window.LarpAuth.isLoggedIn());
         this.els.analyzeBtn.disabled = true;
         this.els.loader.classList.add('active');
         try {
@@ -1159,7 +1161,7 @@ class FacialAnalyzer {
 
     displayResults(scores, m) {
         const rating  = scores.looksmaxxRating;
-        const isGuest = !(window.LarpAuth && window.LarpAuth.isLoggedIn && window.LarpAuth.isLoggedIn());
+        const isGuest = this._isGuestView ?? !(window.LarpAuth && window.LarpAuth.isLoggedIn && window.LarpAuth.isLoggedIn());
         const statePill = document.getElementById('resultStatePill');
         const guestNote = document.getElementById('guestPreviewNote');
         this.els.scoreNum.textContent = scores.overall.toFixed(1);
@@ -1624,7 +1626,7 @@ class FacialAnalyzer {
         `;
         btn.onmouseenter = () => { btn.style.color='#fff'; btn.style.borderColor='rgba(255,255,255,0.35)'; };
         btn.onmouseleave = () => { btn.style.color='rgba(255,255,255,0.6)'; btn.style.borderColor='rgba(255,255,255,0.15)'; };
-        btn.addEventListener('click', () => window.location.href = 'home.html');
+        btn.addEventListener('click', () => navigate('home.html'));
         document.body.appendChild(btn);
     }
 
@@ -1830,10 +1832,11 @@ class FacialAnalyzer {
         const rating   = scores.looksmaxxRating;
         const overall  = scores.overall;
         const gender   = this._selectedGender ?? 'male';
+        const isMobile = window.matchMedia('(max-width: 720px)').matches;
         const KB       = window.LOOKSMAX_KB || {};
         const FDN      = window.LOOKSMAX_FOUNDATION || null;
         const scoreColor = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
-        const isGuestView = !(window.LarpAuth && window.LarpAuth.isLoggedIn && window.LarpAuth.isLoggedIn());
+        const isGuestView = this._isGuestView ?? !(window.LarpAuth && window.LarpAuth.isLoggedIn && window.LarpAuth.isLoggedIn());
 
         // Determine if this is the user's first analysis (result not yet saved)
         const _prevResults = (window.LarpAuth && window.LarpAuth.isLoggedIn())
@@ -1888,7 +1891,7 @@ class FacialAnalyzer {
         const content = ov.querySelector('#_cContent');
         const bg      = ov.querySelector('#_cBg');
 
-        const fadeInEl = (el, delay=0, dur=450, fromY=16) => {
+        const fadeInEl = (el, delay=0, dur=isMobile ? 340 : 450, fromY=isMobile ? 10 : 16) => {
             el.style.opacity = '0';
             el.style.transform = `translateY(${fromY}px)`;
             el.style.transition = `opacity ${dur}ms ease ${delay}ms, transform ${dur}ms ease ${delay}ms`;
@@ -1900,11 +1903,23 @@ class FacialAnalyzer {
 
         const slideInEl = (el, delay=0) => {
             el.style.opacity = '0';
-            el.style.transform = 'translateX(-16px)';
-            el.style.transition = `opacity 380ms ease ${delay}ms, transform 380ms ease ${delay}ms`;
+            el.style.transform = `translateX(${isMobile ? '-10px' : '-16px'})`;
+            el.style.transition = `opacity ${isMobile ? 300 : 380}ms ease ${delay}ms, transform ${isMobile ? 300 : 380}ms ease ${delay}ms`;
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 el.style.opacity = '1';
                 el.style.transform = 'translateX(0)';
+            }));
+        };
+
+        const scaleInEl = (el, delay=0, dur=isMobile ? 420 : 560, fromScale=isMobile ? 0.97 : 0.93) => {
+            el.style.opacity = '0';
+            el.style.transform = `scale(${fromScale}) translateY(${isMobile ? '8px' : '14px'})`;
+            el.style.filter = 'blur(8px)';
+            el.style.transition = `opacity ${dur}ms cubic-bezier(.22,1,.36,1) ${delay}ms, transform ${dur}ms cubic-bezier(.22,1,.36,1) ${delay}ms, filter ${dur}ms ease ${delay}ms`;
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'scale(1) translateY(0)';
+                el.style.filter = 'blur(0)';
             }));
         };
 
@@ -1918,6 +1933,22 @@ class FacialAnalyzer {
                 res();
             }, ms);
         });
+
+        const cinematicSwap = async (builder, opts = {}) => {
+            const outMs = opts.outMs ?? (isMobile ? 220 : 300);
+            content.style.transition = `opacity ${outMs}ms ease, transform ${outMs}ms ease, filter ${outMs}ms ease`;
+            content.style.opacity = '0';
+            content.style.transform = `translateY(${isMobile ? '-10px' : '-18px'}) scale(${isMobile ? 0.992 : 0.985})`;
+            content.style.filter = 'blur(8px)';
+            bg.style.opacity = opts.bgOpacity ?? '1';
+            await new Promise(r => setTimeout(r, outMs));
+            content.innerHTML = '';
+            content.style.opacity = '1';
+            content.style.transform = 'translateY(0) scale(1)';
+            content.style.filter = 'blur(0)';
+            ov.scrollTop = 0;
+            builder();
+        };
 
         const sectionLabel = (text, color='rgba(255,255,255,0.3)') => {
             const d = document.createElement('div');
@@ -2112,7 +2143,7 @@ class FacialAnalyzer {
             setTimeout(() => {
                 continueBtn.style.transition = 'opacity 500ms ease, background 0.15s, color 0.15s';
                 continueBtn.style.opacity = '1';
-            }, 1800);
+            }, isMobile ? 1350 : 1800);
             const goPhase1 = () => {
                 if (isGuestView) { phase4(); return; }
                 if (isFirstAnalysis) phase1();
@@ -2133,135 +2164,135 @@ class FacialAnalyzer {
            PHASE 1 — YOUR STRENGTHS (clean list only)
         ══════════════════════════════════════════════════ */
         const phase1 = async () => {
-            await clearContent();
-            content.style.display = 'block';
-            content.style.alignItems = '';
-            content.style.justifyContent = '';
-            content.style.minHeight = '';
-            content.style.paddingTop = '40px';
-            content.style.textAlign = 'left';
+            await cinematicSwap(() => {
+                content.style.display = 'block';
+                content.style.alignItems = '';
+                content.style.justifyContent = '';
+                content.style.minHeight = '';
+                content.style.paddingTop = '40px';
+                content.style.textAlign = 'left';
 
-            const h = bigHeading('Your Strengths', "What's Working For You", '#30d158');
-            fadeInEl(h, 0);
-            content.appendChild(h);
+                const h = bigHeading('Your Strengths', "What's Working For You", '#30d158');
+                fadeInEl(h, 0);
+                content.appendChild(h);
 
-            const sub = document.createElement('div');
-            sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
-            sub.textContent = `These features are giving you a real advantage. They are above average and pulling your score up.`;
-            fadeInEl(sub, 120);
-            content.appendChild(sub);
+                const sub = document.createElement('div');
+                sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
+                sub.textContent = `These features are giving you a real advantage. They are above average and pulling your score up.`;
+                fadeInEl(sub, 120);
+                content.appendChild(sub);
 
-            // All features scoring 6.5+, sorted best first, show up to 8
-            const goodFeatures = sorted.filter(f => f.score >= 6.5).slice(0, 8);
-            goodFeatures.forEach((f, i) => {
-                const sc = scoreColor(f.score);
-                const kb = KB[f.key];
-                const row = document.createElement('div');
-                row.style.cssText = `
-                    display:flex;align-items:center;gap:12px;
-                    padding:14px 16px;margin-bottom:8px;
-                    background:${sc}0d;border:1px solid ${sc}30;border-radius:12px;
-                    opacity:0;transform:translateX(-14px);
-                    transition:opacity 360ms ease ${i*80+150}ms,transform 360ms ease ${i*80+150}ms;
-                `;
-                const barPct = f.score * 10;
-                row.innerHTML = `
-                    <div style="font-size:20px;font-weight:700;color:${sc};min-width:34px;">${f.score.toFixed(1)}</div>
-                    <div style="flex:1;">
-                        <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:5px;">${f.name}</div>
-                        <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
-                            <div style="height:100%;width:0%;background:${sc};border-radius:2px;transition:width 0.7s ease ${i*80+400}ms;" data-w="${barPct}"></div>
+                const goodFeatures = sorted.filter(f => f.score >= 6.5).slice(0, 8);
+                goodFeatures.forEach((f, i) => {
+                    const sc = scoreColor(f.score);
+                    const kb = KB[f.key];
+                    const row = document.createElement('div');
+                    row.style.cssText = `
+                        display:flex;align-items:center;gap:12px;
+                        padding:14px 16px;margin-bottom:8px;
+                        background:${sc}0d;border:1px solid ${sc}30;border-radius:12px;
+                        opacity:0;transform:translateX(-14px);
+                        transition:opacity 360ms ease ${i*80+150}ms,transform 360ms ease ${i*80+150}ms;
+                    `;
+                    const barPct = f.score * 10;
+                    row.innerHTML = `
+                        <div style="font-size:20px;font-weight:700;color:${sc};min-width:34px;">${f.score.toFixed(1)}</div>
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:5px;">${f.name}</div>
+                            <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+                                <div style="height:100%;width:0%;background:${sc};border-radius:2px;transition:width 0.7s ease ${i*80+400}ms;" data-w="${barPct}"></div>
+                            </div>
+                            ${kb ? `<div style="font-size:10px;color:rgba(255,255,255,0.28);margin-top:4px;line-height:1.45;">${kb.why.split('.')[0]}.</div>` : ''}
                         </div>
-                        ${kb ? `<div style="font-size:10px;color:rgba(255,255,255,0.28);margin-top:4px;line-height:1.45;">${kb.why.split('.')[0]}.</div>` : ''}
-                    </div>
-                    <div style="font-size:18px;color:${sc};">✓</div>
-                `;
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    row.style.opacity = '1';
-                    row.style.transform = 'translateX(0)';
-                    setTimeout(() => {
-                        const bar = row.querySelector('[data-w]');
-                        if (bar) bar.style.width = bar.dataset.w + '%';
-                    }, i*80 + 400);
-                }));
-                content.appendChild(row);
-            });
+                        <div style="font-size:18px;color:${sc};">✓</div>
+                    `;
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateX(0)';
+                        setTimeout(() => {
+                            const bar = row.querySelector('[data-w]');
+                            if (bar) bar.style.width = bar.dataset.w + '%';
+                        }, i*80 + 400);
+                    }));
+                    content.appendChild(row);
+                });
 
-            if (goodFeatures.length === 0) {
-                const msg = document.createElement('div');
-                msg.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);text-align:center;padding:40px 0;`;
-                msg.textContent = 'No features currently above average — the fix guide below will change that.';
-                content.appendChild(msg);
-            }
+                if (goodFeatures.length === 0) {
+                    const msg = document.createElement('div');
+                    msg.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);text-align:center;padding:40px 0;`;
+                    msg.textContent = 'No features currently above average — the fix guide below will change that.';
+                    content.appendChild(msg);
+                }
 
-            const nb = nextBtn("See What's Holding You Back →", phase2);
-            fadeInEl(nb, goodFeatures.length * 80 + 600);
-            content.appendChild(nb);
+                const nb = nextBtn("See What's Holding You Back →", phase2);
+                fadeInEl(nb, goodFeatures.length * 80 + 600);
+                content.appendChild(nb);
+            }, { bgOpacity: '0.9' });
         };
 
         /* ══════════════════════════════════════════════════
            PHASE 2 — YOUR WEAKNESSES (clean list only)
         ══════════════════════════════════════════════════ */
         const phase2 = async () => {
-            await clearContent();
-            content.style.paddingTop = '40px';
+            await cinematicSwap(() => {
+                content.style.paddingTop = '40px';
 
-            const h = bigHeading('Your Weak Points', 'Dragging Your Score Down', '#ff453a');
-            fadeInEl(h, 0);
-            content.appendChild(h);
+                const h = bigHeading('Your Weak Points', 'Dragging Your Score Down', '#ff453a');
+                fadeInEl(h, 0);
+                content.appendChild(h);
 
-            const sub = document.createElement('div');
-            sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
-            sub.textContent = `These are your lowest-scoring features. Each one gets a full dedicated fix guide on the next pages.`;
-            fadeInEl(sub, 120);
-            content.appendChild(sub);
+                const sub = document.createElement('div');
+                sub.style.cssText = `font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;`;
+                sub.textContent = `These are your lowest-scoring features. Each one gets a full dedicated fix guide on the next pages.`;
+                fadeInEl(sub, 120);
+                content.appendChild(sub);
 
-            // All features under 7.5, worst first, up to 8
-            const weakFeatures = sorted.filter(f => f.score < 7.5).slice(0, 8).reverse();
-            weakFeatures.forEach((f, i) => {
-                const sc = scoreColor(f.score);
-                const kb = KB[f.key];
-                const row = document.createElement('div');
-                row.style.cssText = `
-                    display:flex;align-items:center;gap:12px;
-                    padding:14px 16px;margin-bottom:8px;
-                    background:${sc}0d;border:1px solid ${sc}30;border-radius:12px;
-                    opacity:0;transform:translateX(-14px);
-                    transition:opacity 360ms ease ${i*80+150}ms,transform 360ms ease ${i*80+150}ms;
-                `;
-                const barPct = f.score * 10;
-                row.innerHTML = `
-                    <div style="font-size:20px;font-weight:700;color:${sc};min-width:34px;">${f.score.toFixed(1)}</div>
-                    <div style="flex:1;">
-                        <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:5px;">${f.name}</div>
-                        <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
-                            <div style="height:100%;width:0%;background:${sc};border-radius:2px;transition:width 0.7s ease ${i*80+400}ms;" data-w="${barPct}"></div>
+                const weakFeatures = sorted.filter(f => f.score < 7.5).slice(0, 8).reverse();
+                weakFeatures.forEach((f, i) => {
+                    const sc = scoreColor(f.score);
+                    const kb = KB[f.key];
+                    const row = document.createElement('div');
+                    row.style.cssText = `
+                        display:flex;align-items:center;gap:12px;
+                        padding:14px 16px;margin-bottom:8px;
+                        background:${sc}0d;border:1px solid ${sc}30;border-radius:12px;
+                        opacity:0;transform:translateX(-14px);
+                        transition:opacity 360ms ease ${i*80+150}ms,transform 360ms ease ${i*80+150}ms;
+                    `;
+                    const barPct = f.score * 10;
+                    row.innerHTML = `
+                        <div style="font-size:20px;font-weight:700;color:${sc};min-width:34px;">${f.score.toFixed(1)}</div>
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:5px;">${f.name}</div>
+                            <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+                                <div style="height:100%;width:0%;background:${sc};border-radius:2px;transition:width 0.7s ease ${i*80+400}ms;" data-w="${barPct}"></div>
+                            </div>
+                            ${kb ? `<div style="font-size:10px;color:rgba(255,255,255,0.28);margin-top:4px;line-height:1.45;">${kb.why.split('.')[0]}.</div>` : ''}
                         </div>
-                        ${kb ? `<div style="font-size:10px;color:rgba(255,255,255,0.28);margin-top:4px;line-height:1.45;">${kb.why.split('.')[0]}.</div>` : ''}
-                    </div>
-                    <div style="font-size:16px;color:${sc};">→</div>
-                `;
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    row.style.opacity = '1';
-                    row.style.transform = 'translateX(0)';
-                    setTimeout(() => {
-                        const bar = row.querySelector('[data-w]');
-                        if (bar) bar.style.width = bar.dataset.w + '%';
-                    }, i*80 + 400);
-                }));
-                content.appendChild(row);
-            });
+                        <div style="font-size:16px;color:${sc};">→</div>
+                    `;
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateX(0)';
+                        setTimeout(() => {
+                            const bar = row.querySelector('[data-w]');
+                            if (bar) bar.style.width = bar.dataset.w + '%';
+                        }, i*80 + 400);
+                    }));
+                    content.appendChild(row);
+                });
 
-            if (weakFeatures.length === 0) {
-                const msg = document.createElement('div');
-                msg.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);text-align:center;padding:40px 0;`;
-                msg.textContent = 'No significant weaknesses found. You are scoring above average across the board.';
-                content.appendChild(msg);
-            }
+                if (weakFeatures.length === 0) {
+                    const msg = document.createElement('div');
+                    msg.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);text-align:center;padding:40px 0;`;
+                    msg.textContent = 'No significant weaknesses found. You are scoring above average across the board.';
+                    content.appendChild(msg);
+                }
 
-            const nb = nextBtn('See How To Fix Each One →', phase3);
-            fadeInEl(nb, weakFeatures.length * 80 + 600);
-            content.appendChild(nb);
+                const nb = nextBtn('See How To Fix Each One →', phase3);
+                fadeInEl(nb, weakFeatures.length * 80 + 600);
+                content.appendChild(nb);
+            }, { bgOpacity: '0.82' });
         };
 
         /* ══════════════════════════════════════════════════
@@ -2476,10 +2507,13 @@ class FacialAnalyzer {
             const rColor = rating.color;
             const guestBlur = isGuestView ? 'filter:blur(10px);opacity:0.85;' : '';
 
+            const stageWrap = document.createElement('div');
+            stageWrap.style.cssText = `width:100%;display:flex;flex-direction:column;align-items:center;`;
+
             const preLabel = document.createElement('div');
-            preLabel.style.cssText = `font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:24px;`;
+            preLabel.style.cssText = `font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:18px;`;
             preLabel.textContent = 'Official Rating';
-            fadeInEl(preLabel, 100, 500);
+            fadeInEl(preLabel, isMobile ? 40 : 80, isMobile ? 320 : 460);
 
             // Ring
             const circumference = 452;
@@ -2500,7 +2534,7 @@ class FacialAnalyzer {
                     <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;">/ 10</div>
                 </div>
             `;
-            fadeInEl(ringWrap, 300, 500);
+            scaleInEl(ringWrap, isMobile ? 220 : 380, isMobile ? 480 : 620);
 
             const labelWrap = document.createElement('div');
             labelWrap.style.cssText = `margin-bottom:10px;`;
@@ -2509,17 +2543,17 @@ class FacialAnalyzer {
                     <span style="font-size:34px;font-weight:900;color:${rColor};letter-spacing:.04em;${guestBlur}">${rating.label}</span>
                 </div>
             `;
-            fadeInEl(labelWrap, 1000, 600);
+            scaleInEl(labelWrap, isMobile ? 900 : 1320, isMobile ? 360 : 520, isMobile ? 0.988 : 0.97);
 
             const pctEl = document.createElement('div');
             pctEl.style.cssText = `font-size:14px;font-weight:700;color:${rColor};margin-bottom:8px;${isGuestView ? 'filter:blur(6px);opacity:0.82;' : ''}`;
             pctEl.textContent = rating.pct;
-            fadeInEl(pctEl, 1400, 400);
+            fadeInEl(pctEl, isMobile ? 1140 : 1660, isMobile ? 280 : 380, isMobile ? 8 : 12);
 
             const tipEl = document.createElement('div');
             tipEl.style.cssText = `font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:32px;`;
             tipEl.textContent = rating.tooltip;
-            fadeInEl(tipEl, 1600, 400);
+            fadeInEl(tipEl, isMobile ? 1260 : 1820, isMobile ? 280 : 380, isMobile ? 8 : 12);
 
             // Composite mini breakdown
             const compositeBox = document.createElement('div');
@@ -2538,16 +2572,17 @@ class FacialAnalyzer {
                 `;
                 compositeBox.appendChild(row);
             });
-            fadeInEl(compositeBox, 1800, 500);
+            scaleInEl(compositeBox, isMobile ? 1380 : 2100, isMobile ? 340 : 480, isMobile ? 0.988 : 0.975);
 
-            content.appendChild(preLabel);
-            content.appendChild(ringWrap);
-            content.appendChild(labelWrap);
+            stageWrap.appendChild(preLabel);
+            stageWrap.appendChild(ringWrap);
+            stageWrap.appendChild(labelWrap);
             if (!isGuestView) {
-                content.appendChild(pctEl);
-                content.appendChild(tipEl);
-                content.appendChild(compositeBox);
+                stageWrap.appendChild(pctEl);
+                stageWrap.appendChild(tipEl);
+                stageWrap.appendChild(compositeBox);
             }
+            content.appendChild(stageWrap);
 
             // Animate ring + count-up
             setTimeout(() => {
@@ -2669,7 +2704,9 @@ class FacialAnalyzer {
             }
 
             // ── CTA button ──────────────────────────────────────────────
-            const ctaDelay = isGuestView ? 2300 : (isFirstAnalysis ? 2200 : 3200 + (prevResult ? Math.min(18, Object.keys(scores).length) * 80 : 0));
+            const ctaDelay = isGuestView
+                ? (isMobile ? 1600 : 2400)
+                : (isFirstAnalysis ? (isMobile ? 2200 : 3000) : (isMobile ? 2500 : 3600) + (prevResult ? Math.min(18, Object.keys(scores).length) * (isMobile ? 40 : 80) : 0));
 
             const ctaWrap = document.createElement('div');
             ctaWrap.style.cssText = `width:100%;max-width:320px;margin:0 auto;`;
@@ -2681,10 +2718,14 @@ class FacialAnalyzer {
                 transition:transform 0.15s,box-shadow 0.15s;
                 touch-action:manipulation;
             `;
-            ctaBtn.textContent = isGuestView ? 'Continue →' : (isFirstAnalysis ? 'See Full Analysis →' : 'Go to Dashboard →');
+            ctaBtn.textContent = isGuestView ? 'Unlock Full Results →' : (isFirstAnalysis ? 'See Full Analysis →' : 'Go to Dashboard →');
             ctaBtn.onmouseenter = () => { ctaBtn.style.transform='translateY(-2px)'; ctaBtn.style.boxShadow='0 8px 24px rgba(255,255,255,0.2)'; };
             ctaBtn.onmouseleave = () => { ctaBtn.style.transform=''; ctaBtn.style.boxShadow=''; };
             const dismiss = () => {
+                if (isGuestView) {
+                    navigate('signup.html');
+                    return;
+                }
                 ov.style.transition = 'opacity 0.4s ease';
                 ov.style.opacity = '0';
                 setTimeout(() => {
@@ -2697,10 +2738,10 @@ class FacialAnalyzer {
 
             const ctaSub = document.createElement('div');
             ctaSub.style.cssText = `font-size:11px;color:rgba(255,255,255,0.2);margin-top:10px;`;
-            ctaSub.textContent = isGuestView ? 'Unlock the readable result with an account' : (isFirstAnalysis ? 'All 18 scores, measurements & improvement guides' : 'See your full score breakdown & improvement guide');
+            ctaSub.textContent = isGuestView ? '' : (isFirstAnalysis ? 'All 18 scores, measurements & improvement guides' : 'See your full score breakdown & improvement guide');
 
             ctaWrap.appendChild(ctaBtn);
-            ctaWrap.appendChild(ctaSub);
+            if (!isGuestView) ctaWrap.appendChild(ctaSub);
             fadeInEl(ctaWrap, ctaDelay, 600);
             content.appendChild(ctaWrap);
 
