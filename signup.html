@@ -46,6 +46,11 @@
         .side-item:hover{transform:translateY(-3px);border-color:rgba(48,209,88,0.18);background:rgba(255,255,255,0.045);box-shadow:0 14px 34px rgba(0,0,0,0.18);}
         .side-item strong{display:block;font-size:13px;margin-bottom:5px;}
         .side-item span{font-size:12px;color:var(--text2);line-height:1.55;}
+        .side-proof{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:18px;}
+        .proof-pill{padding:12px 10px;border-radius:14px;background:rgba(255,255,255,0.03);border:1px solid var(--card-border);text-align:center;transition:transform .22s ease,border-color .22s ease,background .22s ease;}
+        .proof-pill:hover{transform:translateY(-3px);border-color:rgba(90,200,250,0.16);background:rgba(255,255,255,0.05);}
+        .proof-pill strong{display:block;font-family:'Syne',sans-serif;font-size:24px;letter-spacing:-.05em;margin-bottom:4px;}
+        .proof-pill span{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;}
         .card-glow{position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(48,209,88,0.06) 0%,transparent 70%);border-radius:50%;pointer-events:none;top:50%;left:50%;transform:translate(-50%,-60%);}
         [data-theme="light"] .card-glow{background:radial-gradient(circle,rgba(26,140,56,0.04) 0%,transparent 70%);}
         @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
@@ -113,6 +118,11 @@
                 <div class="side-item"><strong>Readable full results</strong><span>Guest scans now stop at a locked preview. Signing up reveals the score clearly and opens the full breakdown.</span></div>
                 <div class="side-item"><strong>Saved scan history</strong><span>Every new analysis can be compared against previous ones, so the product actually rewards return visits.</span></div>
                 <div class="side-item"><strong>Long-term progress view</strong><span>Your dashboard becomes the place where changes compound instead of each scan feeling disposable.</span></div>
+            </div>
+            <div class="side-proof">
+                <div class="proof-pill"><strong>Free</strong><span>entry</span></div>
+                <div class="proof-pill"><strong>Clear</strong><span>results</span></div>
+                <div class="proof-pill"><strong>Saved</strong><span>progress</span></div>
             </div>
         </div>
         <div style="position:relative;">

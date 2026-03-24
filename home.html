@@ -5,65 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>larp.ai — Facial Analysis</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
     <style>
-        /* ── RESET ── */
         *{margin:0;padding:0;box-sizing:border-box;}
-
-        /* ── THEME TOKENS ── */
         :root{
             --bg:#060608;
             --bg2:#0d0d10;
             --card:rgba(255,255,255,0.03);
-            --card-border:rgba(255,255,255,0.07);
-            --card-hover:rgba(255,255,255,0.06);
+            --card-strong:rgba(255,255,255,0.05);
+            --card-border:rgba(255,255,255,0.08);
             --text:#f0f0f2;
-            --text2:rgba(240,240,242,0.55);
-            --text3:rgba(240,240,242,0.28);
+            --text2:rgba(240,240,242,0.58);
+            --text3:rgba(240,240,242,0.30);
             --green:#30d158;
             --cyan:#5ac8fa;
             --gold:#ffd60a;
-            --accent:#30d158;
-            --nav-bg:rgba(6,6,8,0.82);
+            --orange:#ff9f0a;
+            --red:#ff453a;
+            --nav-bg:rgba(6,6,8,0.84);
             --nav-border:rgba(255,255,255,0.06);
             --btn-primary-bg:#f0f0f2;
             --btn-primary-text:#060608;
             --btn-secondary-bg:rgba(255,255,255,0.06);
             --btn-secondary-border:rgba(255,255,255,0.1);
-            --btn-secondary-text:rgba(240,240,242,0.7);
-            --input-bg:rgba(255,255,255,0.05);
-            --input-border:rgba(255,255,255,0.1);
-            --shadow:0 24px 80px rgba(0,0,0,0.6);
-            --radius:18px;
-            --transition:all 0.2s cubic-bezier(0.4,0,0.2,1);
+            --btn-secondary-text:rgba(240,240,242,0.72);
+            --shadow:0 28px 80px rgba(0,0,0,0.42);
         }
-
         [data-theme="light"]{
             --bg:#f5f5f0;
-            --bg2:#ebebE6;
+            --bg2:#ecece7;
             --card:rgba(0,0,0,0.03);
+            --card-strong:rgba(0,0,0,0.05);
             --card-border:rgba(0,0,0,0.08);
-            --card-hover:rgba(0,0,0,0.06);
             --text:#0a0a0c;
-            --text2:rgba(10,10,12,0.55);
-            --text3:rgba(10,10,12,0.3);
+            --text2:rgba(10,10,12,0.56);
+            --text3:rgba(10,10,12,0.30);
             --green:#1a8c38;
             --cyan:#0077a8;
             --gold:#b8960a;
-            --accent:#1a8c38;
+            --orange:#b56f00;
+            --red:#d63329;
             --nav-bg:rgba(245,245,240,0.88);
             --nav-border:rgba(0,0,0,0.08);
             --btn-primary-bg:#0a0a0c;
             --btn-primary-text:#f5f5f0;
             --btn-secondary-bg:rgba(0,0,0,0.05);
             --btn-secondary-border:rgba(0,0,0,0.12);
-            --btn-secondary-text:rgba(10,10,12,0.65);
-            --input-bg:rgba(0,0,0,0.04);
-            --input-border:rgba(0,0,0,0.12);
-            --shadow:0 24px 80px rgba(0,0,0,0.12);
+            --btn-secondary-text:rgba(10,10,12,0.72);
+            --shadow:0 24px 60px rgba(0,0,0,0.10);
         }
-
-        /* ── BASE ── */
         html{scroll-behavior:smooth;}
         body{
             font-family:'DM Sans',system-ui,sans-serif;
@@ -71,656 +61,25 @@
             color:var(--text);
             min-height:100vh;
             overflow-x:hidden;
-            transition:background 0.3s ease,color 0.3s ease;
+            transition:background .3s ease,color .3s ease;
         }
-
-        /* ── NOISE TEXTURE OVERLAY ── */
         body::before{
             content:'';
             position:fixed;inset:0;
             background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-            opacity:0.025;
+            opacity:.024;
             pointer-events:none;
             z-index:0;
         }
-        [data-theme="light"] body::before{opacity:0.018;}
-
-        /* ── NAV ── */
-        nav{
-            position:fixed;top:0;left:0;right:0;z-index:500;
-            display:flex;align-items:center;justify-content:space-between;
-            padding:0 clamp(16px,4vw,32px);
-            height:60px;
-            background:var(--nav-bg);
-            backdrop-filter:blur(24px) saturate(180%);
-            -webkit-backdrop-filter:blur(24px) saturate(180%);
-            border-bottom:1px solid var(--nav-border);
-            transition:var(--transition);
-        }
-        .nav-brand{
-            font-family:'Syne',sans-serif;
-            font-size:clamp(15px,3.5vw,18px);
-            font-weight:800;
-            color:var(--text);
-            text-decoration:none;
-            letter-spacing:-.04em;
-            display:flex;align-items:center;gap:6px;
-            transition:transform .22s ease,color .22s ease;
-        }
-        .nav-brand:hover{transform:translateY(-1px) scale(1.01);}
-        .nav-brand-dot{
-            width:7px;height:7px;
-            border-radius:50%;
-            background:var(--accent);
-            display:inline-block;
-            animation:pulse-dot 2.5s ease infinite;
-        }
-        @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
-        .nav-brand em{
-            font-family:'DM Sans',sans-serif;
-            font-weight:300;font-style:italic;
-            color:var(--text3);font-size:11px;
-        }
-        .nav-right{display:flex;gap:8px;align-items:center;}
-        .nav-btn{
-            padding:7px clamp(10px,2.5vw,18px);
-            border-radius:10px;
-            font-family:'DM Sans',sans-serif;
-            font-size:clamp(11px,2.5vw,13px);
-            font-weight:500;
-            cursor:pointer;
-            transition:var(--transition);
-            text-decoration:none;
-            display:inline-flex;align-items:center;
-            white-space:nowrap;
-            border:none;
-        }
-        .nav-login{
-            background:var(--btn-secondary-bg);
-            border:1px solid var(--btn-secondary-border)!important;
-            color:var(--btn-secondary-text);
-        }
-        .nav-login:hover{color:var(--text);border-color:rgba(255,255,255,0.2)!important;}
-        [data-theme="light"] .nav-login:hover{border-color:rgba(0,0,0,0.2)!important;}
-        .nav-signup{background:var(--btn-primary-bg);color:var(--btn-primary-text);font-weight:600;}
-        .nav-signup:hover{opacity:0.88;transform:translateY(-1px);}
-        .nav-username{font-size:13px;color:var(--text2);font-weight:400;}
-        .nav-username b{color:var(--text);font-weight:600;}
-        .nav-logout{
-            background:var(--btn-secondary-bg);
-            border:1px solid var(--btn-secondary-border)!important;
-            color:var(--text3);font-size:12px;padding:6px 14px;
-        }
-        .nav-logout:hover{color:var(--text);}
-
-        /* Theme toggle */
-        .theme-toggle{
-            width:34px;height:34px;
-            border-radius:10px;
-            border:1px solid var(--btn-secondary-border)!important;
-            background:var(--btn-secondary-bg);
-            cursor:pointer;
-            display:flex;align-items:center;justify-content:center;
-            font-size:15px;
-            transition:var(--transition);
-            color:var(--text2);
-            padding:0;
-        }
-        .theme-toggle:hover{color:var(--text);border-color:var(--card-hover)!important;}
-
-        /* ── HERO ── */
-        .hero{
-            min-height:100vh;
-            display:flex;flex-direction:column;
-            align-items:center;justify-content:center;
-            text-align:center;
-            padding:80px clamp(18px,5vw,40px) 60px;
-            position:relative;
-            overflow:hidden;
-        }
-        .hero-spotlight{
-            position:absolute;
-            width:360px;height:360px;
-            border-radius:50%;
-            background:radial-gradient(circle, rgba(48,209,88,0.16) 0%, rgba(48,209,88,0.08) 22%, transparent 70%);
-            filter:blur(34px);
-            pointer-events:none;
-            opacity:0;
-            z-index:0;
-            transform:translate(-50%,-50%);
-            transition:opacity .22s ease;
-        }
-
-        /* Animated grid background */
-        .hero-grid{
-            position:absolute;inset:0;
-            background-image:
-                linear-gradient(var(--card-border) 1px,transparent 1px),
-                linear-gradient(90deg,var(--card-border) 1px,transparent 1px);
-            background-size:60px 60px;
-            mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 80%);
-            -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 80%);
-            animation:grid-drift 20s ease infinite alternate;
-        }
-        @keyframes grid-drift{from{transform:translateY(0)}to{transform:translateY(-20px)}}
-
-        /* Glow orbs */
-        .hero-orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;}
-        .hero-orb-1{width:500px;height:500px;background:radial-gradient(circle,rgba(48,209,88,0.08) 0%,transparent 70%);top:-100px;left:50%;transform:translateX(-50%);}
-        .hero-orb-2{width:300px;height:300px;background:radial-gradient(circle,rgba(90,200,250,0.06) 0%,transparent 70%);top:20%;right:-50px;}
-        .hero-orb-3{width:200px;height:200px;background:radial-gradient(circle,rgba(255,214,10,0.04) 0%,transparent 70%);bottom:20%;left:5%;}
-
-        [data-theme="light"] .hero-orb-1{background:radial-gradient(circle,rgba(26,140,56,0.06) 0%,transparent 70%);}
-        [data-theme="light"] .hero-orb-2{background:radial-gradient(circle,rgba(0,119,168,0.05) 0%,transparent 70%);}
-
-        .hero-content{position:relative;z-index:1;max-width:760px;}
-
-        .hero-badge{
-            display:inline-flex;align-items:center;gap:8px;
-            padding:6px 14px 6px 8px;
-            border-radius:100px;
-            background:var(--card);
-            border:1px solid var(--card-border);
-            font-size:11px;font-weight:500;
-            color:var(--text2);
-            margin-bottom:32px;
-            letter-spacing:.03em;
-            opacity:0;animation:fadeUp 0.6s ease 0.1s forwards;
-            transition:transform .22s ease,border-color .22s ease,background .22s ease;
-        }
-        .hero-badge:hover{transform:translateY(-2px);border-color:rgba(48,209,88,0.22);background:rgba(255,255,255,0.05);}
-        .hero-badge-dot{
-            width:6px;height:6px;border-radius:50%;
-            background:var(--accent);
-        }
-
-        .hero-title{
-            margin:0 auto 24px;
-            max-width:700px;
-            opacity:0;animation:fadeUp 0.7s ease 0.25s forwards;
-        }
-        .hero-flip-stack{
-            display:grid;
-            gap:14px;
-            perspective:1200px;
-        }
-        .hero-flip-card{
-            position:relative;
-            display:block;
-            height:clamp(76px,11vw,110px);
-            transform-style:preserve-3d;
-            animation:hero-card-in .9s cubic-bezier(.22,1,.36,1) both;
-            will-change:transform,opacity,filter;
-        }
-        .hero-flip-card.delay-2{animation-delay:.16s;}
-        .hero-flip-card.delay-3{animation-delay:.32s;}
-        .hero-flip-face{
-            position:absolute;
-            inset:0;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            border-radius:28px;
-            border:1px solid rgba(255,255,255,0.12);
-            background:linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03));
-            box-shadow:0 22px 46px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06);
-            backface-visibility:hidden;
-            font-family:'Syne',sans-serif;
-            font-size:clamp(40px,7vw,76px);
-            font-weight:800;
-            letter-spacing:-.06em;
-            line-height:1;
-        }
-        .hero-flip-face.front{
-            color:var(--text);
-            background:
-                linear-gradient(135deg,rgba(48,209,88,0.10),rgba(255,255,255,0.04)),
-                rgba(10,12,14,0.88);
-        }
-        .hero-flip-face.back{
-            color:var(--text3);
-            transform:rotateX(180deg);
-            background:
-                linear-gradient(135deg,rgba(90,200,250,0.10),rgba(255,255,255,0.03)),
-                rgba(10,12,14,0.88);
-        }
-        .hero-flip-card:hover{
-            transform:translateY(-6px) rotateX(180deg);
-        }
-        .hero-title-caption{
-            display:block;
-            margin-top:18px;
-            font-family:'DM Sans',sans-serif;
-            font-size:clamp(18px,2.4vw,22px);
-            font-weight:500;
-            color:var(--text2);
-            letter-spacing:-.02em;
-        }
-        @keyframes hero-card-in{
-            0%{opacity:0;transform:translateY(44px) rotateX(-18deg);filter:blur(12px);}
-            100%{opacity:1;transform:translateY(0) rotateX(0);filter:blur(0);}
-        }
-
-        .hero-sub{
-            font-size:clamp(14px,2vw,17px);
-            color:var(--text2);
-            max-width:430px;
-            line-height:1.65;
-            margin:0 auto 34px;
-            font-weight:400;
-            opacity:0;animation:fadeUp 0.7s ease 0.4s forwards;
-        }
-
-        .hero-btns{
-            display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
-            opacity:0;animation:fadeUp 0.7s ease 0.55s forwards;
-        }
-        .hbtn{
-            padding:14px clamp(22px,5vw,40px);
-            border-radius:13px;
-            font-family:'DM Sans',sans-serif;
-            font-size:clamp(13px,2.5vw,15px);
-            font-weight:600;
-            cursor:pointer;
-            transition:var(--transition);
-            border:none;
-            letter-spacing:-.01em;
-            position:relative;
-            overflow:hidden;
-        }
-        .hbtn::after{
-            content:'';
-            position:absolute;
-            top:-120%;left:-30%;
-            width:44%;height:320%;
-            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);
-            transform:rotate(18deg);
-            opacity:0;
-            transition:transform .55s ease,opacity .25s ease;
-        }
-        .hbtn:hover::after{opacity:1;transform:translateX(260%) rotate(18deg);}
-        .hbtn-p{background:var(--btn-primary-bg);color:var(--btn-primary-text);}
-        .hbtn-p:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,0.3);}
-        [data-theme="light"] .hbtn-p:hover{box-shadow:0 12px 40px rgba(0,0,0,0.15);}
-        .hbtn-s{
-            background:var(--btn-secondary-bg);
-            border:1px solid var(--btn-secondary-border)!important;
-            color:var(--btn-secondary-text);
-        }
-        .hbtn-s:hover{background:var(--card-hover);color:var(--text);transform:translateY(-2px);}
-
-        /* Floating score preview cards */
-        .hero-float{
-            position:absolute;z-index:1;
-            opacity:0;animation:float-in 0.8s ease forwards;
-        }
-        .hero-float-l{left:clamp(-20px,2vw,60px);top:50%;transform:translateY(-50%);}
-        .hero-float-r{right:clamp(-20px,2vw,60px);top:50%;transform:translateY(-50%);}
-        @keyframes float-in{from{opacity:0;transform:translateY(-40%)}to{opacity:1;transform:translateY(-50%)}}
-        .hero-float-r{animation-name:float-in-r;}
-        @keyframes float-in-r{from{opacity:0;transform:translateY(-40%)}to{opacity:1;transform:translateY(-50%)}}
-        .float-card{
-            background:var(--card);
-            border:1px solid var(--card-border);
-            border-radius:16px;
-            padding:16px 18px;
-            width:150px;
-            backdrop-filter:blur(20px);
-            animation:float-bob 4s ease infinite;
-            transition:transform .25s ease,border-color .25s ease,background .25s ease,box-shadow .25s ease;
-        }
-        .float-card:hover{transform:translateY(-6px) rotate(-1deg);border-color:rgba(255,255,255,0.16);background:rgba(255,255,255,0.05);box-shadow:0 16px 42px rgba(0,0,0,0.24);}
-        .float-card-r{animation-delay:2s;animation-name:float-bob-r;}
-        @keyframes float-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-        @keyframes float-bob-r{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
-        .float-label{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
-        .float-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;}
-        .float-sub{font-size:10px;color:var(--text3);margin-top:3px;}
-        @media(max-width:960px){.hero-float{display:none;}}
-
-        /* ── CHIPS ── */
-        .chips{
-            width:min(1040px,calc(100% - 36px));
-            margin:0 auto;
-            display:grid;
-            grid-template-columns:repeat(6,minmax(0,1fr));
-            gap:10px;
-            padding:0 0 56px;
-            position:relative;z-index:1;
-            opacity:0;animation:fadeUp 0.7s ease 0.7s forwards;
-        }
-        .chip{
-            min-height:74px;
-            font-size:11px;color:var(--text2);font-weight:600;
-            display:flex;align-items:flex-end;
-            padding:14px 14px 12px;
-            border-radius:18px;
-            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
-            border:1px solid var(--card-border);
-            transition:transform .24s ease,border-color .24s ease,background .24s ease,box-shadow .24s ease;
-            transform-origin:center;
-            position:relative;
-            overflow:hidden;
-            line-height:1.45;
-        }
-        .chip::after{
-            content:'';
-            position:absolute;inset:0;
-            background:linear-gradient(135deg,rgba(48,209,88,0.10),transparent 55%,rgba(90,200,250,0.08));
-            opacity:0;
-            transition:opacity .24s ease;
-        }
-        .chip:hover{border-color:rgba(48,209,88,0.24);color:var(--text);transform:translateY(-4px);box-shadow:0 20px 48px rgba(0,0,0,0.22);}
-        .chip:hover::after{opacity:1;}
-        .chip span{position:relative;z-index:1;display:block;}
-
-        .announce{
-            margin:76px auto 0;
-            width:min(1120px, calc(100% - 32px));
-            border:1px solid var(--card-border);
-            background:linear-gradient(90deg,rgba(48,209,88,0.10),rgba(90,200,250,0.08));
-            border-radius:16px;
-            padding:12px 16px;
-            display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
-            position:relative;z-index:20;
-            backdrop-filter:blur(18px);
-        }
-        .announce-copy{font-size:12px;color:var(--text2);line-height:1.6;}
-        .announce-copy strong{color:var(--text);font-weight:700;}
-        .announce-link{font-size:12px;color:var(--accent);text-decoration:none;font-weight:700;}
-        .announce-link:hover{color:var(--text);}
-        .announce{transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease;}
-        .announce:hover{transform:translateY(-2px);border-color:rgba(48,209,88,0.18);box-shadow:0 16px 34px rgba(0,0,0,0.14);}
-
-        /* ── DIVIDERS ── */
-        .div-line{height:1px;background:linear-gradient(90deg,transparent,var(--card-border),transparent);}
-
-        /* ── SCROLL REVEAL ── */
-        .reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s ease,transform 0.7s ease;}
-        .reveal.visible{opacity:1;transform:translateY(0);}
-        .reveal-delay-1{transition-delay:0.1s;}
-        .reveal-delay-2{transition-delay:0.2s;}
-        .reveal-delay-3{transition-delay:0.3s;}
-        .reveal-delay-4{transition-delay:0.4s;}
-
-        /* ── HOW IT WORKS ── */
-        .section{padding:80px clamp(18px,5vw,40px);max-width:900px;margin:0 auto;text-align:center;}
-        .sec-eyebrow{
-            font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
-            color:var(--accent);margin-bottom:12px;
-            display:inline-flex;align-items:center;gap:8px;
-        }
-        .sec-eyebrow::before,.sec-eyebrow::after{content:'';flex:1;height:1px;background:var(--accent);opacity:0.3;width:20px;}
-        .sec-title{
-            font-family:'Syne',sans-serif;
-            font-size:clamp(26px,4vw,42px);
-            font-weight:800;letter-spacing:-.04em;
-            margin-bottom:12px;
-            line-height:1.1;
-        }
-        .sec-sub{font-size:15px;color:var(--text2);line-height:1.7;max-width:500px;margin:0 auto 52px;font-weight:300;}
-
-        .steps{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px;}
-        .step{
-            background:var(--card);
-            border:1px solid var(--card-border);
-            border-radius:var(--radius);
-            padding:28px 22px;
-            text-align:left;
-            transition:var(--transition);
-            position:relative;
-            overflow:hidden;
-        }
-        .step::before{
-            content:'';
-            position:absolute;inset:0;
-            background:linear-gradient(135deg,var(--accent),transparent);
-            opacity:0;
-            transition:opacity 0.3s ease;
-        }
-        .step:hover{border-color:rgba(48,209,88,0.25);transform:translateY(-3px);}
-        .step:nth-child(1){grid-column:span 6;}
-        .step:nth-child(2){grid-column:span 6;}
-        .step:nth-child(3){grid-column:span 7;}
-        .step:nth-child(4){grid-column:span 5;}
-        [data-theme="light"] .step:hover{border-color:rgba(26,140,56,0.25);}
-        .step:hover::before{opacity:0.04;}
-        .step:hover .step-icon{transform:translateY(-2px) rotate(-3deg);border-color:rgba(48,209,88,0.22);}
-        .step:hover .step-title{letter-spacing:-.01em;}
-        .step-num{
-            font-family:'Syne',sans-serif;
-            font-size:11px;font-weight:700;letter-spacing:.15em;
-            color:var(--text3);margin-bottom:18px;
-        }
-        .step-icon{
-            width:44px;height:44px;
-            border-radius:12px;
-            background:linear-gradient(135deg,var(--card-hover),var(--card));
-            border:1px solid var(--card-border);
-            display:flex;align-items:center;justify-content:center;
-            font-size:20px;margin-bottom:14px;
-            transition:transform .25s ease,border-color .25s ease,background .25s ease;
-        }
-        .step-title{
-            font-family:'Syne',sans-serif;
-            font-size:14px;font-weight:700;margin-bottom:7px;
-            transition:letter-spacing .22s ease,color .22s ease;
-        }
-        .step-desc{font-size:12px;color:var(--text2);line-height:1.65;}
-
-        /* ── STATS ── */
-        .stats-section{
-            padding:60px clamp(18px,5vw,40px);
-            border-top:1px solid var(--card-border);
-            border-bottom:1px solid var(--card-border);
-        }
-        .stats-inner{
-            max-width:700px;margin:0 auto;
-            display:flex;justify-content:center;gap:clamp(28px,6vw,64px);flex-wrap:wrap;
-        }
-        .stat{text-align:center;transition:transform .22s ease;}
-        .stat:hover{transform:translateY(-3px);}
-        .stat-num{
-            font-family:'Syne',sans-serif;
-            font-size:clamp(36px,6vw,52px);
-            font-weight:800;letter-spacing:-.05em;
-            margin-bottom:6px;
-            background:linear-gradient(135deg,var(--text),var(--text2));
-            -webkit-background-clip:text;
-            -webkit-text-fill-color:transparent;
-            background-clip:text;
-        }
-        .stat-label{font-size:11px;color:var(--text3);font-weight:500;letter-spacing:.04em;}
-
-        .split-grid{
-            max-width:980px;
-            margin:0 auto;
-            padding:80px clamp(18px,5vw,40px);
-            display:grid;
-            grid-template-columns:1.1fr .9fr;
-            gap:16px;
-            align-items:start;
-        }
-        .split-card{
-            background:var(--card);
-            border:1px solid var(--card-border);
-            border-radius:24px;
-            padding:26px 24px;
-            position:relative;
-            overflow:hidden;
-            transition:transform .26s ease,border-color .26s ease,box-shadow .26s ease,background .26s ease;
-        }
-        .split-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.12);box-shadow:0 26px 66px rgba(0,0,0,0.22);}
-        .split-card::before{
-            content:'';
-            position:absolute;inset:0;
-            background:linear-gradient(135deg,rgba(48,209,88,0.06),transparent 40%);
-            pointer-events:none;
-        }
-        .split-card > *{position:relative;z-index:1;}
-        .split-title{
-            font-family:'Syne',sans-serif;
-            font-size:clamp(24px,4vw,36px);
-            letter-spacing:-.04em;
-            line-height:1.05;
-            margin-bottom:10px;
-        }
-        .split-sub{font-size:14px;color:var(--text2);line-height:1.75;max-width:520px;}
-        .scan-list{margin-top:18px;display:grid;gap:10px;}
-        .scan-row{
-            display:flex;gap:12px;align-items:flex-start;
-            padding:12px 0;border-bottom:1px solid var(--card-border);
-            transition:transform .22s ease,padding-left .22s ease,border-color .22s ease;
-        }
-        .scan-row:hover{transform:translateX(4px);padding-left:4px;border-color:rgba(48,209,88,0.18);}
-        .scan-row:last-child{border-bottom:none;padding-bottom:0;}
-        .scan-num{
-            width:24px;height:24px;border-radius:8px;background:rgba(48,209,88,0.12);
-            border:1px solid rgba(48,209,88,0.2);color:var(--accent);
-            display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;
-        }
-        .scan-row strong{display:block;font-size:13px;margin-bottom:4px;}
-        .scan-row span{font-size:12px;color:var(--text2);line-height:1.55;}
-        .promise-grid{display:grid;gap:10px;margin-top:16px;}
-        .promise{
-            border-radius:16px;padding:14px;
-            background:rgba(255,255,255,0.03);
-            border:1px solid var(--card-border);
-            transition:transform .22s ease,border-color .22s ease,background .22s ease;
-            position:relative;
-            overflow:hidden;
-        }
-        .promise::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(90,200,250,0.10),transparent 58%);opacity:0;transition:opacity .22s ease;}
-        .promise:hover{transform:translateY(-3px);border-color:rgba(90,200,250,0.18);background:rgba(255,255,255,0.045);}
-        .promise:hover::after{opacity:1;}
-        .promise > *{position:relative;z-index:1;}
-        .promise-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
-        .promise-copy{font-size:13px;color:var(--text2);line-height:1.6;}
-
-        /* ── CTA ── */
-        .cta{text-align:center;padding:80px clamp(18px,5vw,40px) 100px;}
-        .cta-title{
-            font-family:'Syne',sans-serif;
-            font-size:clamp(28px,5vw,52px);
-            font-weight:800;letter-spacing:-.04em;
-            margin-bottom:16px;line-height:1.05;
-        }
-        .cta-sub{font-size:15px;color:var(--text2);margin-bottom:40px;line-height:1.6;font-weight:300;}
-
-        /* ── LEADERBOARD ── */
-        .lb-section{max-width:700px;margin:0 auto;padding:0 clamp(18px,5vw,32px) 80px;}
-        .lb-item{
-            display:flex;align-items:center;gap:14px;
-            padding:14px 18px;
-            background:var(--card);
-            border:1px solid var(--card-border);
-            border-radius:14px;
-            margin-bottom:8px;
-            transition:var(--transition);
-            position:relative;
-            overflow:hidden;
-        }
-        .lb-item::before{
-            content:'';
-            position:absolute;left:0;top:0;bottom:0;width:3px;
-            background:transparent;
-            transition:background 0.2s ease;
-        }
-        .lb-item:hover{border-color:var(--card-hover);transform:translateX(4px);}
-        .lb-item:hover .lb-score{transform:scale(1.04);}
-        .lb-item.rank-1::before{background:var(--gold);}
-        .lb-item.rank-2::before{background:#c0c0c0;}
-        .lb-item.rank-3::before{background:#cd7f32;}
-        .lb-rank{font-size:14px;font-weight:700;color:var(--text3);min-width:26px;text-align:center;}
-        .lb-rank.top1{color:var(--gold);font-size:18px;}
-        .lb-rank.top2{color:#c0c0c0;font-size:16px;}
-        .lb-rank.top3{color:#cd7f32;font-size:16px;}
-        .lb-name{flex:1;font-size:13px;font-weight:600;color:var(--text);}
-        .lb-you{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(48,209,88,0.12);color:var(--accent);margin-left:7px;}
-        .lb-score{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;transition:transform .22s ease;}
-        .lb-tier{font-size:10px;color:var(--text3);margin-top:1px;text-align:right;}
-        .lb-bar-bg{width:72px;height:3px;background:var(--card-border);border-radius:2px;overflow:hidden;}
-        .lb-bar-fill{height:100%;border-radius:2px;}
-
-        /* ── FOOTER ── */
-        footer{
-            border-top:1px solid var(--card-border);
-            padding:22px clamp(18px,5vw,32px);
-            display:flex;justify-content:space-between;align-items:center;
-            flex-wrap:wrap;gap:10px;
-        }
-        .foot-brand{
-            font-family:'Syne',sans-serif;
-            font-size:14px;font-weight:800;letter-spacing:-.03em;
-            color:var(--text3);
-        }
-        .foot-note{font-size:11px;color:var(--text3);}
-
-        /* ── POPUPS ── */
-        .ov{
-            position:fixed;inset:0;
-            background:rgba(0,0,0,0.75);
-            z-index:5000;display:none;
-            align-items:center;justify-content:center;
-            font-family:'DM Sans',sans-serif;
-            padding:20px;
-            backdrop-filter:blur(8px);
-        }
-        .ov.show{display:flex;}
-        @keyframes popIn{from{opacity:0;transform:scale(0.93) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        .pb{
-            background:var(--bg2);
-            border:1px solid var(--card-border);
-            border-radius:22px;
-            padding:36px 30px;
-            max-width:380px;width:100%;
-            text-align:center;
-            box-shadow:var(--shadow);
-            animation:popIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .pb-icon{font-size:32px;margin-bottom:16px;line-height:1;}
-        .pb-title{
-            font-family:'Syne',sans-serif;
-            font-size:20px;font-weight:800;letter-spacing:-.03em;margin-bottom:8px;
-        }
-        .pb-sub{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:28px;}
-        .pb-sub-gray{display:block;margin-top:8px;font-size:12px;color:var(--text3);}
-        .pb-row{display:flex;gap:10px;}
-        .btn-w{flex:1;padding:14px;border-radius:12px;border:none;background:var(--btn-primary-bg);color:var(--btn-primary-text);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;}
-        .btn-w:hover{opacity:.88;}
-        .btn-g{flex:1;padding:14px;border-radius:12px;border:1px solid var(--btn-secondary-border);background:var(--btn-secondary-bg);color:var(--btn-secondary-text);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:var(--transition);}
-        .btn-g:hover{background:var(--card-hover);color:var(--text);}
-        .pb-wide{max-width:500px;text-align:left;max-height:82vh;overflow-y:auto;padding:28px 26px;}
-
-        /* ── ANIMATIONS ── */
-        @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
-
-        /* ── RESPONSIVE ── */
-        @media(max-width:600px){
-            .hero{padding:72px 18px 44px;}
-            .hero-btns{flex-direction:column;align-items:stretch;max-width:280px;margin:0 auto;}
-            .stats-inner{gap:24px;}
-            footer{flex-direction:column;text-align:center;}
-            .chips{gap:8px;}
-            .announce{margin-top:72px;}
-            .hero-flip-card{height:82px;}
-            .hero-flip-face{border-radius:22px;font-size:42px;}
-            .hero-spotlight{display:none;}
-        }
-        @media(max-width:860px){
-            .split-grid{grid-template-columns:1fr;padding-top:60px;padding-bottom:60px;}
-        }
-        body.page-preload{opacity:0;transform:translateY(10px);}
-        body.page-live{opacity:1;transform:none;transition:opacity .42s cubic-bezier(.22,1,.36,1),transform .42s cubic-bezier(.22,1,.36,1);}
-        body.page-exit{opacity:0;transform:translateY(-10px);}
         .page-transition{
             position:fixed;inset:0;z-index:9999;pointer-events:none;
             background:
                 linear-gradient(180deg,rgba(255,255,255,0.05),transparent 18%),
-                radial-gradient(circle at 20% 20%, rgba(48,209,88,0.16), transparent 30%),
-                radial-gradient(circle at 80% 30%, rgba(90,200,250,0.12), transparent 32%),
+                radial-gradient(circle at 24% 18%, rgba(48,209,88,0.14), transparent 30%),
+                radial-gradient(circle at 76% 26%, rgba(90,200,250,0.12), transparent 32%),
                 linear-gradient(180deg,#060608,#060608);
-            opacity:0;transform:translateY(100%);
+            opacity:0;
+            transform:translateY(100%);
             transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .2s ease;
             overflow:hidden;
         }
@@ -729,25 +88,527 @@
         .page-transition::after{background:linear-gradient(180deg,transparent,rgba(255,255,255,0.05),transparent);opacity:.35;transform:translateY(-100%);transition:transform .6s cubic-bezier(.22,1,.36,1);}
         .page-transition.active{opacity:1;transform:translateY(0);}
         .page-transition.active::after{transform:translateY(100%);}
-        @media(max-width:720px){
-            body.page-live{transition-duration:.3s;}
+        body.page-preload{opacity:0;transform:translateY(10px);}
+        body.page-live{opacity:1;transform:none;transition:opacity .42s cubic-bezier(.22,1,.36,1),transform .42s cubic-bezier(.22,1,.36,1);}
+        body.page-exit{opacity:0;transform:translateY(-10px);}
+
+        nav{
+            position:fixed;top:0;left:0;right:0;z-index:500;
+            display:flex;align-items:center;justify-content:space-between;
+            height:60px;padding:0 clamp(16px,4vw,32px);
+            background:var(--nav-bg);
+            backdrop-filter:blur(24px) saturate(180%);
+            border-bottom:1px solid var(--nav-border);
+        }
+        .nav-brand{
+            font-family:'Syne',sans-serif;
+            font-size:18px;
+            font-weight:800;
+            color:var(--text);
+            text-decoration:none;
+            letter-spacing:-.04em;
+            display:flex;align-items:center;gap:7px;
+        }
+        .nav-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
+        .nav-brand em{font-family:'DM Sans',sans-serif;font-style:italic;font-weight:300;font-size:11px;color:var(--text3);}
+        .nav-right{display:flex;align-items:center;gap:8px;}
+        .theme-toggle{
+            width:34px;height:34px;border-radius:10px;
+            border:1px solid var(--btn-secondary-border)!important;
+            background:var(--btn-secondary-bg);
+            color:var(--text2);
+            cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            font-size:15px;
+        }
+        .nav-btn{
+            padding:8px 16px;border-radius:10px;
+            font-size:12px;font-weight:600;text-decoration:none;
+            display:inline-flex;align-items:center;
+            border:none;cursor:pointer;font-family:inherit;
+            transition:transform .18s ease,opacity .18s ease,border-color .18s ease,color .18s ease,background .18s ease;
+        }
+        .nav-login,.nav-logout{
+            background:var(--btn-secondary-bg);
+            border:1px solid var(--btn-secondary-border)!important;
+            color:var(--btn-secondary-text);
+        }
+        .nav-signup{background:var(--btn-primary-bg);color:var(--btn-primary-text);}
+        .nav-btn:hover{transform:translateY(-1px);}
+        .nav-username{font-size:13px;color:var(--text2);}
+        .nav-username b{color:var(--text);}
+
+        .site-shell{position:relative;z-index:1;padding-top:60px;}
+        .hero{
+            position:relative;
+            min-height:100vh;
+            display:grid;
+            align-items:center;
+            padding:28px clamp(18px,4vw,36px) 40px;
+            overflow:hidden;
+        }
+        .hero-grid{
+            position:absolute;inset:0;
+            background-image:
+                linear-gradient(var(--card-border) 1px,transparent 1px),
+                linear-gradient(90deg,var(--card-border) 1px,transparent 1px);
+            background-size:72px 72px;
+            mask-image:radial-gradient(ellipse 82% 82% at 50% 42%,black 32%,transparent 84%);
+            -webkit-mask-image:radial-gradient(ellipse 82% 82% at 50% 42%,black 32%,transparent 84%);
+            animation:gridFloat 20s ease infinite alternate;
+        }
+        @keyframes gridFloat{from{transform:translateY(0)}to{transform:translateY(-24px)}}
+        .hero-orb{
+            position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;
+        }
+        .hero-orb.a{width:560px;height:560px;background:radial-gradient(circle,rgba(48,209,88,0.10),transparent 72%);top:-130px;left:48%;transform:translateX(-50%);}
+        .hero-orb.b{width:300px;height:300px;background:radial-gradient(circle,rgba(90,200,250,0.08),transparent 72%);top:18%;right:-40px;}
+        .hero-orb.c{width:240px;height:240px;background:radial-gradient(circle,rgba(255,214,10,0.06),transparent 72%);bottom:12%;left:-40px;}
+        .hero-spotlight{
+            position:absolute;width:360px;height:360px;border-radius:50%;
+            background:radial-gradient(circle, rgba(48,209,88,0.16) 0%, rgba(48,209,88,0.08) 22%, transparent 70%);
+            filter:blur(34px);pointer-events:none;opacity:0;z-index:0;
+            transform:translate(-50%,-50%);transition:opacity .22s ease;
+        }
+        .hero-layout{
+            position:relative;z-index:1;
+            width:min(1220px,100%);
+            margin:0 auto;
+            display:grid;
+            grid-template-columns:1.08fr .92fr;
+            gap:18px;
+            align-items:end;
+        }
+        .hero-main,.hero-side{
+            border:1px solid var(--card-border);
+            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
+            border-radius:30px;
+            position:relative;
+            overflow:hidden;
+            box-shadow:var(--shadow);
+        }
+        .hero-main{
+            min-height:640px;
+            padding:32px clamp(22px,4vw,42px) 34px;
+            display:flex;flex-direction:column;justify-content:space-between;
+        }
+        .hero-main::before{
+            content:'';position:absolute;inset:0;
+            background:
+                linear-gradient(135deg,rgba(48,209,88,0.10),transparent 38%,rgba(90,200,250,0.06)),
+                radial-gradient(circle at 66% 34%,rgba(255,255,255,0.04),transparent 30%);
+            pointer-events:none;
+        }
+        .hero-side{
+            min-height:640px;
+            display:grid;
+            grid-template-rows:1.08fr .92fr;
+            gap:0;
+        }
+        .hero-panel{
+            position:relative;padding:22px;
+            border-bottom:1px solid var(--card-border);
+        }
+        .hero-panel:last-child{border-bottom:none;}
+        .hero-panel::before{
+            content:'';position:absolute;inset:0;
+            background:linear-gradient(135deg,rgba(255,255,255,0.03),transparent 58%);
+            pointer-events:none;
+        }
+        .hero-panel > *,.hero-main > *{position:relative;z-index:1;}
+        .eyebrow{
+            display:inline-flex;align-items:center;gap:8px;
+            font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+            color:var(--text3);margin-bottom:14px;
+        }
+        .eyebrow::before{content:'';width:28px;height:1px;background:rgba(48,209,88,0.42);}
+        .hero-title{
+            font-family:'Syne',sans-serif;
+            font-size:clamp(54px,8vw,114px);
+            letter-spacing:-.07em;
+            line-height:.88;
+            max-width:700px;
+            margin-bottom:18px;
+        }
+        .hero-title .line{display:block;}
+        .hero-title .muted{color:var(--text2);}
+        .hero-sub{
+            max-width:520px;
+            font-size:17px;
+            line-height:1.68;
+            color:var(--text2);
+            margin-bottom:26px;
+        }
+        .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+        .hero-button{
+            padding:15px 24px;border-radius:14px;border:none;
+            font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;
+            transition:transform .18s ease,box-shadow .18s ease,background .18s ease,color .18s ease,border-color .18s ease;
+        }
+        .hero-button.primary{background:var(--btn-primary-bg);color:var(--btn-primary-text);}
+        .hero-button.secondary{background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-text);}
+        .hero-button:hover{transform:translateY(-2px);}
+        .hero-stats{
+            display:grid;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:12px;
+            max-width:700px;
+        }
+        .hero-stat{
+            border-radius:18px;
+            background:rgba(255,255,255,0.03);
+            border:1px solid var(--card-border);
+            padding:16px 15px 14px;
+        }
+        .hero-stat strong{
+            display:block;
+            font-family:'Syne',sans-serif;
+            font-size:28px;
+            letter-spacing:-.05em;
+            margin-bottom:4px;
+        }
+        .hero-stat span{
+            font-size:11px;
+            line-height:1.55;
+            color:var(--text3);
+            text-transform:uppercase;
+            letter-spacing:.14em;
+        }
+        .score-object{
+            position:absolute;
+            right:26px;bottom:22px;
+            width:min(46vw,360px);
+            aspect-ratio:1/1;
+            border-radius:32px;
+            border:1px solid rgba(255,255,255,0.08);
+            background:rgba(0,0,0,0.14);
+            backdrop-filter:blur(18px);
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 24px 60px rgba(0,0,0,0.26);
+        }
+        .score-object::before{
+            content:'';position:absolute;inset:20px;border-radius:50%;
+            border:1px solid rgba(255,255,255,0.08);
+        }
+        .score-object::after{
+            content:'';position:absolute;inset:0;
+            background:radial-gradient(circle at 50% 50%,rgba(48,209,88,0.12),transparent 60%);
+            filter:blur(18px);
+        }
+        .score-core{text-align:center;position:relative;z-index:1;}
+        .score-core .score-kicker{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+        .score-core .score-value{font-family:'Syne',sans-serif;font-size:78px;letter-spacing:-.08em;line-height:.92;color:var(--text);}
+        .score-core .score-tier{font-size:18px;font-weight:700;color:var(--green);margin-top:8px;}
+        .hero-side-top{display:flex;flex-direction:column;justify-content:space-between;height:100%;}
+        .hero-side-title{font-family:'Syne',sans-serif;font-size:34px;letter-spacing:-.05em;line-height:.98;max-width:360px;}
+        .hero-side-copy{font-size:14px;line-height:1.68;color:var(--text2);max-width:330px;}
+        .stack-list{display:grid;gap:10px;}
+        .stack-item{
+            padding:14px 14px 13px;border-radius:16px;
+            background:rgba(255,255,255,0.03);
+            border:1px solid var(--card-border);
+            transition:transform .18s ease,border-color .18s ease,background .18s ease;
+        }
+        .stack-item:hover{transform:translateY(-3px);border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);}
+        .stack-item strong{display:block;font-size:12px;margin-bottom:5px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);}
+        .stack-item span{display:block;font-size:14px;line-height:1.55;color:var(--text);}
+        .guest-card{
+            display:flex;flex-direction:column;justify-content:space-between;height:100%;
+        }
+        .guest-badge{
+            display:inline-flex;align-items:center;gap:8px;
+            padding:9px 12px;border-radius:999px;
+            border:1px solid rgba(255,214,10,0.18);
+            background:rgba(255,214,10,0.08);
+            color:var(--gold);font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+        }
+        .guest-title{font-family:'Syne',sans-serif;font-size:32px;line-height:.98;letter-spacing:-.05em;margin:18px 0 10px;}
+        .guest-copy{font-size:14px;line-height:1.68;color:var(--text2);margin-bottom:18px;}
+        .guest-lock{
+            border-radius:18px;padding:18px;
+            border:1px solid rgba(255,255,255,0.08);
+            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
+        }
+        .lock-score{font-family:'Syne',sans-serif;font-size:52px;letter-spacing:-.08em;line-height:.92;filter:blur(8px);opacity:.78;}
+        .lock-note{font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;}
+        .ticker{
+            border-top:1px solid var(--card-border);
+            border-bottom:1px solid var(--card-border);
+            background:rgba(255,255,255,0.02);
+            overflow:hidden;
+        }
+        .ticker-track{
+            display:flex;gap:28px;white-space:nowrap;
+            padding:15px 0;
+            animation:tickerMove 26s linear infinite;
+        }
+        .ticker-track span{
+            font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);
+        }
+        .ticker-track strong{color:var(--text);}
+        @keyframes tickerMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+        .section{
+            width:min(1220px,calc(100% - 36px));
+            margin:0 auto;
+            padding:92px 0;
+        }
+        .section-head{
+            display:flex;justify-content:space-between;align-items:end;gap:18px;
+            margin-bottom:28px;
+        }
+        .section-kicker{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:10px;}
+        .section-title{font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,54px);letter-spacing:-.06em;line-height:.95;max-width:700px;}
+        .section-copy{max-width:380px;font-size:14px;line-height:1.7;color:var(--text2);}
+        .system-grid{
+            display:grid;
+            grid-template-columns:1.1fr .9fr .9fr;
+            gap:14px;
+        }
+        .system-card{
+            border-radius:26px;
+            border:1px solid var(--card-border);
+            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
+            padding:22px;
+            position:relative;overflow:hidden;
+            transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+        }
+        .system-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.12);box-shadow:0 24px 58px rgba(0,0,0,0.22);}
+        .system-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(48,209,88,0.09),transparent 55%,rgba(90,200,250,0.06));pointer-events:none;}
+        .system-card > *{position:relative;z-index:1;}
+        .system-card.large{grid-row:span 2;min-height:420px;display:flex;flex-direction:column;justify-content:space-between;}
+        .card-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;}
+        .card-title{font-family:'Syne',sans-serif;font-size:clamp(24px,3vw,38px);letter-spacing:-.05em;line-height:1.02;margin-bottom:10px;}
+        .card-copy{font-size:14px;color:var(--text2);line-height:1.68;}
+        .card-mini{
+            margin-top:18px;
+            padding-top:18px;
+            border-top:1px solid var(--card-border);
+            display:grid;gap:12px;
+        }
+        .mini-row{
+            display:grid;grid-template-columns:72px 1fr;gap:12px;
+            font-size:13px;line-height:1.6;color:var(--text2);
+        }
+        .mini-row strong{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);}
+        .scan-journey{
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:12px;
+            margin-top:18px;
+        }
+        .journey-step{
+            border-radius:18px;padding:16px 15px 14px;
+            background:rgba(255,255,255,0.03);
+            border:1px solid var(--card-border);
+            min-height:150px;
+        }
+        .journey-step em{
+            display:block;
+            font-style:normal;
+            font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);
+            margin-bottom:12px;
+        }
+        .journey-step strong{
+            display:block;font-family:'Syne',sans-serif;font-size:20px;letter-spacing:-.04em;line-height:1.02;margin-bottom:8px;
+        }
+        .journey-step span{font-size:13px;color:var(--text2);line-height:1.6;}
+        .proof-wrap{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:14px;
+        }
+        .proof-card{
+            border-radius:24px;
+            border:1px solid var(--card-border);
+            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
+            padding:22px;
+            position:relative;overflow:hidden;
+        }
+        .proof-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(90,200,250,0.08),transparent 55%);pointer-events:none;}
+        .proof-card > *{position:relative;z-index:1;}
+        .proof-list{display:grid;gap:10px;margin-top:18px;}
+        .proof-item{
+            display:flex;gap:12px;align-items:flex-start;
+            padding:12px 0;border-bottom:1px solid var(--card-border);
+        }
+        .proof-item:last-child{border-bottom:none;padding-bottom:0;}
+        .proof-num{
+            width:24px;height:24px;border-radius:8px;
+            background:rgba(48,209,88,0.12);
+            border:1px solid rgba(48,209,88,0.2);
+            color:var(--green);
+            display:flex;align-items:center;justify-content:center;
+            font-size:11px;font-weight:700;flex-shrink:0;
+        }
+        .proof-item strong{display:block;font-size:13px;margin-bottom:4px;}
+        .proof-item span{font-size:12px;color:var(--text2);line-height:1.6;}
+        .progress-grid{
+            display:grid;
+            grid-template-columns:1.12fr .88fr;
+            gap:14px;
+        }
+        .progress-card{
+            border-radius:28px;
+            border:1px solid var(--card-border);
+            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
+            padding:22px;
+            position:relative;overflow:hidden;
+        }
+        .progress-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(48,209,88,0.08),transparent 50%);pointer-events:none;}
+        .progress-card > *{position:relative;z-index:1;}
+        .progress-chart{
+            margin-top:22px;
+            padding:22px 18px 16px;
+            border-radius:20px;
+            background:rgba(0,0,0,0.14);
+            border:1px solid rgba(255,255,255,0.06);
+        }
+        .chart-rail{
+            display:grid;
+            gap:14px;
+        }
+        .chart-row{display:grid;grid-template-columns:58px 1fr 64px;gap:12px;align-items:center;}
+        .chart-row label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);}
+        .chart-bar{height:6px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;}
+        .chart-fill{height:100%;border-radius:999px;}
+        .chart-row span{font-size:12px;font-weight:700;text-align:right;}
+        .vault-card{
+            display:flex;flex-direction:column;justify-content:space-between;
+            min-height:100%;
+        }
+        .vault-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
+        .vault-metric{
+            border-radius:16px;background:rgba(255,255,255,0.03);
+            border:1px solid var(--card-border);padding:14px 12px;
+        }
+        .vault-metric strong{display:block;font-family:'Syne',sans-serif;font-size:28px;letter-spacing:-.05em;margin-bottom:4px;}
+        .vault-metric span{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.14em;}
+        .cta-band{
+            width:min(1220px,calc(100% - 36px));
+            margin:0 auto 80px;
+            border-radius:30px;
+            border:1px solid var(--card-border);
+            background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+            padding:32px clamp(22px,4vw,36px);
+            display:grid;
+            grid-template-columns:1.1fr .9fr;
+            gap:18px;
+            align-items:end;
+        }
+        .cta-band::before{
+            content:'';position:absolute;
+        }
+        .cta-copy{max-width:620px;}
+        .cta-title{
+            font-family:'Syne',sans-serif;
+            font-size:clamp(34px,5vw,62px);
+            letter-spacing:-.06em;line-height:.92;
+            margin-bottom:12px;
+        }
+        .cta-sub{font-size:15px;color:var(--text2);line-height:1.68;}
+        .cta-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px;flex-wrap:wrap;}
+        .lb-section{width:min(1220px,calc(100% - 36px));margin:0 auto 90px;}
+        .lb-frame{
+            border-radius:28px;border:1px solid var(--card-border);
+            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
+            padding:22px;
+        }
+        .lb-item{
+            display:flex;align-items:center;gap:14px;
+            padding:14px 18px;border-radius:16px;
+            background:rgba(255,255,255,0.03);
+            border:1px solid var(--card-border);
+            margin-bottom:10px;
+            transition:transform .18s ease,border-color .18s ease,background .18s ease;
+        }
+        .lb-item:hover{transform:translateX(4px);border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);}
+        .lb-rank{font-size:14px;font-weight:700;color:var(--text3);min-width:30px;text-align:center;}
+        .lb-rank.top1{color:var(--gold);}
+        .lb-rank.top2{color:#c0c0c0;}
+        .lb-rank.top3{color:#cd7f32;}
+        .lb-name{flex:1;font-size:14px;font-weight:600;color:var(--text);}
+        .lb-you{font-size:9px;font-weight:700;padding:3px 7px;border-radius:999px;background:rgba(48,209,88,0.12);color:var(--green);margin-left:7px;}
+        .lb-score{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;}
+        .lb-tier{font-size:10px;color:var(--text3);margin-top:2px;text-align:right;}
+        .lb-bar-bg{width:80px;height:3px;background:var(--card-border);border-radius:999px;overflow:hidden;}
+        .lb-bar-fill{height:100%;border-radius:999px;}
+        footer{
+            border-top:1px solid var(--card-border);
+            padding:24px clamp(18px,4vw,36px) 34px;
+            display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+            color:var(--text3);
+        }
+        .foot-brand{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.03em;}
+        .foot-note{font-size:11px;}
+
+        .ov{
+            position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;
+            background:rgba(0,0,0,0.76);backdrop-filter:blur(8px);padding:20px;
+        }
+        .ov.show{display:flex;}
+        .pb{
+            background:var(--bg2);
+            border:1px solid var(--card-border);
+            border-radius:24px;
+            padding:34px 30px;
+            max-width:390px;width:100%;
+            text-align:center;
+            box-shadow:var(--shadow);
+            animation:popIn .28s cubic-bezier(.34,1.56,.64,1);
+        }
+        .pb-wide{max-width:520px;text-align:left;max-height:82vh;overflow-y:auto;padding:28px 26px;}
+        @keyframes popIn{from{opacity:0;transform:scale(.93) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        .pb-icon{font-size:32px;margin-bottom:16px;line-height:1;}
+        .pb-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.03em;margin-bottom:8px;}
+        .pb-sub{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:28px;}
+        .pb-sub-gray{display:block;margin-top:8px;font-size:12px;color:var(--text3);}
+        .pb-row{display:flex;gap:10px;}
+        .btn-w,.btn-g{
+            flex:1;padding:14px;border-radius:12px;font-size:14px;font-family:inherit;cursor:pointer;
+        }
+        .btn-w{border:none;background:var(--btn-primary-bg);color:var(--btn-primary-text);font-weight:700;}
+        .btn-g{border:1px solid var(--btn-secondary-border);background:var(--btn-secondary-bg);color:var(--btn-secondary-text);}
+
+        .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease;}
+        .reveal.visible{opacity:1;transform:translateY(0);}
+        .reveal-delay-1{transition-delay:.08s;}
+        .reveal-delay-2{transition-delay:.16s;}
+        .reveal-delay-3{transition-delay:.24s;}
+
+        @media(max-width:1080px){
+            .hero-layout,
+            .proof-wrap,
+            .progress-grid,
+            .cta-band{grid-template-columns:1fr;}
+            .hero-main,.hero-side{min-height:auto;}
+            .score-object{position:relative;right:auto;bottom:auto;width:min(100%,360px);margin-top:20px;}
+            .hero-title{font-size:clamp(48px,10vw,88px);}
+            .system-grid{grid-template-columns:1fr 1fr;}
+            .system-card.large{grid-column:1 / -1;grid-row:auto;min-height:auto;}
+            .scan-journey{grid-template-columns:1fr 1fr;}
+            .section-head{flex-direction:column;align-items:flex-start;}
+            .cta-actions{justify-content:flex-start;}
+        }
+        @media(max-width:760px){
+            nav{padding:0 16px;}
+            .hero{padding:20px 18px 34px;}
+            .hero-main,.hero-side,.lb-frame,.cta-band,.system-card,.proof-card,.progress-card{border-radius:24px;}
+            .hero-main{padding:22px 18px 20px;}
+            .hero-panel{padding:18px;}
+            .hero-cta{flex-direction:column;align-items:stretch;}
+            .hero-button{width:100%;}
+            .hero-stats{grid-template-columns:1fr;}
+            .scan-journey,.system-grid,.vault-metrics{grid-template-columns:1fr;}
+            .ticker-track span{font-size:11px;}
+            .lb-item{padding:12px 14px;}
+            footer{flex-direction:column;align-items:flex-start;}
             .page-transition{transition:transform .38s cubic-bezier(.22,1,.36,1),opacity .2s ease;}
-        }
-        @media(max-width:960px){
-            .chips{grid-template-columns:repeat(2,minmax(0,1fr));width:calc(100% - 36px);}
-            .step{grid-column:span 6;}
-        }
-        @media(max-width:720px){
-            .steps{grid-template-columns:1fr;}
-            .step{grid-column:span 1;}
-            .chip{min-height:64px;padding:12px;}
         }
     </style>
 </head>
 <body class="page-preload">
 <div class="page-transition" id="pageTransition"></div>
 
-<!-- NAV -->
 <nav>
     <a href="home.html" class="nav-brand">
         <span class="nav-brand-dot"></span>
@@ -760,194 +621,302 @@
     </div>
 </nav>
 
-<div class="announce">
-    <div class="announce-copy"><strong>New:</strong> guests can now run a scan and see a blurred preview before creating an account, while full readable results stay reserved for logged-in users.</div>
-    <a href="signup.html" class="announce-link">Unlock Full Results</a>
-</div>
+<div class="site-shell">
+    <section class="hero">
+        <div class="hero-grid"></div>
+        <div class="hero-orb a"></div>
+        <div class="hero-orb b"></div>
+        <div class="hero-orb c"></div>
+        <div class="hero-spotlight" id="heroSpotlight"></div>
 
-<!-- HERO -->
-<section class="hero">
-    <div class="hero-spotlight" id="heroSpotlight"></div>
-    <div class="hero-grid"></div>
-    <div class="hero-orb hero-orb-1"></div>
-    <div class="hero-orb hero-orb-2"></div>
-    <div class="hero-orb hero-orb-3"></div>
+        <div class="hero-layout">
+            <div class="hero-main">
+                <div>
+                    <div class="eyebrow">PSL Facial Analysis System</div>
+                    <h1 class="hero-title">
+                        <span class="line">Read the</span>
+                        <span class="line muted">structure.</span>
+                        <span class="line">Build the edge.</span>
+                    </h1>
+                    <p class="hero-sub">A premium facial analysis experience built around baseline scoring, locked guest previews, readable member detail, and progress that actually compounds.</p>
+                    <div class="hero-cta">
+                        <button class="hero-button primary" id="btnAnalysis">Start Analysis</button>
+                        <button class="hero-button secondary" id="btnDashboard" style="display:none;">Open Dashboard</button>
+                        <button class="hero-button secondary" id="btnLeaderboard">View Leaderboard</button>
+                    </div>
+                </div>
 
-    <!-- Floating score cards (desktop only) -->
-    <div class="hero-float hero-float-l" style="animation-delay:0.9s;">
-        <div class="float-card">
-            <div class="float-label">Facial Harmony</div>
-            <div class="float-val" style="color:#30d158;">9.2</div>
-            <div class="float-sub">Chadlite tier</div>
-        </div>
-    </div>
-    <div class="hero-float hero-float-r" style="animation-delay:1.1s;">
-        <div class="float-card float-card-r">
-            <div class="float-label">Overall</div>
-            <div class="float-val" style="color:#5ac8fa;">7.84</div>
-            <div class="float-sub">HTN · Top 2%</div>
-        </div>
-    </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <strong>18</strong>
+                        <span>Facial metrics scored</span>
+                    </div>
+                    <div class="hero-stat">
+                        <strong>68</strong>
+                        <span>Landmark points mapped</span>
+                    </div>
+                    <div class="hero-stat">
+                        <strong>∞</strong>
+                        <span>Saved scans per account</span>
+                    </div>
+                </div>
 
-    <div class="hero-content">
-        <div class="hero-badge">
-            <span class="hero-badge-dot"></span>
-            PSL · Looksmaxxing · Bone Structure
-        </div>
-        <h1 class="hero-title" aria-label="Ascend. Improve. Refine. All with larp.ai.">
-            <span class="hero-flip-stack">
-                <span class="hero-flip-card">
-                    <span class="hero-flip-face front">Ascend</span>
-                    <span class="hero-flip-face back">Ascend</span>
-                </span>
-                <span class="hero-flip-card delay-2">
-                    <span class="hero-flip-face front">Improve</span>
-                    <span class="hero-flip-face back">Improve</span>
-                </span>
-                <span class="hero-flip-card delay-3">
-                    <span class="hero-flip-face front">Refine</span>
-                    <span class="hero-flip-face back">Refine</span>
-                </span>
-            </span>
-            <span class="hero-title-caption">All with larp.ai.</span>
-        </h1>
-        <p class="hero-sub">Precision PSL scoring for structure, harmony, angularity, and your next move.</p>
-        <div class="hero-btns">
-            <button class="hbtn hbtn-p" id="btnAnalysis">Analysis</button>
-            <button class="hbtn hbtn-s" id="btnDashboard" style="display:none;">Dashboard</button>
-            <button class="hbtn hbtn-s" id="btnLeaderboard">Leaderboard</button>
-        </div>
-    </div>
-</section>
-
-<!-- CHIPS -->
-<div class="chips">
-    <div class="chip"><span>PSL scale scoring</span></div>
-    <div class="chip"><span>Bone structure read</span></div>
-    <div class="chip"><span>Softmax and hardmax path</span></div>
-    <div class="chip"><span>Canthal tilt, FWHR, gonial angle</span></div>
-    <div class="chip"><span>Male and female calibrated scales</span></div>
-    <div class="chip"><span>Saved scans and progress tracking</span></div>
-</div>
-
-<div class="div-line"></div>
-
-<!-- HOW IT WORKS -->
-<div class="section reveal">
-    <div class="sec-eyebrow">How it works</div>
-    <h2 class="sec-title">Know exactly where you stand</h2>
-    <p class="sec-sub">68 landmarks mapped into one clean score, a readable breakdown, and a clear improvement path.</p>
-    <div class="steps">
-        <div class="step reveal reveal-delay-1">
-            <div class="step-num">01</div>
-            <div class="step-icon">📸</div>
-            <div class="step-title">Upload Your Photo</div>
-            <div class="step-desc">Front-facing, neutral expression. Set your hairline — this directly affects your facial thirds score.</div>
-        </div>
-        <div class="step reveal reveal-delay-2">
-            <div class="step-num">02</div>
-            <div class="step-icon">🔬</div>
-            <div class="step-title">68-Point Detection</div>
-            <div class="step-desc">Core facial structure is mapped and scored against PSL-calibrated ideals.</div>
-        </div>
-        <div class="step reveal reveal-delay-3">
-            <div class="step-num">03</div>
-            <div class="step-icon">🎬</div>
-            <div class="step-title">Cinematic Reveal</div>
-            <div class="step-desc">Your score lands in a staged reveal instead of a flat instant dump.</div>
-        </div>
-        <div class="step reveal reveal-delay-4">
-            <div class="step-num">04</div>
-            <div class="step-icon">📈</div>
-            <div class="step-title">Track Progress</div>
-            <div class="step-desc">Save scans, compare movement, and see whether your stack is working.</div>
-        </div>
-    </div>
-</div>
-
-<!-- STATS -->
-<div class="stats-section">
-    <div class="stats-inner reveal">
-        <div class="stat">
-            <div class="stat-num" data-count="18">0</div>
-            <div class="stat-label">Facial metrics scored</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num" data-count="68">0</div>
-            <div class="stat-label">Landmark points mapped</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num" data-count="4">0</div>
-            <div class="stat-label">Composite dimensions</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num">∞</div>
-            <div class="stat-label">Results saved per account</div>
-        </div>
-    </div>
-</div>
-
-<section class="split-grid reveal">
-    <div class="split-card reveal reveal-delay-1">
-        <div class="sec-eyebrow" style="justify-content:flex-start;">Scan Better</div>
-        <h2 class="split-title">Set yourself up for a cleaner result before you ever upload.</h2>
-        <p class="split-sub">A cleaner scan starts with cleaner input. These checks reduce bad uploads before the model ever runs.</p>
-        <div class="scan-list">
-            <div class="scan-row"><div class="scan-num">1</div><div><strong>Neutral expression</strong><span>No smile, no jaw tension, and no exaggerated squint. Keep the face relaxed and straight.</span></div></div>
-            <div class="scan-row"><div class="scan-num">2</div><div><strong>Visible forehead and upper neck</strong><span>The manual hairline step works best when the image is framed slightly wider than a cropped selfie.</span></div></div>
-            <div class="scan-row"><div class="scan-num">3</div><div><strong>Soft lighting, no shadows</strong><span>Even light across both sides of the face gives the landmark detection the cleanest read.</span></div></div>
-            <div class="scan-row"><div class="scan-num">4</div><div><strong>Use an account if you want clarity</strong><span>Guest mode is now a preview. Full readable breakdowns, history, and tracking stay behind login.</span></div></div>
-        </div>
-    </div>
-    <div class="split-card reveal reveal-delay-2">
-        <div class="sec-eyebrow" style="justify-content:flex-start;">Product Promise</div>
-        <h2 class="split-title">Private, guided, and built for progress.</h2>
-        <p class="split-sub">Same analysis core. Better framing, better locked states, and a much stronger return-user experience.</p>
-        <div class="promise-grid">
-            <div class="promise">
-                <div class="promise-label">Client-side feel</div>
-                <div class="promise-copy">The experience is designed to feel controlled and personal, with local account storage and a more premium result flow.</div>
+                <div class="score-object">
+                    <div class="score-core">
+                        <div class="score-kicker">Sample Reading</div>
+                        <div class="score-value">7.84</div>
+                        <div class="score-tier">HTN · Top 2%</div>
+                    </div>
+                </div>
             </div>
-            <div class="promise">
-                <div class="promise-label">Guest Preview</div>
-                <div class="promise-copy">Anyone can try the scan. Readable score detail is intentionally reserved for logged-in users, which creates a cleaner value exchange.</div>
-            </div>
-            <div class="promise">
-                <div class="promise-label">Progress-first</div>
-                <div class="promise-copy">Signed-in users get the full path: readable output, saved scans, dashboard tracking, and a much more rewarding return-user experience.</div>
+
+            <div class="hero-side">
+                <div class="hero-panel hero-side-top">
+                    <div>
+                        <div class="eyebrow">System Layer</div>
+                        <div class="hero-side-title">One scan for the baseline. One account for the climb.</div>
+                    </div>
+                    <div class="stack-list">
+                        <div class="stack-item">
+                            <strong>Guest Preview</strong>
+                            <span>Anyone can run the scan. Guests land on a premium locked score preview instead of full readable detail.</span>
+                        </div>
+                        <div class="stack-item">
+                            <strong>Readable Member Mode</strong>
+                            <span>Logged-in users unlock the exact score, readable breakdown, saved history, and dashboard movement.</span>
+                        </div>
+                        <div class="stack-item">
+                            <strong>Return Loop</strong>
+                            <span>The product is designed so each scan becomes a comparison point, not a disposable result.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-panel guest-card">
+                    <div>
+                        <div class="guest-badge">Locked Guest Reveal</div>
+                        <div class="guest-title">Preview the result. Unlock the readable score.</div>
+                        <div class="guest-copy">The homepage now frames guest mode as intentional, not incomplete. The preview builds demand; the account unlock closes the loop.</div>
+                    </div>
+                    <div class="guest-lock">
+                        <div class="card-label">Guest Score State</div>
+                        <div class="lock-score">HB7.5</div>
+                        <div class="lock-note">Blurred tier, blurred score, clean conversion path. Full readability stays behind the account.</div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- CTA -->
-<div class="cta reveal">
-    <h2 class="cta-title">Find your baseline.<br>Fix what matters.</h2>
-    <p class="cta-sub">Free PSL scan. Sign up to track your score over time and see exactly what to work on.</p>
-    <button class="hbtn hbtn-p" id="btnAnalysisCta" style="font-size:16px;padding:16px 52px;">Start Your Analysis</button>
+    <div class="ticker">
+        <div class="ticker-track">
+            <span><strong>Guest Mode</strong> blurred preview</span>
+            <span><strong>Member Mode</strong> readable detail</span>
+            <span><strong>Dashboard</strong> saved movement</span>
+            <span><strong>Analysis</strong> front-facing only</span>
+            <span><strong>Metrics</strong> structure, harmony, angularity</span>
+            <span><strong>Guest Mode</strong> blurred preview</span>
+            <span><strong>Member Mode</strong> readable detail</span>
+            <span><strong>Dashboard</strong> saved movement</span>
+            <span><strong>Analysis</strong> front-facing only</span>
+            <span><strong>Metrics</strong> structure, harmony, angularity</span>
+        </div>
+    </div>
+
+    <section class="section reveal">
+        <div class="section-head">
+            <div>
+                <div class="section-kicker">Campaign Layout</div>
+                <h2 class="section-title">The homepage now sells the product as a system, not just a tool.</h2>
+            </div>
+            <p class="section-copy">This redesign moves away from a standard app landing page. It frames larp.ai as a premium loop: scan, reveal, unlock, return.</p>
+        </div>
+        <div class="system-grid">
+            <div class="system-card large reveal reveal-delay-1">
+                <div>
+                    <div class="card-label">Why It Feels Bigger</div>
+                    <div class="card-title">A clearer first impression, a stronger locked state, and a better reason to come back.</div>
+                    <div class="card-copy">The analysis itself stays the same. What changes here is the framing: stronger campaign energy on the homepage, stronger reveal energy in the app, and a stronger progress layer in the dashboard.</div>
+                </div>
+                <div class="card-mini">
+                    <div class="mini-row"><strong>Scan</strong><span>Front-facing upload with quality guidance before the model runs.</span></div>
+                    <div class="mini-row"><strong>Reveal</strong><span>A staged result landing instead of a plain instant output.</span></div>
+                    <div class="mini-row"><strong>Unlock</strong><span>Guest previews stay aspirational while logged-in mode stays readable.</span></div>
+                    <div class="mini-row"><strong>Return</strong><span>The dashboard becomes the long-term layer where progress compounds.</span></div>
+                </div>
+            </div>
+            <div class="system-card reveal reveal-delay-2">
+                <div class="card-label">Guest Mode</div>
+                <div class="card-title">Preview</div>
+                <div class="card-copy">Run the scan, land on the title screen, see the locked score state, then unlock the readable result through account creation.</div>
+            </div>
+            <div class="system-card reveal reveal-delay-3">
+                <div class="card-label">Member Mode</div>
+                <div class="card-title">History</div>
+                <div class="card-copy">Readable scores, saved scans, movement across time, and a more rewarding return-user loop.</div>
+            </div>
+            <div class="system-card reveal reveal-delay-2">
+                <div class="card-label">Analysis Core</div>
+                <div class="card-title">Structure, harmony, angularity.</div>
+                <div class="card-copy">The product reads the face, scores the baseline, and keeps the result ready for comparison later.</div>
+            </div>
+            <div class="system-card reveal reveal-delay-3">
+                <div class="card-label">Progress Layer</div>
+                <div class="card-title">Baseline to timeline.</div>
+                <div class="card-copy">The value is no longer just the first score. It is the ability to measure movement and keep returning.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section reveal">
+        <div class="section-head">
+            <div>
+                <div class="section-kicker">Product Journey</div>
+                <h2 class="section-title">From upload to dashboard, the product now has clearer rhythm.</h2>
+            </div>
+            <p class="section-copy">The homepage introduces the exact path users move through once they enter the app.</p>
+        </div>
+        <div class="scan-journey">
+            <div class="journey-step reveal reveal-delay-1">
+                <em>01</em>
+                <strong>Upload</strong>
+                <span>Use a front-facing portrait with neutral expression, visible forehead, and clean lighting.</span>
+            </div>
+            <div class="journey-step reveal reveal-delay-1">
+                <em>02</em>
+                <strong>Measure</strong>
+                <span>68 landmarks are mapped into structure, harmony, and dimensional composites.</span>
+            </div>
+            <div class="journey-step reveal reveal-delay-2">
+                <em>03</em>
+                <strong>Reveal</strong>
+                <span>Guests see a locked premium preview. Members get the readable score and full detail.</span>
+            </div>
+            <div class="journey-step reveal reveal-delay-3">
+                <em>04</em>
+                <strong>Return</strong>
+                <span>The dashboard stores every readable scan so progress turns into a visible system.</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="section reveal">
+        <div class="proof-wrap">
+            <div class="proof-card reveal reveal-delay-1">
+                <div class="section-kicker">Scan Better</div>
+                <div class="card-title">Set yourself up for a cleaner result before you ever upload.</div>
+                <div class="proof-list">
+                    <div class="proof-item"><div class="proof-num">1</div><div><strong>Neutral expression</strong><span>No smile, no jaw tension, and no exaggerated squint. Keep the face relaxed and straight.</span></div></div>
+                    <div class="proof-item"><div class="proof-num">2</div><div><strong>Visible forehead and upper neck</strong><span>The hairline step works best when the top of the face is not cropped too tight.</span></div></div>
+                    <div class="proof-item"><div class="proof-num">3</div><div><strong>Soft lighting, no shadows</strong><span>Even light across both sides of the face gives the cleanest structural read.</span></div></div>
+                    <div class="proof-item"><div class="proof-num">4</div><div><strong>Use an account for clarity</strong><span>Guest mode is now a preview. Readable results and tracking stay behind the account.</span></div></div>
+                </div>
+            </div>
+            <div class="proof-card reveal reveal-delay-2">
+                <div class="section-kicker">Private And Guided</div>
+                <div class="card-title">Same analysis core. Better framing, better locked states, stronger return-user value.</div>
+                <div class="proof-list">
+                    <div class="proof-item"><div class="proof-num">A</div><div><strong>Client-side feel</strong><span>The product is designed to feel controlled and personal, with local account storage and a more premium reveal shell.</span></div></div>
+                    <div class="proof-item"><div class="proof-num">B</div><div><strong>Guest preview</strong><span>Anyone can try the scan. Readable score detail is intentionally reserved for signed-in users.</span></div></div>
+                    <div class="proof-item"><div class="proof-num">C</div><div><strong>Progress-first</strong><span>Signed-in users get readable output, saved scans, dashboard tracking, and a better return-user experience.</span></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section reveal">
+        <div class="progress-grid">
+            <div class="progress-card reveal reveal-delay-1">
+                <div class="section-kicker">Progress Preview</div>
+                <div class="card-title">The dashboard is the long-term layer.</div>
+                <div class="card-copy">Scans only become valuable over time if the product stores them clearly and makes movement visible. That is the job of the account side.</div>
+                <div class="progress-chart">
+                    <div class="chart-rail">
+                        <div class="chart-row">
+                            <label>HARM</label>
+                            <div class="chart-bar"><div class="chart-fill" style="width:82%;background:var(--green);"></div></div>
+                            <span style="color:var(--green);">8.2</span>
+                        </div>
+                        <div class="chart-row">
+                            <label>ANGU</label>
+                            <div class="chart-bar"><div class="chart-fill" style="width:77%;background:var(--orange);"></div></div>
+                            <span style="color:var(--orange);">7.7</span>
+                        </div>
+                        <div class="chart-row">
+                            <label>DIMO</label>
+                            <div class="chart-bar"><div class="chart-fill" style="width:75%;background:var(--orange);"></div></div>
+                            <span style="color:var(--orange);">7.5</span>
+                        </div>
+                        <div class="chart-row">
+                            <label>MISC</label>
+                            <div class="chart-bar"><div class="chart-fill" style="width:79%;background:var(--green);"></div></div>
+                            <span style="color:var(--green);">7.9</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-card reveal reveal-delay-2">
+                <div class="vault-card">
+                    <div>
+                        <div class="section-kicker">Account Vault</div>
+                        <div class="card-title">Readable results. Saved scans. Better return energy.</div>
+                        <div class="card-copy">The account side is where readable detail, score comparisons, best-score moments, and scan history all stay together.</div>
+                    </div>
+                    <div class="vault-metrics">
+                        <div class="vault-metric">
+                            <strong>Peak</strong>
+                            <span>best score state</span>
+                        </div>
+                        <div class="vault-metric">
+                            <strong>Trend</strong>
+                            <span>movement over time</span>
+                        </div>
+                        <div class="vault-metric">
+                            <strong>Fixes</strong>
+                            <span>member detail</span>
+                        </div>
+                        <div class="vault-metric">
+                            <strong>Loop</strong>
+                            <span>reason to return</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="lb-section reveal" id="leaderboardSection">
+        <div class="section-head">
+            <div>
+                <div class="section-kicker">Leaderboard</div>
+                <h2 class="section-title">Top rated readable accounts.</h2>
+            </div>
+            <p class="section-copy">Best analysis per logged-in user. The board only reflects saved readable scans, not guest previews.</p>
+        </div>
+        <div class="lb-frame">
+            <div id="leaderboardList">
+                <div style="text-align:center;padding:32px 0;color:var(--text3);font-size:13px;">Loading leaderboard...</div>
+            </div>
+        </div>
+    </div>
+
+    <section class="cta-band reveal">
+        <div class="cta-copy">
+            <div class="section-kicker">Enter The System</div>
+            <div class="cta-title">Find the baseline. Read the score. Track the climb.</div>
+            <div class="cta-sub">Run the facial analysis free. Sign up if you want readable results, saved progress, and a dashboard that keeps the whole system together.</div>
+        </div>
+        <div class="cta-actions">
+            <button class="hero-button primary" id="btnAnalysisCta">Start Your Analysis</button>
+            <a href="signup.html" class="hero-button secondary" style="text-decoration:none;">Create Account</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="foot-brand">larp.ai</div>
+        <div class="foot-note">For self-improvement reference. Not medical advice.</div>
+    </footer>
 </div>
 
-<div class="div-line"></div>
-
-<!-- LEADERBOARD -->
-<div class="lb-section reveal" id="leaderboardSection">
-    <div style="text-align:center;margin-bottom:28px;">
-        <div class="sec-eyebrow" style="justify-content:center;">Leaderboard</div>
-        <h2 class="sec-title" style="font-size:clamp(22px,4vw,32px);">Top Rated</h2>
-    </div>
-    <div id="leaderboardList">
-        <div style="text-align:center;padding:32px 0;color:var(--text3);font-size:13px;">Loading leaderboard...</div>
-    </div>
-    <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text3);">Best analysis per user · logged-in accounts only</div>
-</div>
-
-<!-- FOOTER -->
-<footer>
-    <div class="foot-brand">larp.ai</div>
-    <div class="foot-note">For self-improvement reference. Not medical advice.</div>
-</footer>
-
-<!-- POPUPS -->
 <div class="ov" id="suggestPopup">
     <div class="pb">
         <div class="pb-icon">🧬</div>
@@ -985,7 +954,7 @@
             <button id="closeResultsPopup" style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--text2);font-size:12px;font-weight:500;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit;">Close</button>
         </div>
         <div id="resultsHistoryList"></div>
-        <button id="newAnalysisBtn" style="width:100%;margin-top:16px;padding:14px;border-radius:12px;border:none;background:var(--btn-primary-bg);color:var(--btn-primary-text);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">+ New Analysis</button>
+        <button id="newAnalysisBtn" style="width:100%;margin-top:16px;padding:14px;border-radius:12px;border:none;background:var(--btn-primary-bg);color:var(--btn-primary-text);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">+ New Analysis</button>
     </div>
 </div>
 
@@ -1021,27 +990,24 @@
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
-    const auth    = window.LarpAuth;
+    const auth = window.LarpAuth;
     const session = auth.currentUser();
     const nav = url => window.larpNavigate ? window.larpNavigate(url) : (window.location.href = url);
     const hero = document.querySelector('.hero');
     const heroSpotlight = document.getElementById('heroSpotlight');
 
-    // ── THEME ────────────────────────────────────────────────────────────
     const savedTheme = localStorage.getItem('larp_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     const themeBtn = document.getElementById('themeToggle');
     themeBtn.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
-
     themeBtn.addEventListener('click', () => {
         const current = document.documentElement.getAttribute('data-theme');
-        const next    = current === 'dark' ? 'light' : 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('larp_theme', next);
         themeBtn.textContent = next === 'dark' ? '🌙' : '☀️';
     });
 
-    // ── NAV ──────────────────────────────────────────────────────────────
     const navRight = document.getElementById('navRight');
     if (session) {
         navRight.innerHTML = `<span class="nav-username">Hi, <b>${session.name.split(' ')[0]}</b></span><button class="nav-btn nav-logout" id="logoutBtn">Log Out</button>`;
@@ -1050,7 +1016,6 @@ document.addEventListener('DOMContentLoaded', () => {
         navRight.innerHTML = `<a href="login.html" class="nav-btn nav-login">Log In</a><a href="signup.html" class="nav-btn nav-signup">Sign Up</a>`;
     }
 
-    // ── TOASTS ───────────────────────────────────────────────────────────
     if (sessionStorage.getItem('larp_signup_success')) {
         sessionStorage.removeItem('larp_signup_success');
         auth.showToast('Account created — please log in now', 'success', 5000);
@@ -1061,7 +1026,6 @@ document.addEventListener('DOMContentLoaded', () => {
         auth.showToast('Welcome back, ' + n, 'success', 3500);
     }
 
-    // ── BUTTONS ──────────────────────────────────────────────────────────
     if (auth.isLoggedIn()) {
         const db = document.getElementById('btnDashboard');
         if (db) db.style.display = '';
@@ -1085,7 +1049,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnAnalysisCta').addEventListener('click', goAnalysis);
     document.getElementById('suggestLogin').addEventListener('click', () => nav('login.html'));
     document.getElementById('suggestContinue').addEventListener('click', () => nav('app.html'));
-
     document.getElementById('lrpBack').addEventListener('click', () => hideOv('loginRequiredPopup'));
     document.getElementById('lrpLogin').addEventListener('click', () => nav('login.html'));
     document.getElementById('closeResultsPopup').addEventListener('click', () => hideOv('resultsPopup'));
@@ -1103,36 +1066,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── SCROLL REVEAL ────────────────────────────────────────────────────
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold:0.12 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    // ── STAT COUNTER ANIMATION ────────────────────────────────────────────
-    const statObserver = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-            if (!e.isIntersecting) return;
-            const el  = e.target;
-            const end = parseInt(el.dataset.count);
-            if (!end) return;
-            let start = 0;
-            const dur  = 1200;
-            const t0   = Date.now();
-            const tick = () => {
-                const progress = Math.min(1, (Date.now()-t0)/dur);
-                const ease = 1 - Math.pow(1-progress, 3);
-                el.textContent = Math.round(start + (end-start)*ease);
-                if (progress < 1) requestAnimationFrame(tick);
-                else el.textContent = end;
-            };
-            tick();
-            statObserver.unobserve(el);
-        });
-    }, { threshold:0.5 });
-    document.querySelectorAll('[data-count]').forEach(el => statObserver.observe(el));
-
-    // ── LEADERBOARD ──────────────────────────────────────────────────────
     const buildLeaderboard = () => {
         const lbEl = document.getElementById('leaderboardList');
         if (!lbEl) return;
@@ -1146,28 +1084,28 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const results = JSON.parse(localStorage.getItem(key) || '[]');
                 if (!results.length) continue;
-                const best  = results.reduce((a,b) => a.overall > b.overall ? a : b);
+                const best = results.reduce((a,b) => a.overall > b.overall ? a : b);
                 const users = JSON.parse(localStorage.getItem('larp_users') || '{}');
-                const user  = users[email];
+                const user = users[email];
                 if (!user) continue;
                 entries.push({ name:user.name.split(' ')[0], email, score:best.overall, rating:best.rating });
             } catch {}
         }
         entries.sort((a,b) => b.score - a.score);
         if (entries.length === 0) {
-            lbEl.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-size:13px;line-height:1.7;">No logged-in users yet.<br>Be the first on the board.</div>`;
+            lbEl.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-size:13px;line-height:1.7;">No logged-in users yet.<br>Be the first readable account on the board.</div>`;
             return;
         }
         const sc = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
         lbEl.innerHTML = entries.slice(0,10).map((e,i) => {
             const rankClass = i===0?'top1':i===1?'top2':i===2?'top3':'';
-            const rankIcon  = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
-            const isYou     = e.email === currentEmail;
-            return `<div class="lb-item rank-${i+1}" style="animation:fadeUp 0.5s ease ${i*60}ms both;">
+            const rankIcon = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+            const isYou = e.email === currentEmail;
+            return `<div class="lb-item">
                 <div class="lb-rank ${rankClass}">${rankIcon}</div>
                 <div style="flex:1;">
                     <div class="lb-name">${e.name}${isYou?'<span class="lb-you">You</span>':''}</div>
-                    <div class="lb-bar-bg" style="margin-top:5px;">
+                    <div class="lb-bar-bg" style="margin-top:6px;">
                         <div class="lb-bar-fill" style="width:${(e.score/10*100).toFixed(1)}%;background:${sc(e.score)};"></div>
                     </div>
                 </div>
