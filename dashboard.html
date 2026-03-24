@@ -38,6 +38,18 @@
 
         /* LAYOUT */
         .page{max-width:900px;margin:0 auto;padding:88px 20px 60px;}
+        .dash-hero{max-width:900px;margin:0 auto;padding:92px 20px 20px;position:relative;z-index:1;}
+        .dash-hero-card{background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));border:1px solid var(--border);border-radius:24px;padding:28px 26px;position:relative;overflow:hidden;}
+        .dash-hero-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(48,209,88,0.08),transparent 45%,rgba(90,200,250,0.05));pointer-events:none;}
+        .dash-hero-card>*{position:relative;z-index:1;}
+        .dash-eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:14px;}
+        .dash-title{font-family:"Syne",sans-serif;font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;line-height:.95;margin-bottom:10px;}
+        .dash-copy{font-size:14px;color:rgba(255,255,255,0.55);line-height:1.75;max-width:620px;}
+        .dash-mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:20px;}
+        .dash-mini{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:16px;padding:14px;}
+        .dash-mini-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px;}
+        .dash-mini-value{font-size:14px;font-weight:700;color:#fff;}
+        .dash-mini-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-top:5px;line-height:1.45;}
 
         /* SECTION LABEL */
         .sec-label{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:14px;}
@@ -159,6 +171,8 @@
 
         @media(max-width:600px){
             nav{padding:13px 16px;}
+            .dash-hero{padding:78px 14px 16px;}
+            .dash-mini-grid{grid-template-columns:1fr;}
             .page{padding:76px 14px 50px;}
             .comp-grid{grid-template-columns:1fr 1fr;}
             .action-row{flex-direction:column;}
@@ -177,6 +191,31 @@
         <button class="nbtn nbtn-ghost" onclick="LarpAuth.logout()">Log Out</button>
     </div>
 </nav>
+
+<div class="dash-hero">
+    <div class="dash-hero-card">
+        <div class="dash-eyebrow">Progress Console</div>
+        <div class="dash-title">Your face scores, tracked like a system.</div>
+        <div class="dash-copy">The dashboard now opens with a stronger summary shell so returning users immediately understand their position, momentum, and why keeping an account matters.</div>
+        <div class="dash-mini-grid">
+            <div class="dash-mini">
+                <div class="dash-mini-label">Latest Score</div>
+                <div class="dash-mini-value" id="heroLatest">Waiting for data</div>
+                <div class="dash-mini-sub">Most recent readable analysis saved to your account.</div>
+            </div>
+            <div class="dash-mini">
+                <div class="dash-mini-label">Total Scans</div>
+                <div class="dash-mini-value" id="heroCount">0 scans</div>
+                <div class="dash-mini-sub">Each saved analysis contributes to your history and trend view.</div>
+            </div>
+            <div class="dash-mini">
+                <div class="dash-mini-label">Best Score</div>
+                <div class="dash-mini-value" id="heroBest">No scans yet</div>
+                <div class="dash-mini-sub">Your best recorded result across all saved sessions.</div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="page" id="page">
     <!-- content injected by JS -->
@@ -215,6 +254,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const results = auth.getResults(); // newest first
     const page    = document.getElementById('page');
+    const latestHero = document.getElementById('heroLatest');
+    const countHero  = document.getElementById('heroCount');
+    const bestHero   = document.getElementById('heroBest');
+
+    if (countHero) countHero.textContent = results.length + (results.length === 1 ? ' scan' : ' scans');
+    if (results.length > 0) {
+        const best = results.reduce((a,b) => a.overall > b.overall ? a : b);
+        if (latestHero) latestHero.textContent = results[0].overall.toFixed(2) + ' · ' + results[0].rating;
+        if (bestHero) bestHero.textContent = best.overall.toFixed(2) + ' · peak';
+    } else {
+        if (latestHero) latestHero.textContent = 'No readable scans yet';
+        if (bestHero) bestHero.textContent = 'No scans yet';
+    }
 
     if (results.length === 0) {
         page.innerHTML = buildEmpty();

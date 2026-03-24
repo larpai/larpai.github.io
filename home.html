@@ -310,6 +310,22 @@
         .chip:hover{border-color:rgba(48,209,88,0.3);color:var(--accent);}
         .chip::before{content:'\2713';color:var(--accent);font-weight:700;font-size:10px;}
 
+        .announce{
+            margin:76px auto 0;
+            width:min(1120px, calc(100% - 32px));
+            border:1px solid var(--card-border);
+            background:linear-gradient(90deg,rgba(48,209,88,0.10),rgba(90,200,250,0.08));
+            border-radius:16px;
+            padding:12px 16px;
+            display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+            position:relative;z-index:20;
+            backdrop-filter:blur(18px);
+        }
+        .announce-copy{font-size:12px;color:var(--text2);line-height:1.6;}
+        .announce-copy strong{color:var(--text);font-weight:700;}
+        .announce-link{font-size:12px;color:var(--accent);text-decoration:none;font-weight:700;}
+        .announce-link:hover{color:var(--text);}
+
         /* ── DIVIDERS ── */
         .div-line{height:1px;background:linear-gradient(90deg,transparent,var(--card-border),transparent);}
 
@@ -400,6 +416,60 @@
             background-clip:text;
         }
         .stat-label{font-size:11px;color:var(--text3);font-weight:500;letter-spacing:.04em;}
+
+        .split-grid{
+            max-width:980px;
+            margin:0 auto;
+            padding:80px clamp(18px,5vw,40px);
+            display:grid;
+            grid-template-columns:1.1fr .9fr;
+            gap:16px;
+            align-items:start;
+        }
+        .split-card{
+            background:var(--card);
+            border:1px solid var(--card-border);
+            border-radius:24px;
+            padding:26px 24px;
+            position:relative;
+            overflow:hidden;
+        }
+        .split-card::before{
+            content:'';
+            position:absolute;inset:0;
+            background:linear-gradient(135deg,rgba(48,209,88,0.06),transparent 40%);
+            pointer-events:none;
+        }
+        .split-card > *{position:relative;z-index:1;}
+        .split-title{
+            font-family:'Syne',sans-serif;
+            font-size:clamp(24px,4vw,36px);
+            letter-spacing:-.04em;
+            line-height:1.05;
+            margin-bottom:10px;
+        }
+        .split-sub{font-size:14px;color:var(--text2);line-height:1.75;max-width:520px;}
+        .scan-list{margin-top:18px;display:grid;gap:10px;}
+        .scan-row{
+            display:flex;gap:12px;align-items:flex-start;
+            padding:12px 0;border-bottom:1px solid var(--card-border);
+        }
+        .scan-row:last-child{border-bottom:none;padding-bottom:0;}
+        .scan-num{
+            width:24px;height:24px;border-radius:8px;background:rgba(48,209,88,0.12);
+            border:1px solid rgba(48,209,88,0.2);color:var(--accent);
+            display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;
+        }
+        .scan-row strong{display:block;font-size:13px;margin-bottom:4px;}
+        .scan-row span{font-size:12px;color:var(--text2);line-height:1.55;}
+        .promise-grid{display:grid;gap:10px;margin-top:16px;}
+        .promise{
+            border-radius:16px;padding:14px;
+            background:rgba(255,255,255,0.03);
+            border:1px solid var(--card-border);
+        }
+        .promise-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+        .promise-copy{font-size:13px;color:var(--text2);line-height:1.6;}
 
         /* ── CTA ── */
         .cta{text-align:center;padding:80px clamp(18px,5vw,40px) 100px;}
@@ -505,6 +575,10 @@
             .stats-inner{gap:24px;}
             footer{flex-direction:column;text-align:center;}
             .chips{gap:8px;}
+            .announce{margin-top:72px;}
+        }
+        @media(max-width:860px){
+            .split-grid{grid-template-columns:1fr;padding-top:60px;padding-bottom:60px;}
         }
     </style>
 </head>
@@ -522,6 +596,11 @@
         <div id="navRight"></div>
     </div>
 </nav>
+
+<div class="announce">
+    <div class="announce-copy"><strong>New:</strong> guests can now run a scan and see a blurred preview before creating an account, while full readable results stay reserved for logged-in users.</div>
+    <a href="signup.html" class="announce-link">Unlock Full Results</a>
+</div>
 
 <!-- HERO -->
 <section class="hero">
@@ -632,6 +711,39 @@
         </div>
     </div>
 </div>
+
+<section class="split-grid reveal">
+    <div class="split-card reveal reveal-delay-1">
+        <div class="sec-eyebrow" style="justify-content:flex-start;">Scan Better</div>
+        <h2 class="split-title">Set yourself up for a cleaner result before you ever upload.</h2>
+        <p class="split-sub">The visual design stays the same, but the product is now more guided. These additions reduce bad scans and make the app feel more intentional.</p>
+        <div class="scan-list">
+            <div class="scan-row"><div class="scan-num">1</div><div><strong>Neutral expression</strong><span>No smile, no jaw tension, and no exaggerated squint. Keep the face relaxed and straight.</span></div></div>
+            <div class="scan-row"><div class="scan-num">2</div><div><strong>Visible forehead and upper neck</strong><span>The manual hairline step works best when the image is framed slightly wider than a cropped selfie.</span></div></div>
+            <div class="scan-row"><div class="scan-num">3</div><div><strong>Soft lighting, no shadows</strong><span>Even light across both sides of the face gives the landmark detection the cleanest read.</span></div></div>
+            <div class="scan-row"><div class="scan-num">4</div><div><strong>Use an account if you want clarity</strong><span>Guest mode is now a preview. Full readable breakdowns, history, and tracking stay behind login.</span></div></div>
+        </div>
+    </div>
+    <div class="split-card reveal reveal-delay-2">
+        <div class="sec-eyebrow" style="justify-content:flex-start;">Product Promise</div>
+        <h2 class="split-title">Private, guided, and built for progress.</h2>
+        <p class="split-sub">These are UI and product-layer upgrades, not changes to the analysis formula. The app now explains itself better and converts better without breaking the original aesthetic.</p>
+        <div class="promise-grid">
+            <div class="promise">
+                <div class="promise-label">Client-side feel</div>
+                <div class="promise-copy">The experience is designed to feel controlled and personal, with local account storage and a more premium result flow.</div>
+            </div>
+            <div class="promise">
+                <div class="promise-label">Guest Preview</div>
+                <div class="promise-copy">Anyone can try the scan. Readable score detail is intentionally reserved for logged-in users, which creates a cleaner value exchange.</div>
+            </div>
+            <div class="promise">
+                <div class="promise-label">Progress-first</div>
+                <div class="promise-copy">Signed-in users get the full path: readable output, saved scans, dashboard tracking, and a much more rewarding return-user experience.</div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- CTA -->
 <div class="cta reveal">

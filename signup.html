@@ -33,6 +33,17 @@
         .topbar-back{font-size:13px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.2s ease;}
         .topbar-back:hover{color:var(--text);}
         .center{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 20px;position:relative;z-index:1;}
+        .auth-shell{width:100%;max-width:1080px;display:grid;grid-template-columns:minmax(300px,450px) minmax(320px,430px);gap:22px;align-items:center;}
+        .side-panel{background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));border:1px solid var(--card-border);border-radius:28px;padding:32px 30px;position:relative;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.32);}
+        .side-panel::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(48,209,88,0.12),transparent 48%);pointer-events:none;}
+        .side-panel>*{position:relative;z-index:1;}
+        .side-kicker{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;}
+        .side-title{font-family:'Syne',sans-serif;font-size:40px;line-height:.95;letter-spacing:-.05em;margin-bottom:12px;}
+        .side-copy{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:22px;}
+        .side-grid{display:grid;gap:10px;}
+        .side-item{padding:14px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid var(--card-border);}
+        .side-item strong{display:block;font-size:13px;margin-bottom:5px;}
+        .side-item span{font-size:12px;color:var(--text2);line-height:1.55;}
         .card-glow{position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(48,209,88,0.06) 0%,transparent 70%);border-radius:50%;pointer-events:none;top:50%;left:50%;transform:translate(-50%,-60%);}
         [data-theme="light"] .card-glow{background:radial-gradient(circle,rgba(26,140,56,0.04) 0%,transparent 70%);}
         @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
@@ -64,6 +75,7 @@
         .switch{text-align:center;font-size:13px;color:var(--text3);}
         .switch a{color:var(--text2);text-decoration:none;font-weight:600;transition:color 0.15s;}
         .switch a:hover{color:var(--text);}
+        @media(max-width:920px){.auth-shell{grid-template-columns:1fr;max-width:460px;}.side-panel{order:2;padding:24px 22px;}.side-title{font-size:32px;}}
         @media(max-width:480px){.card{padding:28px 20px;}.topbar{padding:0 16px;}}
     </style>
 </head>
@@ -74,24 +86,38 @@
     <a href="home.html" class="topbar-back">← Back</a>
 </div>
 <div class="center">
-    <div class="card-glow"></div>
-    <div class="card">
-        <div class="card-icon-wrap">✦</div>
-        <div class="card-title">Create account</div>
-        <div class="card-sub">Free forever. Your results are saved so you can track your progress over time.</div>
-        <div class="benefits">
-            <div class="benefit"><div class="benefit-dot">✓</div>Save every analysis result</div>
-            <div class="benefit"><div class="benefit-dot">✓</div>Track your score over time</div>
-            <div class="benefit"><div class="benefit-dot">✓</div>Access full improvement guide anytime</div>
+    <div class="auth-shell">
+        <div class="side-panel">
+            <div class="side-kicker">Free Account</div>
+            <div class="side-title">Turn a scan<br>into a timeline.</div>
+            <div class="side-copy">You already had a strong theme here. I’m keeping that direction and making the signup page feel more valuable and more premium.</div>
+            <div class="side-grid">
+                <div class="side-item"><strong>Readable full results</strong><span>Guest scans now stop at a locked preview. Signing up reveals the score clearly and opens the full breakdown.</span></div>
+                <div class="side-item"><strong>Saved scan history</strong><span>Every new analysis can be compared against previous ones, so the product actually rewards return visits.</span></div>
+                <div class="side-item"><strong>Long-term progress view</strong><span>Your dashboard becomes the place where changes compound instead of each scan feeling disposable.</span></div>
+            </div>
         </div>
-        <div class="error-box" id="errorBox"></div>
-        <div class="field"><label>Full Name</label><input type="text" id="name" placeholder="Your name" autocomplete="name"></div>
-        <div class="field"><label>Email</label><input type="email" id="email" placeholder="you@example.com" autocomplete="email"></div>
-        <div class="field"><label>Password</label><input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password"><div class="field-hint">Minimum 6 characters</div></div>
-        <div class="field"><label>Confirm Password</label><input type="password" id="confirm" placeholder="Repeat your password" autocomplete="new-password"></div>
-        <button class="submit-btn" id="signupBtn">Create Account</button>
-        <div class="divider"></div>
-        <div class="switch">Already have an account? <a href="login.html">Log in</a></div>
+        <div style="position:relative;">
+            <div class="card-glow"></div>
+            <div class="card">
+                <div class="card-icon-wrap">✦</div>
+                <div class="card-title">Create account</div>
+                <div class="card-sub">Free forever. Your results are saved so you can track your progress over time.</div>
+                <div class="benefits">
+                    <div class="benefit"><div class="benefit-dot">✓</div>Save every analysis result</div>
+                    <div class="benefit"><div class="benefit-dot">✓</div>Track your score over time</div>
+                    <div class="benefit"><div class="benefit-dot">✓</div>Access full improvement guide anytime</div>
+                </div>
+                <div class="error-box" id="errorBox"></div>
+                <div class="field"><label>Full Name</label><input type="text" id="name" placeholder="Your name" autocomplete="name"></div>
+                <div class="field"><label>Email</label><input type="email" id="email" placeholder="you@example.com" autocomplete="email"></div>
+                <div class="field"><label>Password</label><input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password"><div class="field-hint">Minimum 6 characters</div></div>
+                <div class="field"><label>Confirm Password</label><input type="password" id="confirm" placeholder="Repeat your password" autocomplete="new-password"></div>
+                <button class="submit-btn" id="signupBtn">Create Account</button>
+                <div class="divider"></div>
+                <div class="switch">Already have an account? <a href="login.html">Log in</a></div>
+            </div>
+        </div>
     </div>
 </div>
 <script src="auth.js"></script>

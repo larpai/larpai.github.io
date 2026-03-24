@@ -1159,9 +1159,24 @@ class FacialAnalyzer {
 
     displayResults(scores, m) {
         const rating  = scores.looksmaxxRating;
+        const isGuest = !(window.LarpAuth && window.LarpAuth.isLoggedIn && window.LarpAuth.isLoggedIn());
+        const statePill = document.getElementById('resultStatePill');
+        const guestNote = document.getElementById('guestPreviewNote');
         this.els.scoreNum.textContent = scores.overall.toFixed(1);
         const C = 389.6;
         this.els.scoreCircle.style.strokeDashoffset = C - (scores.overall / 10) * C;
+        this.els.scoreNum.style.filter = '';
+        this.els.scoreNum.style.opacity = '';
+        this.els.scoreCircle.style.filter = '';
+        this.els.scoreCircle.style.opacity = '';
+        if (statePill) statePill.textContent = isGuest ? 'Guest preview only' : 'Full result unlocked';
+        if (guestNote) guestNote.style.display = isGuest ? 'block' : 'none';
+        if (isGuest) {
+            this.els.scoreNum.style.filter = 'blur(8px)';
+            this.els.scoreNum.style.opacity = '0.9';
+            this.els.scoreCircle.style.filter = 'blur(2px)';
+            this.els.scoreCircle.style.opacity = '0.65';
+        }
 
         const META = {
             symmetry: {
@@ -1369,6 +1384,51 @@ class FacialAnalyzer {
             <div style="font-size:11px;color:${rating.color};font-weight:600;margin-top:3px;">${rating.pct}</div>
             <div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:4px;">Confidence: ${(m.detectionConfidence*100).toFixed(0)}% &nbsp;\u00b7&nbsp; ${this.naturalW}\xd7${this.naturalH}px</div>
         </div>`;
+
+        if (isGuest) {
+            const previewRows = [
+                ['Face harmony', '#30d158', 74],
+                ['Structure balance', '#30d158', 69],
+                ['Feature depth', '#ff9f0a', 63],
+                ['Improvement guide', '#ff9f0a', 58],
+            ];
+            html += `<div style="margin-bottom:18px;padding:18px;border-radius:18px;border:1px solid rgba(255,214,10,0.18);background:linear-gradient(180deg,rgba(255,214,10,0.10),rgba(255,214,10,0.04));">
+                <div style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#ffd60a;margin-bottom:10px;">Guest Preview</div>
+                <div style="font-size:14px;color:rgba(255,255,255,0.84);line-height:1.7;margin-bottom:14px;">The scan is complete, but the exact score and readable feature analysis remain blurred in guest mode. Unlock them by logging in or creating a free account.</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                    <a href="signup.html" style="flex:1;min-width:150px;padding:13px 16px;border-radius:12px;background:#fff;color:#000;text-decoration:none;font-size:13px;font-weight:700;text-align:center;">Create Free Account</a>
+                    <a href="login.html" style="flex:1;min-width:150px;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.84);text-decoration:none;font-size:13px;font-weight:600;text-align:center;">Log In To Unlock</a>
+                </div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.38);line-height:1.6;">Accounts unlock readable scores, detailed features, saved result history, and dashboard tracking.</div>
+            </div>`;
+
+            html += `<div style="position:relative;margin-bottom:18px;">
+                <div style="filter:blur(10px);opacity:0.86;pointer-events:none;">${previewRows.map(([name, color, width]) => `
+                    <div class="feature-item" style="margin-bottom:10px;opacity:0.96;">
+                        <div class="feature-top"><span class="feature-name">${name}</span><span class="feature-score" style="color:${color};">${(width / 10).toFixed(1)}</span></div>
+                        <div class="feature-bar"><div class="feature-fill" style="width:${width}%;background:${color};"></div></div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:8px;">Readable after login</div>
+                    </div>
+                `).join('')}</div>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+                    <div style="padding:12px 16px;border-radius:999px;background:rgba(6,6,8,0.86);border:1px solid rgba(255,255,255,0.10);color:#fff;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;backdrop-filter:blur(18px);">
+                        Unlock readable detail
+                    </div>
+                </div>
+            </div>`;
+
+            this.els.featuresBox.innerHTML = html;
+            this.els.statsGrid.innerHTML = `<div class="stat-box" style="grid-column:1/-1;padding:18px;">
+                <div class="stat-label">Measurements Locked</div>
+                <div class="stat-value" style="font-size:16px;line-height:1.6;">Exact measurements, proportions, and fix guidance are only shown for logged-in accounts.</div>
+            </div>`;
+            this.els.featuresBox.classList.remove('collapsed');
+            this.els.statsSection.classList.add('active');
+            if (typeof this._onDisplayResults === 'function') {
+                this._onDisplayResults(scores, m);
+            }
+            return;
+        }
 
         html += `<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;margin-bottom:18px;">
             <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Looksmax.org Composite Breakdown</div>

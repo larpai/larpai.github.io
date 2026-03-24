@@ -661,6 +661,492 @@
             opacity: 0.85;
         }
 
+        .app-shell {
+            position: relative;
+            z-index: 1;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 28px 20px 48px;
+        }
+
+        .app-shell::before,
+        .app-shell::after {
+            content: "";
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.8;
+        }
+
+        .app-shell::before {
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(48,209,88,0.10) 0%, transparent 72%);
+            top: 90px;
+            left: -80px;
+        }
+
+        .app-shell::after {
+            width: 360px;
+            height: 360px;
+            background: radial-gradient(circle, rgba(90,200,250,0.07) 0%, transparent 72%);
+            right: -60px;
+            top: 160px;
+        }
+
+        .masthead {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+            gap: 18px;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .masthead-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 26px 90px rgba(0,0,0,0.34);
+        }
+
+        .masthead-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(48,209,88,0.08), transparent 42%, rgba(255,255,255,0.02) 100%);
+            pointer-events: none;
+        }
+
+        .masthead-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--text-tertiary);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .hero-eyebrow::before {
+            content: "";
+            width: 26px;
+            height: 1px;
+            background: rgba(48,209,88,0.45);
+        }
+
+        .masthead-title {
+            font-family: "Syne", sans-serif;
+            font-size: clamp(34px, 6vw, 58px);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+            margin-bottom: 14px;
+        }
+
+        .masthead-title span {
+            color: var(--text-secondary);
+        }
+
+        .masthead-copy {
+            max-width: 620px;
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.75;
+            margin-bottom: 20px;
+        }
+
+        .masthead-meta {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .meta-pill {
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            padding: 14px;
+        }
+
+        .meta-pill-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-tertiary);
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .meta-pill-value {
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .signal-stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .signal-card {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px 18px 16px;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .signal-card.accent {
+            background: linear-gradient(180deg, rgba(48,209,88,0.11), rgba(48,209,88,0.04));
+            border-color: rgba(48,209,88,0.18);
+        }
+
+        .signal-title {
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .signal-value {
+            font-family: "Syne", sans-serif;
+            font-size: 28px;
+            letter-spacing: -0.04em;
+            margin-bottom: 6px;
+        }
+
+        .signal-copy {
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 380px;
+            gap: 18px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .left-col,
+        .right-col {
+            display: grid;
+            gap: 18px;
+            align-content: start;
+        }
+
+        .surface-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 18px 60px rgba(0,0,0,0.26);
+        }
+
+        .surface-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .surface-title {
+            font-family: "Syne", sans-serif;
+            font-size: 24px;
+            letter-spacing: -0.04em;
+            margin-bottom: 6px;
+        }
+
+        .surface-sub {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.65;
+            max-width: 520px;
+        }
+
+        .surface-badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(48,209,88,0.18);
+            background: rgba(48,209,88,0.08);
+            color: var(--success);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .upload-zone {
+            background:
+                radial-gradient(circle at top, rgba(48,209,88,0.08), transparent 42%),
+                rgba(255,255,255,0.02);
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: rgba(48,209,88,0.35);
+            background:
+                radial-gradient(circle at top, rgba(48,209,88,0.12), transparent 44%),
+                rgba(255,255,255,0.03);
+        }
+
+        .upload-title {
+            font-family: "Syne", sans-serif;
+            font-size: 28px;
+            letter-spacing: -0.04em;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            max-width: 340px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .status-note {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        .micro-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .micro-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 14px;
+        }
+
+        .micro-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-tertiary);
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .micro-copy {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.55;
+        }
+
+        .checklist {
+            display: grid;
+            gap: 10px;
+        }
+
+        .check-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .check-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .check-mark {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: rgba(48,209,88,0.12);
+            border: 1px solid rgba(48,209,88,0.2);
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .check-copy strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .check-copy span {
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .results-shell {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .results-shell::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(48,209,88,0.07), transparent 25%);
+            pointer-events: none;
+        }
+
+        .results-shell > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .result-topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .result-kicker {
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            font-weight: 700;
+        }
+
+        .result-state {
+            font-size: 11px;
+            color: var(--text-secondary);
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            border-radius: 999px;
+            padding: 8px 12px;
+        }
+
+        .privacy-note {
+            border-radius: 18px;
+            border: 1px solid rgba(90,200,250,0.16);
+            background: rgba(90,200,250,0.06);
+            padding: 16px;
+        }
+
+        .privacy-note-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 8px;
+        }
+
+        .privacy-note p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .guest-preview-note {
+            display: none;
+            margin-top: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,214,10,0.16);
+            background: rgba(255,214,10,0.06);
+            padding: 14px 16px;
+            color: rgba(255,255,255,0.78);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .guest-preview-note strong {
+            color: #ffd60a;
+        }
+
+        [data-theme="light"] .masthead-card,
+        [data-theme="light"] .surface-card {
+            box-shadow: 0 22px 60px rgba(0,0,0,0.08);
+        }
+
+        [data-theme="light"] .surface-badge,
+        [data-theme="light"] .signal-card.accent {
+            border-color: rgba(26,140,56,0.18);
+            background: rgba(26,140,56,0.08);
+        }
+
+        [data-theme="light"] .upload-zone:hover,
+        [data-theme="light"] .upload-zone.dragover {
+            border-color: rgba(26,140,56,0.28);
+        }
+
+        @media (max-width: 1080px) {
+            .masthead,
+            .workspace-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .app-shell {
+                padding-top: 18px;
+            }
+
+            .right-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .masthead-card,
+            .surface-card {
+                padding: 20px;
+                border-radius: 20px;
+            }
+
+            .masthead-meta,
+            .micro-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .surface-head,
+            .result-topline,
+            .status-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .hero-eyebrow {
+                margin-bottom: 12px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -677,19 +1163,51 @@
     <div style="height:56px;"></div>
 
     <div class="app">
-        <header class="header">
-            <div class="branding">
-                <h1 class="brand">larp.ai</h1>
-                <span style="color:#8e8e93;font-style:italic;">v4.4</span>
-                <p class="tagline">Facial Analysis</p>
-            </div>
-            <p class="subtitle">Upload a photo for detailed biometric analysis</p>
-        </header>
-        
-        <main class="main">
-            <div class="grid">
+        <div class="app-shell">
+            <section class="masthead">
+                <div class="masthead-card">
+                    <div class="hero-eyebrow">Facial Analysis Suite</div>
+                    <h1 class="masthead-title">Sharper structure.<br><span>Cleaner presentation.</span></h1>
+                    <p class="masthead-copy">Run the same core analysis inside a much stronger UI shell. This page is now built around scan quality, privacy reassurance, and a cleaner path from upload to results.</p>
+                    <div class="masthead-meta">
+                        <div class="meta-pill">
+                            <div class="meta-pill-label">Mode</div>
+                            <div class="meta-pill-value">Front-facing photo scan with manual hairline adjustment</div>
+                        </div>
+                        <div class="meta-pill">
+                            <div class="meta-pill-label">Guest Access</div>
+                            <div class="meta-pill-value">Guests can preview results, then unlock full detail by creating an account</div>
+                        </div>
+                        <div class="meta-pill">
+                            <div class="meta-pill-label">Theme</div>
+                            <div class="meta-pill-value">Same larp.ai aesthetic, but with a stronger premium shell</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="signal-stack">
+                    <div class="signal-card accent">
+                        <div class="signal-title">Scan Quality</div>
+                        <div class="signal-value">Front-facing only</div>
+                        <div class="signal-copy">Neutral expression, clear lighting, and a visible forehead still matter most for stable measurements.</div>
+                    </div>
+                    <div class="signal-card">
+                        <div class="signal-title">Private By Default</div>
+                        <div class="signal-copy">This app runs client-side and saves progress only to your browser storage. Logged-in users unlock saved history and full result detail.</div>
+                    </div>
+                </div>
+            </section>
+
+            <main class="workspace-grid">
                 <div class="left-col">
-                    <div class="card">
+                    <section class="surface-card">
+                        <div class="surface-head">
+                            <div>
+                                <div class="surface-title">Upload Your Photo</div>
+                                <div class="surface-sub">Use a clean portrait with your full face visible. The redesign keeps your original dark premium aesthetic, but makes the scan workflow feel more deliberate and more trustworthy.</div>
+                            </div>
+                            <div class="surface-badge">Client-side scan</div>
+                        </div>
+
                         <div class="upload-zone" id="uploadZone">
                             <input type="file" id="fileInput" accept="image/*" hidden>
                             <div class="upload-icon">
@@ -698,7 +1216,7 @@
                                 </svg>
                             </div>
                             <p class="upload-title">Drop your photo here</p>
-                            <p class="upload-hint">or click to browse (JPG, PNG)</p>
+                            <p class="upload-hint">or click to browse a clear JPG or PNG. Best results come from symmetrical, front-facing portraits with soft lighting.</p>
                         </div>
 
                         <div class="preview-box" id="previewBox">
@@ -711,12 +1229,69 @@
                             <button class="btn btn-secondary" id="analyzeBtn" disabled>Analyze Face</button>
                         </div>
 
-                        <p class="status" id="status">Loading models...</p>
-                    </div>
+                        <div class="status-row">
+                            <p class="status" id="status">Loading models...</p>
+                            <div class="status-note">Guests can run a scan, but full readable score detail is reserved for logged-in accounts.</div>
+                        </div>
+                    </section>
+
+                    <section class="surface-card">
+                        <div class="surface-head">
+                            <div>
+                                <div class="surface-title">Before You Scan</div>
+                                <div class="surface-sub">These additions are not analysis features. They are UX support to make the scan output more reliable and the flow more premium.</div>
+                            </div>
+                        </div>
+                        <div class="checklist">
+                            <div class="check-row">
+                                <div class="check-mark">1</div>
+                                <div class="check-copy"><strong>Use a neutral expression</strong><span>No smile, no exaggerated squint, and no head tilt. Keep the face relaxed.</span></div>
+                            </div>
+                            <div class="check-row">
+                                <div class="check-mark">2</div>
+                                <div class="check-copy"><strong>Show your full forehead</strong><span>The manual hairline step works best when the top of the face is visible and not cropped too tight.</span></div>
+                            </div>
+                            <div class="check-row">
+                                <div class="check-mark">3</div>
+                                <div class="check-copy"><strong>Keep lighting flat and clean</strong><span>Harsh shadows, side lighting, and blur reduce confidence and make proportions less stable.</span></div>
+                            </div>
+                            <div class="check-row">
+                                <div class="check-mark">4</div>
+                                <div class="check-copy"><strong>Log in if you want full clarity</strong><span>Guest mode is now a preview experience. Accounts unlock readable detail, saved scans, and long-term progress.</span></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="surface-card">
+                        <div class="surface-head">
+                            <div>
+                                <div class="surface-title">Quality Signals</div>
+                                <div class="surface-sub">Three quick reminders built into the scanner so the product feels guided instead of empty while waiting for upload.</div>
+                            </div>
+                        </div>
+                        <div class="micro-grid">
+                            <div class="micro-card">
+                                <div class="micro-label">Framing</div>
+                                <div class="micro-copy">Head and upper neck only. Avoid mirror selfies cropped too close to the forehead or jaw.</div>
+                            </div>
+                            <div class="micro-card">
+                                <div class="micro-label">Accessories</div>
+                                <div class="micro-copy">No glasses, hats, or heavy occlusion. Clean visibility matters more than style for the scan.</div>
+                            </div>
+                            <div class="micro-card">
+                                <div class="micro-label">Output</div>
+                                <div class="micro-copy">Logged-in scans stay readable and save to history. Guest scans are intentionally restricted to preview mode.</div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
                 <div class="right-col" id="resultsPanel">
-                    <div class="card">
+                    <section class="surface-card results-shell">
+                        <div class="result-topline">
+                            <div class="result-kicker">Result Console</div>
+                            <div class="result-state" id="resultStatePill">Waiting for analysis</div>
+                        </div>
                         <div class="score-header">
                             <p class="score-label">Overall Rating</p>
                             <div class="score-ring">
@@ -734,6 +1309,7 @@
                             </div>
                         </div>
 
+                        <div class="guest-preview-note" id="guestPreviewNote"><strong>Guest preview only.</strong> Your analysis can run without an account, but the readable score and detailed feature breakdown stay locked until you log in or sign up.</div>
                         <div class="features" id="featuresBox">
                             <div class="empty">Upload and analyze to see detailed scores</div>
                         </div>
@@ -744,10 +1320,15 @@
                             </div>
                             <div class="stats-grid" id="statsGrid"></div>
                         </div>
-                    </div>
+                    </section>
+
+                    <section class="privacy-note">
+                        <div class="privacy-note-title">Privacy And Access</div>
+                        <p>Scans are processed in-browser. Creating an account does not change the analysis itself. It only unlocks readable full results, result history, and progress tracking.</p>
+                    </section>
                 </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 
     <div class="loader" id="loader">

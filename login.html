@@ -68,6 +68,21 @@
         .topbar-back:hover{color:var(--text);}
 
         .center{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;position:relative;z-index:1;}
+        .auth-shell{width:100%;max-width:1040px;display:grid;grid-template-columns:minmax(280px,420px) minmax(320px,420px);gap:22px;align-items:center;}
+        .side-panel{
+            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
+            border:1px solid var(--card-border);border-radius:28px;padding:32px 30px;position:relative;overflow:hidden;
+            box-shadow:0 32px 80px rgba(0,0,0,0.32);
+        }
+        .side-panel::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(48,209,88,0.12),transparent 48%);pointer-events:none;}
+        .side-panel>*{position:relative;z-index:1;}
+        .side-kicker{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;}
+        .side-title{font-family:'Syne',sans-serif;font-size:40px;line-height:.95;letter-spacing:-.05em;margin-bottom:12px;}
+        .side-copy{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:22px;}
+        .side-grid{display:grid;gap:10px;}
+        .side-item{padding:14px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid var(--card-border);}
+        .side-item strong{display:block;font-size:13px;margin-bottom:5px;}
+        .side-item span{font-size:12px;color:var(--text2);line-height:1.55;}
 
         /* Glow behind card */
         .card-glow{
@@ -145,6 +160,7 @@
         .switch a{color:var(--text2);text-decoration:none;font-weight:600;transition:color 0.15s;}
         .switch a:hover{color:var(--text);}
 
+        @media(max-width:900px){.auth-shell{grid-template-columns:1fr;max-width:460px;}.side-panel{order:2;padding:24px 22px;}.side-title{font-size:32px;}}
         @media(max-width:480px){.card{padding:32px 22px;}.topbar{padding:0 16px;}}
     </style>
 </head>
@@ -160,29 +176,43 @@
 </div>
 
 <div class="center">
-    <div class="card-glow"></div>
-    <div class="card">
-        <div class="card-top">
-            <div class="card-icon-wrap">👤</div>
-            <div class="card-title">Welcome back</div>
-            <div class="card-sub">Log in to access your results and track your facial improvement journey.</div>
+    <div class="auth-shell">
+        <div class="side-panel">
+            <div class="side-kicker">Account Access</div>
+            <div class="side-title">Readable results.<br>Saved progress.</div>
+            <div class="side-copy">The core larp.ai look stays the same. This pass makes the auth flow feel more premium and gives users a cleaner reason to log in.</div>
+            <div class="side-grid">
+                <div class="side-item"><strong>Unlock full score detail</strong><span>Guest scans now stop at a blurred preview. Logging in reveals the exact score and the readable feature breakdown.</span></div>
+                <div class="side-item"><strong>Track every scan over time</strong><span>Your dashboard keeps a persistent timeline so improvement actually feels measurable.</span></div>
+                <div class="side-item"><strong>Keep the same theme</strong><span>Dark-first, minimal, and premium. The redesign sharpens the shell without changing the product identity.</span></div>
+            </div>
         </div>
+        <div style="position:relative;">
+            <div class="card-glow"></div>
+            <div class="card">
+                <div class="card-top">
+                    <div class="card-icon-wrap">👤</div>
+                    <div class="card-title">Welcome back</div>
+                    <div class="card-sub">Log in to access your readable results, saved scans, and progress dashboard.</div>
+                </div>
 
-        <div class="error-box" id="errorBox"></div>
+                <div class="error-box" id="errorBox"></div>
 
-        <div class="field">
-            <label>Email</label>
-            <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Your password" autocomplete="current-password">
+                </div>
+
+                <button class="submit-btn" id="loginBtn">Log In</button>
+
+                <div class="divider"></div>
+                <div class="switch">No account? <a href="signup.html">Sign up free</a></div>
+            </div>
         </div>
-        <div class="field">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="Your password" autocomplete="current-password">
-        </div>
-
-        <button class="submit-btn" id="loginBtn">Log In</button>
-
-        <div class="divider"></div>
-        <div class="switch">No account? <a href="signup.html">Sign up free</a></div>
     </div>
 </div>
 
