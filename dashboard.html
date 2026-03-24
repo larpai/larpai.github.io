@@ -55,7 +55,7 @@
         .ring-old{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:541;stroke-dashoffset:541;transition:stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1);overflow:visible;}
         .ring-new{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:565;stroke-dashoffset:565;transition:stroke-dashoffset 2s cubic-bezier(.4,0,.2,1) .3s;opacity:0;}
         .ring-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
-        .score-num-big{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:44px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+        .score-num-big{font-family:"Syne",sans-serif;font-size:56px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.05em;}
         .score-denom{font-size:12px;color:rgba(255,255,255,0.3);margin-top:3px;}
         .score-label-big{font-family:"Syne",sans-serif;font-size:28px;font-weight:800;letter-spacing:.02em;margin-bottom:6px;}
         .score-pct{font-size:13px;font-weight:600;margin-bottom:4px;}
@@ -173,7 +173,7 @@
     <div class="nav-right">
         <span class="nav-name" id="navName"></span>
         <button id="dashThemeToggle" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,0.05);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;color:rgba(255,255,255,0.5);" title="Toggle theme">🌙</button>
-        <a href="app.html" class="nbtn nbtn-solid">+ New Analysis</a>
+        <a href="app.html" class="nbtn nbtn-solid">+ New Scan</a>
         <button class="nbtn nbtn-ghost" onclick="LarpAuth.logout()">Log Out</button>
     </div>
 </nav>
@@ -434,7 +434,7 @@ function buildEmpty() {
     return `<div style="text-align:center;padding:80px 20px;">
         <div style="font-size:48px;margin-bottom:20px;">📊</div>
         <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:10px;">No analyses yet</div>
-        <div style="font-size:14px;color:rgba(255,255,255,0.38);margin-bottom:32px;line-height:1.6;">Run your first analysis to see your dashboard.</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.38);margin-bottom:32px;line-height:1.6;">Run your first PSL scan to establish your baseline.</div>
         <a href="app.html" style="display:inline-block;padding:14px 36px;border-radius:14px;background:#fff;color:#000;font-size:15px;font-weight:700;text-decoration:none;">Start Analysis</a>
     </div>`;
 }
@@ -469,13 +469,13 @@ function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialS
 
     const noImprove = hasPrev && !didImprove ? `
         <div id="noImprove" class="no-improve">
-            You didn't improve yet — but that's fine! 💪<br>
-            <span style="font-size:12px;">Check your fix guide below and keep working on it.</span>
+            Score unchanged — keep working the softmax stack 💪<br>
+            <span style="font-size:12px;">Diet, mewing, sleep posture. Consistency compounds.</span>
         </div>` : '';
 
     return `
     <div class="fade-up d1">
-        <div class="sec-label">Your Dashboard</div>
+        <div class="sec-label">Your PSL Dashboard</div>
         <div class="action-row">
             <a href="app.html" class="action-btn action-primary">+ New Analysis</a>
             <a href="home.html" class="action-btn action-secondary">← Home</a>
@@ -509,7 +509,7 @@ function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialS
             ${noImprove}
             ${potentialScore ? `
             <div style="margin-top:16px;padding:14px 18px;background:rgba(90,200,250,0.07);border:1px solid rgba(90,200,250,0.2);border-radius:12px;text-align:left;">
-                <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#5ac8fa;margin-bottom:10px;">Potential vs Reality</div>
+                <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#5ac8fa;margin-bottom:10px;">Genetic Ceiling vs Current</div>
                 <div style="display:flex;align-items:center;gap:10px;">
                     <div style="flex:1;">
                         <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:5px;">
@@ -523,7 +523,7 @@ function buildScoreHero(latest, prev, delta, didImprove, isFirst, sc, potentialS
                     </div>
                     <div style="text-align:center;min-width:52px;">
                         <div style="font-size:20px;font-weight:800;color:#5ac8fa;">+${(potentialScore-latest.overall).toFixed(2)}</div>
-                        <div style="font-size:9px;color:rgba(255,255,255,0.25);">to unlock</div>
+                        <div style="font-size:9px;color:rgba(255,255,255,0.25);">gap to close</div>
                     </div>
                 </div>
             </div>` : ''}
@@ -551,7 +551,7 @@ function buildImprovedCarousel(improved, sc) {
     ).join('');
 
     return `<div class="card fade-up d3" style="margin-bottom:14px;">
-        <div class="sec-label" style="margin-bottom:16px;">What You Improved 🎉</div>
+        <div class="sec-label" style="margin-bottom:16px;">Score Improvements 🎉</div>
         <div class="carousel-wrap">
             <div class="carousel-track" id="carouselTrack">${slides}</div>
         </div>
@@ -618,9 +618,9 @@ function buildFixGuide(fixItems, sc) {
     }).join('');
 
     return `<div class="card fade-up d5" style="margin-bottom:14px;">
-        <div class="sec-label" style="margin-bottom:14px;">Your Fix Guide</div>
+        <div class="sec-label" style="margin-bottom:14px;">Looksmax Guide</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:16px;line-height:1.5;">
-            Features sorted worst → best. Tap any to expand the full improvement guide.
+            Sorted worst → best. Each entry covers softmax, medmax, and hardmax options.
         </div>
         ${items}
     </div>`;
@@ -642,7 +642,7 @@ function buildHistory(results, sc) {
     }).join('');
 
     return `<div class="card fade-up d6" style="margin-bottom:14px;">
-        <div class="sec-label" style="margin-bottom:14px;">Analysis History</div>
+        <div class="sec-label" style="margin-bottom:14px;">Scan History</div>
         ${items}
     </div>`;
 }
@@ -682,7 +682,7 @@ function buildDailyTip(latest, sc) {
         <div style="display:flex;align-items:flex-start;gap:14px;">
             <div style="font-size:28px;line-height:1;flex-shrink:0;">💡</div>
             <div>
-                <div style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:6px;">Daily Tip</div>
+                <div style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:6px;">Daily Looksmax</div>
                 <div style="font-size:13px;color:rgba(255,255,255,0.7);line-height:1.65;">${tip}</div>
                 <div style="font-size:10px;color:${color};margin-top:8px;font-weight:600;">Based on your ${worstFeature === 'default' ? 'profile' : 'lowest feature'}</div>
             </div>
@@ -757,7 +757,7 @@ function buildWeeklyReport(results, sc) {
 
     return `<div class="card fade-up d5" style="margin-bottom:14px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-            <div class="sec-label" style="margin-bottom:0;">This Week's Report</div>
+            <div class="sec-label" style="margin-bottom:0;">Weekly Breakdown</div>
             <div style="display:flex;align-items:center;gap:10px;">
                 <div style="font-size:10px;color:rgba(255,255,255,0.25);">${weekStr}</div>
                 <div style="width:40px;height:40px;border-radius:10px;background:${gradeColor}18;border:2px solid ${gradeColor};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:${gradeColor};">${grade}</div>
@@ -799,7 +799,7 @@ function buildWeeklyReport(results, sc) {
 function buildScoreGraph(results, sc) {
     if (results.length < 2) return '';
     return `<div class="card fade-up d6" style="margin-bottom:14px;">
-        <div class="sec-label" style="margin-bottom:4px;">Score Over Time</div>
+        <div class="sec-label" style="margin-bottom:4px;">PSL Progression</div>
         <div class="graph-wrap">
             <canvas id="scoreGraphCanvas"></canvas>
             <div class="graph-tooltip" id="scoreGraphTooltip"></div>
@@ -935,8 +935,8 @@ const FEAT_COLORS = [
 function buildFeatureGraph(results, sc) {
     if (results.length < 2) return '';
     return `<div class="card fade-up d7" style="margin-bottom:14px;">
-        <div class="sec-label" style="margin-bottom:4px;">Feature Progress</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-bottom:8px;">Each line = one feature. Tap legend to toggle.</div>
+        <div class="sec-label" style="margin-bottom:4px;">Feature Breakdown</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-bottom:8px;">One line per metric. Tap legend to show/hide.</div>
         <div class="feat-graph-wrap">
             <canvas id="featGraphCanvas"></canvas>
         </div>
