@@ -29,59 +29,6 @@
         { file: 'signup.html', label: 'Sign Up', desc: 'Create account' }
     ];
 
-    const pageThemes = {
-        home: {
-            badge: 'Site Expansion',
-            message: 'New layers across the site: scan prep, playbook pages, quick navigation, and richer motion.',
-            action: { href: 'guide.html', label: 'See Guide' }
-        },
-        login: {
-            badge: 'Member Access',
-            message: 'Account pages now live inside a bigger site shell with direct routes to guide, playbook, and privacy.',
-            action: { href: 'playbook.html', label: 'Open Playbook' }
-        },
-        signup: {
-            badge: 'Join Larp.ai',
-            message: 'Create an account to unlock readable results, saved scans, and the expanded site layer.',
-            action: { href: 'privacy.html', label: 'Privacy Notes' }
-        },
-        app: {
-            badge: 'Scan Layer',
-            message: 'The analysis page now sits inside the wider product system with shortcuts, quick nav, and support pages.',
-            action: { href: 'guide.html', label: 'Photo Guide' }
-        },
-        dashboard: {
-            badge: 'Progress Layer',
-            message: 'The dashboard can now branch into guide, playbook, roadmap, and privacy without leaving the product context.',
-            action: { href: 'roadmap.html', label: 'See Roadmap' }
-        },
-        guide: {
-            badge: 'Scan Guide',
-            message: 'This page is part of the new support layer for better scans and cleaner baselines.',
-            action: { href: 'app.html', label: 'Run Scan' }
-        },
-        playbook: {
-            badge: 'Playbook',
-            message: 'Reference page for practical interpretation without changing the core analysis logic.',
-            action: { href: 'dashboard.html', label: 'View Dashboard' }
-        },
-        roadmap: {
-            badge: 'Roadmap',
-            message: 'Product direction, active ideas, and the next layers now have a dedicated home.',
-            action: { href: 'home.html', label: 'Back Home' }
-        },
-        privacy: {
-            badge: 'Privacy Layer',
-            message: 'Local-first handling, guest previews, and readable account modes now have a dedicated page.',
-            action: { href: 'signup.html', label: 'Create Account' }
-        },
-        generic: {
-            badge: 'Larp.ai',
-            message: 'Expanded site shell active.',
-            action: { href: 'home.html', label: 'Home' }
-        }
-    };
-
     const shortcuts = [
         { key: 'G', label: 'Guide', route: 'guide.html', desc: 'Open scan quality guide' },
         { key: 'P', label: 'Playbook', route: 'playbook.html', desc: 'Open looksmaxxing playbook' },
@@ -149,32 +96,14 @@
         });
     }
 
-    function makeAnnouncement() {
-        if (PAGE === 'app') return;
-        const theme = pageThemes[PAGE] || pageThemes.generic;
-        const wrapper = el('div', 'shell-announcement');
-        const inner = el('div', 'shell-announcement-inner');
-        const copy = el(
-            'div',
-            'shell-announcement-copy',
-            `<span class="shell-announcement-badge">${theme.badge}</span><span>${theme.message}</span>`
-        );
-        const action = el('a', 'shell-announcement-action', `${theme.action.label} <span>→</span>`);
-        action.href = theme.action.href;
-        inner.append(copy, action);
-        wrapper.appendChild(inner);
-        document.body.insertBefore(wrapper, document.body.firstChild);
-    }
-
     function makeDock() {
         const dock = el('div', 'shell-dock');
         dock.innerHTML = `
-            <a class="shell-dock-link" href="home.html">Home</a>
-            <a class="shell-dock-link" href="guide.html">Guide</a>
-            <a class="shell-dock-link" href="playbook.html">Playbook</a>
-            <a class="shell-dock-link" href="privacy.html">Privacy</a>
-            <button class="shell-dock-btn" data-shell-command>Search</button>
-            <button class="shell-dock-btn is-primary" data-shell-quick-action>${PAGE === 'app' ? 'Scan' : 'Go'}</button>
+            <a class="shell-dock-link" href="home.html" title="Home">⌂</a>
+            <a class="shell-dock-link" href="guide.html" title="Guide">◔</a>
+            <button class="shell-dock-btn" data-shell-command title="Search">⌕</button>
+            <button class="shell-dock-btn is-primary" data-shell-quick-action title="${PAGE === 'app' ? 'Scan' : 'Go'}">${PAGE === 'app' ? '●' : '→'}</button>
+            <div class="shell-dock-tip">Quick Nav</div>
         `;
         document.body.appendChild(dock);
         dock.querySelector('[data-shell-quick-action]')?.addEventListener('click', () => {
@@ -511,81 +440,25 @@
     }
 
     function addHomeSections() {
-        const insight = el('section', 'shell-insight');
-        insight.innerHTML = `
-            <div class="shell-insight-card">
-                <div class="shell-hero-orb a"></div>
-                <div class="shell-hero-orb b"></div>
-                <div class="shell-floating-note n1">baseline</div>
-                <div class="shell-floating-note n2">angles</div>
-                <div class="shell-floating-note n3">readability</div>
-                <div class="shell-insight-kicker">What Was Added</div>
-                <div class="shell-insight-title">A bigger site around the scan.</div>
-                <div class="shell-insight-copy">The app is no longer just a landing page plus a scanner. There is now a guide layer, a playbook layer, a roadmap layer, and a privacy layer so the site feels fuller without changing the core analysis model.</div>
-                <div class="shell-insight-grid">
-                    <div class="shell-micro"><span class="shell-micro-label">Site Pages</span><span class="shell-micro-value" data-count-value="9">0</span><span class="shell-micro-copy">Main routes now in the site shell</span></div>
-                    <div class="shell-micro"><span class="shell-micro-label">Quick Actions</span><span class="shell-micro-value" data-count-value="14">0</span><span class="shell-micro-copy">Keyboard and dock shortcuts</span></div>
-                    <div class="shell-micro"><span class="shell-micro-label">New Layers</span><span class="shell-micro-value" data-count-value="5">0</span><span class="shell-micro-copy">Guide, playbook, roadmap, privacy, shell</span></div>
-                </div>
-            </div>
-            <div class="shell-insight-card">
-                <div class="shell-insight-kicker">Quick Reasons</div>
-                <div class="shell-side-list">
-                    <div class="shell-side-item"><strong>Guide page</strong><span>Better scans need dedicated prep instead of hiding all instructions inside the app.</span></div>
-                    <div class="shell-side-item"><strong>Playbook page</strong><span>Users want contextual reading, not just a number floating alone.</span></div>
-                    <div class="shell-side-item"><strong>Roadmap page</strong><span>Product direction is now visible instead of implied.</span></div>
-                    <div class="shell-side-item"><strong>Privacy page</strong><span>Guest mode, local-first storage, and readable account mode now have a dedicated explanation.</span></div>
-                </div>
-            </div>
-        `;
-        insertAfterFirstMatch(['#hero', '.hero', '.site-shell .hero'], insight);
-
         const pageNav = el('section', 'shell-page-nav');
+        pageNav.classList.add('is-compact');
         pageNav.innerHTML = `
-            <a class="shell-page-link" href="guide.html"><strong>Scan Guide</strong><span>Prep, framing, lighting, and baseline quality rules.</span></a>
-            <a class="shell-page-link" href="playbook.html"><strong>Playbook</strong><span>Looksmaxxing-oriented language and practical reading notes.</span></a>
-            <a class="shell-page-link" href="roadmap.html"><strong>Roadmap</strong><span>Where the product can go next without bloating the core flow.</span></a>
-            <a class="shell-page-link" href="privacy.html"><strong>Privacy</strong><span>Local-first data notes, guest previews, and account storage.</span></a>
-            <a class="shell-page-link" href="app.html"><strong>Run Analysis</strong><span>Jump straight into the scan flow when you are ready.</span></a>
+            <a class="shell-page-link" href="guide.html"><strong>Guide</strong><span>Photo prep</span></a>
+            <a class="shell-page-link" href="playbook.html"><strong>Playbook</strong><span>Reading notes</span></a>
+            <a class="shell-page-link" href="privacy.html"><strong>Privacy</strong><span>Storage notes</span></a>
+            <a class="shell-page-link" href="app.html"><strong>Analysis</strong><span>Run scan</span></a>
         `;
         appendBeforeFooter(pageNav);
-
-        const marquee = el('div', 'shell-marquee');
-        marquee.innerHTML = `
-            <div class="shell-marquee-track">
-                <span><strong>PSL</strong> structure read</span>
-                <span><strong>Guide</strong> photo prep</span>
-                <span><strong>Playbook</strong> reading notes</span>
-                <span><strong>Roadmap</strong> future layers</span>
-                <span><strong>Privacy</strong> local-first storage</span>
-                <span><strong>PSL</strong> structure read</span>
-                <span><strong>Guide</strong> photo prep</span>
-                <span><strong>Playbook</strong> reading notes</span>
-                <span><strong>Roadmap</strong> future layers</span>
-                <span><strong>Privacy</strong> local-first storage</span>
-            </div>
-        `;
-        appendBeforeFooter(marquee);
     }
 
     function addDashboardSections() {
-        const kpis = el('section', 'shell-kpi-wrap');
-        kpis.innerHTML = `
-            <div class="shell-kpi"><span class="shell-kpi-label">Saved Layer</span><span class="shell-kpi-value" data-count-value="1" data-countDecimals="0">0</span><span class="shell-kpi-sub">Readable accounts only</span></div>
-            <div class="shell-kpi"><span class="shell-kpi-label">Quick Compare</span><span class="shell-kpi-value" data-count-value="3" data-countDecimals="0">0</span><span class="shell-kpi-sub">Peak, recent, average</span></div>
-            <div class="shell-kpi"><span class="shell-kpi-label">Guide Link</span><span class="shell-kpi-value" data-countValue="1">1</span><span class="shell-kpi-sub">Direct route to better scan quality</span></div>
-            <div class="shell-kpi"><span class="shell-kpi-label">Playbook Link</span><span class="shell-kpi-value" data-count-value="1">0</span><span class="shell-kpi-sub">Interpretation page now lives beside the dashboard</span></div>
-            <div class="shell-kpi"><span class="shell-kpi-label">Shell Active</span><span class="shell-kpi-value">v5</span><span class="shell-kpi-sub">Expanded product wrapper</span></div>
-        `;
-        insertAfterFirstMatch(['.dash-hero', 'nav'], kpis);
-
         const pageNav = el('section', 'shell-page-nav');
+        pageNav.classList.add('is-compact');
         pageNav.innerHTML = `
-            <a class="shell-page-link" href="guide.html"><strong>Guide</strong><span>Fix bad scan quality before comparing old results.</span></a>
-            <a class="shell-page-link" href="playbook.html"><strong>Playbook</strong><span>Read the broader language around scores and traits.</span></a>
-            <a class="shell-page-link" href="roadmap.html"><strong>Roadmap</strong><span>See the wider direction of the product.</span></a>
-            <a class="shell-page-link" href="privacy.html"><strong>Privacy</strong><span>Understand what is stored locally and what is gated.</span></a>
-            <a class="shell-page-link" href="app.html"><strong>New Scan</strong><span>Run another analysis right away.</span></a>
+            <a class="shell-page-link" href="guide.html"><strong>Guide</strong><span>Better scans</span></a>
+            <a class="shell-page-link" href="playbook.html"><strong>Playbook</strong><span>Read scores</span></a>
+            <a class="shell-page-link" href="privacy.html"><strong>Privacy</strong><span>Local storage</span></a>
+            <a class="shell-page-link" href="app.html"><strong>New Scan</strong><span>Run again</span></a>
         `;
         appendBeforeFooter(pageNav);
     }
@@ -599,46 +472,10 @@
             <div class="shell-check"><div class="shell-check-icon">4</div><div><strong>Account if needed</strong><span>Guests preview. Logged-in users keep readable results and timeline value.</span></div></div>
         `;
         insertAfterFirstMatch(['.header', '.main'], checks);
-
-        const tabs = el('section', 'shell-tabs');
-        tabs.setAttribute('data-shell-tabs', '');
-        tabs.innerHTML = `
-            <div class="shell-tab-list">
-                <button class="shell-tab-btn" data-shell-tab="prep">Prep</button>
-                <button class="shell-tab-btn" data-shell-tab="guest">Guest</button>
-                <button class="shell-tab-btn" data-shell-tab="member">Member</button>
-            </div>
-            <div class="shell-tab-panel" data-shell-panel="prep">
-                <div class="shell-panel-grid">
-                    <div class="shell-rail"><strong>Best baseline</strong><p>Use one front-facing image with neutral expression, visible forehead, and no dramatic side shadow.</p></div>
-                    <div class="shell-rail"><strong>Biggest throw-off</strong><p>Tight crop, smile tension, harsh shadow, and tilted phone angle all distort baseline readability.</p></div>
-                </div>
-            </div>
-            <div class="shell-tab-panel" data-shell-panel="guest">
-                <div class="shell-panel-grid">
-                    <div class="shell-rail"><strong>Locked preview</strong><p>Guests still get the main reveal energy, but readable score detail stays gated.</p></div>
-                    <div class="shell-rail"><strong>Clean conversion</strong><p>The shell now gives direct routes to signup, privacy notes, and the broader product pages.</p></div>
-                </div>
-            </div>
-            <div class="shell-tab-panel" data-shell-panel="member">
-                <div class="shell-panel-grid">
-                    <div class="shell-rail"><strong>Readable result</strong><p>Logged-in users keep the clear score, tier, and saved history.</p></div>
-                    <div class="shell-rail"><strong>Timeline value</strong><p>The scan matters more when it can later be compared against another scan in the dashboard.</p></div>
-                </div>
-            </div>
-        `;
-        appendBeforeFooter(tabs);
     }
 
     function addAuthSections() {
-        const grid = el('section', 'shell-grid');
-        grid.innerHTML = `
-            <div class="shell-tile"><div class="shell-tile-kicker">Readable</div><div class="shell-tile-title">Full Score</div><div class="shell-tile-copy">Account mode keeps the readable score and unlocks dashboard history.</div></div>
-            <div class="shell-tile"><div class="shell-tile-kicker">Stored</div><div class="shell-tile-title">Saved Scans</div><div class="shell-tile-copy">Each analysis can turn into a reference point instead of disappearing.</div></div>
-            <div class="shell-tile"><div class="shell-tile-kicker">Expanded</div><div class="shell-tile-title">More Pages</div><div class="shell-tile-copy">Guide, playbook, privacy, and roadmap now sit around the auth flow too.</div></div>
-            <div class="shell-tile"><div class="shell-tile-kicker">Shortcuts</div><div class="shell-tile-title">Quick Access</div><div class="shell-tile-copy">Dock, command palette, and keyboard routes work before and after login.</div></div>
-        `;
-        appendBeforeFooter(grid);
+        return;
     }
 
     function normalizeDataAttrs() {
@@ -658,7 +495,6 @@
         normalizeDataAttrs();
         makeProgressBar();
         makeCursorHalo();
-        makeAnnouncement();
         makeDock();
         makeBackTop();
         makeShortcutMap();

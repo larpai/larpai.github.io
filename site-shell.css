@@ -28,76 +28,6 @@ html.shell-ready body{
     position:relative;
 }
 
-.shell-announcement{
-    position:sticky;
-    top:0;
-    z-index:120;
-    display:flex;
-    justify-content:center;
-    padding:10px 16px;
-    background:linear-gradient(90deg,rgba(48,209,88,0.08),rgba(90,200,250,0.05),rgba(255,255,255,0.03));
-    border-bottom:1px solid var(--shell-border);
-    backdrop-filter:blur(18px) saturate(170%);
-}
-
-.shell-announcement.is-hidden{
-    display:none;
-}
-
-.shell-announcement-inner{
-    width:min(1180px,100%);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:14px;
-    color:var(--shell-text);
-}
-
-.shell-announcement-copy{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-    font-size:12px;
-    color:var(--shell-muted);
-}
-
-.shell-announcement-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:6px 10px;
-    border-radius:999px;
-    border:1px solid rgba(48,209,88,0.18);
-    background:rgba(48,209,88,0.10);
-    color:var(--shell-green);
-    font-weight:700;
-    letter-spacing:.10em;
-    text-transform:uppercase;
-    font-size:10px;
-}
-
-.shell-announcement-action{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:10px 14px;
-    border-radius:999px;
-    border:1px solid var(--shell-border);
-    background:var(--shell-bg);
-    color:var(--shell-text);
-    text-decoration:none;
-    font-size:12px;
-    font-weight:700;
-    transition:transform .18s ease,border-color .18s ease,background .18s ease;
-}
-
-.shell-announcement-action:hover{
-    transform:translateY(-2px);
-    border-color:rgba(48,209,88,0.20);
-    background:var(--shell-bg-strong);
-}
-
 .shell-progress{
     position:fixed;
     top:0;
@@ -131,11 +61,11 @@ html.shell-ready body{
     z-index:160;
     display:flex;
     align-items:center;
-    gap:10px;
-    padding:12px;
-    border-radius:22px;
+    gap:8px;
+    padding:10px;
+    border-radius:18px;
     border:1px solid var(--shell-border);
-    background:rgba(10,10,12,0.78);
+    background:rgba(10,10,12,0.62);
     backdrop-filter:blur(22px) saturate(180%);
     box-shadow:var(--shell-shadow);
 }
@@ -149,19 +79,18 @@ html.shell-ready body{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    gap:8px;
-    min-width:46px;
-    height:46px;
-    padding:0 14px;
-    border-radius:14px;
+    gap:6px;
+    min-width:40px;
+    width:40px;
+    height:40px;
+    padding:0;
+    border-radius:12px;
     border:1px solid var(--shell-border);
-    background:var(--shell-bg);
+    background:rgba(255,255,255,0.03);
     color:var(--shell-text);
     text-decoration:none;
-    font-size:11px;
+    font-size:14px;
     font-weight:700;
-    letter-spacing:.08em;
-    text-transform:uppercase;
     transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
     cursor:pointer;
     font-family:inherit;
@@ -180,6 +109,30 @@ html.shell-ready body{
     background:var(--shell-text);
     color:#060608;
     border-color:transparent;
+}
+
+.shell-dock-tip{
+    position:absolute;
+    right:12px;
+    bottom:58px;
+    padding:8px 10px;
+    border-radius:12px;
+    border:1px solid var(--shell-border);
+    background:rgba(10,10,12,0.78);
+    color:var(--shell-muted);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .18s ease,transform .18s ease;
+    pointer-events:none;
+}
+
+.shell-dock:hover .shell-dock-tip{
+    opacity:1;
+    transform:translateY(0);
 }
 
 [data-theme="light"] .shell-dock-link.is-primary,
@@ -308,6 +261,24 @@ html.shell-ready body{
     display:grid;
     grid-template-columns:1.25fr .75fr;
     gap:14px;
+}
+
+.shell-page-nav.is-compact{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+}
+
+.shell-page-nav.is-compact .shell-page-link{
+    padding:14px 16px;
+    gap:4px;
+}
+
+.shell-page-nav.is-compact .shell-page-link strong{
+    font-size:12px;
+}
+
+.shell-page-nav.is-compact .shell-page-link span{
+    font-size:10px;
+    line-height:1.45;
 }
 
 .shell-insight-card{
@@ -1098,22 +1069,15 @@ html.shell-ready body{
 }
 
 @media(max-width:760px){
-    .shell-announcement{
-        top:auto;
-        bottom:0;
-        border-top:1px solid var(--shell-border);
-        border-bottom:none;
-    }
-    .shell-announcement-inner{
-        flex-direction:column;
-        align-items:flex-start;
-    }
     .shell-dock{
         left:14px;
         right:14px;
         bottom:70px;
-        justify-content:space-between;
+        justify-content:center;
         overflow:auto;
+    }
+    .shell-dock-tip{
+        display:none;
     }
     .shell-backtop{
         right:14px;
