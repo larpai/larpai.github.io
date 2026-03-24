@@ -697,9 +697,7 @@
         }
 
         .masthead {
-            display: grid;
-            grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-            gap: 18px;
+            display: block;
             margin-bottom: 18px;
             position: relative;
             z-index: 1;
@@ -759,25 +757,12 @@
             color: var(--text-secondary);
         }
 
-        .masthead-copy {
-            max-width: 620px;
-            color: var(--text-secondary);
-            font-size: 15px;
-            line-height: 1.75;
-            margin-bottom: 20px;
-        }
-
-        .masthead-meta {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-        }
-
         .meta-pill {
             border-radius: 16px;
             border: 1px solid rgba(255,255,255,0.08);
             background: rgba(255,255,255,0.03);
             padding: 14px;
+            max-width: 420px;
         }
 
         .meta-pill-label {
@@ -794,45 +779,6 @@
             color: var(--text);
             font-weight: 600;
             line-height: 1.4;
-        }
-
-        .signal-stack {
-            display: grid;
-            gap: 12px;
-        }
-
-        .signal-card {
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 18px 18px 16px;
-            background: rgba(255,255,255,0.03);
-        }
-
-        .signal-card.accent {
-            background: linear-gradient(180deg, rgba(48,209,88,0.11), rgba(48,209,88,0.04));
-            border-color: rgba(48,209,88,0.18);
-        }
-
-        .signal-title {
-            font-size: 11px;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: var(--text-tertiary);
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-
-        .signal-value {
-            font-family: "Syne", sans-serif;
-            font-size: 28px;
-            letter-spacing: -0.04em;
-            margin-bottom: 6px;
-        }
-
-        .signal-copy {
-            color: var(--text-secondary);
-            font-size: 13px;
-            line-height: 1.6;
         }
 
         .workspace-grid {
@@ -1097,8 +1043,7 @@
             box-shadow: 0 22px 60px rgba(0,0,0,0.08);
         }
 
-        [data-theme="light"] .surface-badge,
-        [data-theme="light"] .signal-card.accent {
+        [data-theme="light"] .surface-badge {
             border-color: rgba(26,140,56,0.18);
             background: rgba(26,140,56,0.08);
         }
@@ -1109,7 +1054,6 @@
         }
 
         @media (max-width: 1080px) {
-            .masthead,
             .workspace-grid {
                 grid-template-columns: 1fr;
             }
@@ -1130,7 +1074,6 @@
                 border-radius: 20px;
             }
 
-            .masthead-meta,
             .micro-grid {
                 grid-template-columns: 1fr;
             }
@@ -1167,32 +1110,9 @@
             <section class="masthead">
                 <div class="masthead-card">
                     <div class="hero-eyebrow">Facial Analysis Suite</div>
-                    <h1 class="masthead-title">Sharper structure.<br><span>Cleaner presentation.</span></h1>
-                    <p class="masthead-copy">Run the same core analysis inside a much stronger UI shell. This page is now built around scan quality, privacy reassurance, and a cleaner path from upload to results.</p>
-                    <div class="masthead-meta">
-                        <div class="meta-pill">
-                            <div class="meta-pill-label">Mode</div>
-                            <div class="meta-pill-value">Front-facing photo scan with manual hairline adjustment</div>
-                        </div>
-                        <div class="meta-pill">
-                            <div class="meta-pill-label">Guest Access</div>
-                            <div class="meta-pill-value">Guests can preview results, then unlock full detail by creating an account</div>
-                        </div>
-                        <div class="meta-pill">
-                            <div class="meta-pill-label">Theme</div>
-                            <div class="meta-pill-value">Same larp.ai aesthetic, but with a stronger premium shell</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="signal-stack">
-                    <div class="signal-card accent">
-                        <div class="signal-title">Scan Quality</div>
-                        <div class="signal-value">Front-facing only</div>
-                        <div class="signal-copy">Neutral expression, clear lighting, and a visible forehead still matter most for stable measurements.</div>
-                    </div>
-                    <div class="signal-card">
-                        <div class="signal-title">Private By Default</div>
-                        <div class="signal-copy">This app runs client-side and saves progress only to your browser storage. Logged-in users unlock saved history and full result detail.</div>
+                    <div class="meta-pill">
+                        <div class="meta-pill-label">Mode</div>
+                        <div class="meta-pill-value">Front-facing only</div>
                     </div>
                 </div>
             </section>

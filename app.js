@@ -1833,6 +1833,7 @@ class FacialAnalyzer {
         const KB       = window.LOOKSMAX_KB || {};
         const FDN      = window.LOOKSMAX_FOUNDATION || null;
         const scoreColor = v => v>=8?'#30d158':v>=6.5?'#ff9f0a':v>=5?'#ff6b35':'#ff453a';
+        const isGuestView = !(window.LarpAuth && window.LarpAuth.isLoggedIn && window.LarpAuth.isLoggedIn());
 
         // Determine if this is the user's first analysis (result not yet saved)
         const _prevResults = (window.LarpAuth && window.LarpAuth.isLoggedIn())
@@ -2113,6 +2114,7 @@ class FacialAnalyzer {
                 continueBtn.style.opacity = '1';
             }, 1800);
             const goPhase1 = () => {
+                if (isGuestView) { phase4(); return; }
                 if (isFirstAnalysis) phase1();
                 else phase4();
             };
@@ -2472,6 +2474,7 @@ class FacialAnalyzer {
             content.style.paddingTop = '0';
 
             const rColor = rating.color;
+            const guestBlur = isGuestView ? 'filter:blur(10px);opacity:0.85;' : '';
 
             const preLabel = document.createElement('div');
             preLabel.style.cssText = `font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:24px;`;
@@ -2493,7 +2496,7 @@ class FacialAnalyzer {
                         style="transition:stroke-dashoffset 2s cubic-bezier(0.4,0,0.2,1) 500ms;"/>
                 </svg>
                 <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
-                    <div id="_cScoreNum" style="font-size:58px;font-weight:200;color:#fff;line-height:1;font-variant-numeric:tabular-nums;">--</div>
+                    <div id="_cScoreNum" style="font-size:58px;font-weight:200;color:#fff;line-height:1;font-variant-numeric:tabular-nums;${guestBlur}">--</div>
                     <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;">/ 10</div>
                 </div>
             `;
@@ -2503,13 +2506,13 @@ class FacialAnalyzer {
             labelWrap.style.cssText = `margin-bottom:10px;`;
             labelWrap.innerHTML = `
                 <div style="display:inline-block;padding:14px 36px;background:${rColor}18;border:2px solid ${rColor};border-radius:16px;">
-                    <span style="font-size:34px;font-weight:900;color:${rColor};letter-spacing:.04em;">${rating.label}</span>
+                    <span style="font-size:34px;font-weight:900;color:${rColor};letter-spacing:.04em;${guestBlur}">${rating.label}</span>
                 </div>
             `;
             fadeInEl(labelWrap, 1000, 600);
 
             const pctEl = document.createElement('div');
-            pctEl.style.cssText = `font-size:14px;font-weight:700;color:${rColor};margin-bottom:8px;`;
+            pctEl.style.cssText = `font-size:14px;font-weight:700;color:${rColor};margin-bottom:8px;${isGuestView ? 'filter:blur(6px);opacity:0.82;' : ''}`;
             pctEl.textContent = rating.pct;
             fadeInEl(pctEl, 1400, 400);
 
@@ -2540,9 +2543,11 @@ class FacialAnalyzer {
             content.appendChild(preLabel);
             content.appendChild(ringWrap);
             content.appendChild(labelWrap);
-            content.appendChild(pctEl);
-            content.appendChild(tipEl);
-            content.appendChild(compositeBox);
+            if (!isGuestView) {
+                content.appendChild(pctEl);
+                content.appendChild(tipEl);
+                content.appendChild(compositeBox);
+            }
 
             // Animate ring + count-up
             setTimeout(() => {
@@ -2561,17 +2566,37 @@ class FacialAnalyzer {
                     };
                     requestAnimationFrame(tick);
                 }
-                // Animate composite bars
-                setTimeout(() => {
-                    compositeBox.querySelectorAll('[data-w]').forEach(bar => {
-                        bar.style.width = bar.dataset.w + '%';
-                    });
-                }, 1800);
+                if (!isGuestView) {
+                    setTimeout(() => {
+                        compositeBox.querySelectorAll('[data-w]').forEach(bar => {
+                            bar.style.width = bar.dataset.w + '%';
+                        });
+                    }, 1800);
+                }
             }, 500);
+
+            if (isGuestView) {
+                const guestCard = document.createElement('div');
+                guestCard.style.cssText = `
+                    width:100%;max-width:360px;margin:18px auto 0;
+                    background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.18);
+                    border-radius:16px;padding:18px 18px 16px;
+                `;
+                guestCard.innerHTML = `
+                    <div style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#ffd60a;margin-bottom:10px;">Guest Preview</div>
+                    <div style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.65;margin-bottom:14px;">Guests only see the title screen and a locked score preview. Log in or create an account to unlock the readable score, full tier, and detailed breakdown.</div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <a href="signup.html" style="flex:1;min-width:140px;padding:12px 14px;border-radius:12px;background:#fff;color:#000;text-decoration:none;font-size:13px;font-weight:700;text-align:center;">Create Account</a>
+                        <a href="login.html" style="flex:1;min-width:140px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.84);text-decoration:none;font-size:13px;font-weight:600;text-align:center;">Log In</a>
+                    </div>
+                `;
+                fadeInEl(guestCard, 1800, 500);
+                content.appendChild(guestCard);
+            }
 
             // CTA
             // ── Feature deltas (only for return users) ──────────────────
-            if (!isFirstAnalysis && prevResult) {
+            if (!isGuestView && !isFirstAnalysis && prevResult) {
                 const deltaWrap = document.createElement('div');
                 deltaWrap.style.cssText = `width:100%;max-width:380px;margin:0 auto 24px;`;
 
@@ -2644,7 +2669,7 @@ class FacialAnalyzer {
             }
 
             // ── CTA button ──────────────────────────────────────────────
-            const ctaDelay = isFirstAnalysis ? 2200 : 3200 + (prevResult ? Math.min(18, Object.keys(scores).length) * 80 : 0);
+            const ctaDelay = isGuestView ? 2300 : (isFirstAnalysis ? 2200 : 3200 + (prevResult ? Math.min(18, Object.keys(scores).length) * 80 : 0));
 
             const ctaWrap = document.createElement('div');
             ctaWrap.style.cssText = `width:100%;max-width:320px;margin:0 auto;`;
@@ -2656,7 +2681,7 @@ class FacialAnalyzer {
                 transition:transform 0.15s,box-shadow 0.15s;
                 touch-action:manipulation;
             `;
-            ctaBtn.textContent = isFirstAnalysis ? 'See Full Analysis →' : 'Go to Dashboard →';
+            ctaBtn.textContent = isGuestView ? 'Continue →' : (isFirstAnalysis ? 'See Full Analysis →' : 'Go to Dashboard →');
             ctaBtn.onmouseenter = () => { ctaBtn.style.transform='translateY(-2px)'; ctaBtn.style.boxShadow='0 8px 24px rgba(255,255,255,0.2)'; };
             ctaBtn.onmouseleave = () => { ctaBtn.style.transform=''; ctaBtn.style.boxShadow=''; };
             const dismiss = () => {
@@ -2672,7 +2697,7 @@ class FacialAnalyzer {
 
             const ctaSub = document.createElement('div');
             ctaSub.style.cssText = `font-size:11px;color:rgba(255,255,255,0.2);margin-top:10px;`;
-            ctaSub.textContent = isFirstAnalysis ? 'All 18 scores, measurements & improvement guides' : 'See your full score breakdown & improvement guide';
+            ctaSub.textContent = isGuestView ? 'Unlock the readable result with an account' : (isFirstAnalysis ? 'All 18 scores, measurements & improvement guides' : 'See your full score breakdown & improvement guide');
 
             ctaWrap.appendChild(ctaBtn);
             ctaWrap.appendChild(ctaSub);
@@ -2680,7 +2705,7 @@ class FacialAnalyzer {
             content.appendChild(ctaWrap);
 
             // ── POTENTIAL widget — first analysis only ──────────────────
-            if (isFirstAnalysis) {
+            if (!isGuestView && isFirstAnalysis) {
                 const potDelay = ctaDelay + 700;
                 const potGap   = +(potentialScore - overall).toFixed(2);
                 const potColor = '#5ac8fa';
