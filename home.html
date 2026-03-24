@@ -6,30 +6,30 @@
     <title>larp.ai — Facial Analysis</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="site-shell.css">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
         :root{
             --bg:#060608;
             --bg2:#0d0d10;
             --card:rgba(255,255,255,0.03);
-            --card-strong:rgba(255,255,255,0.05);
+            --card-strong:rgba(255,255,255,0.06);
             --card-border:rgba(255,255,255,0.08);
             --text:#f0f0f2;
-            --text2:rgba(240,240,242,0.58);
-            --text3:rgba(240,240,242,0.30);
+            --text2:rgba(240,240,242,0.60);
+            --text3:rgba(240,240,242,0.32);
             --green:#30d158;
             --cyan:#5ac8fa;
             --gold:#ffd60a;
             --orange:#ff9f0a;
             --red:#ff453a;
             --nav-bg:rgba(6,6,8,0.84);
-            --nav-border:rgba(255,255,255,0.06);
             --btn-primary-bg:#f0f0f2;
             --btn-primary-text:#060608;
             --btn-secondary-bg:rgba(255,255,255,0.06);
             --btn-secondary-border:rgba(255,255,255,0.1);
-            --btn-secondary-text:rgba(240,240,242,0.72);
-            --shadow:0 28px 80px rgba(0,0,0,0.42);
+            --btn-secondary-text:rgba(240,240,242,0.76);
+            --shadow:0 30px 90px rgba(0,0,0,0.44);
         }
         [data-theme="light"]{
             --bg:#f5f5f0;
@@ -38,7 +38,7 @@
             --card-strong:rgba(0,0,0,0.05);
             --card-border:rgba(0,0,0,0.08);
             --text:#0a0a0c;
-            --text2:rgba(10,10,12,0.56);
+            --text2:rgba(10,10,12,0.58);
             --text3:rgba(10,10,12,0.30);
             --green:#1a8c38;
             --cyan:#0077a8;
@@ -46,13 +46,12 @@
             --orange:#b56f00;
             --red:#d63329;
             --nav-bg:rgba(245,245,240,0.88);
-            --nav-border:rgba(0,0,0,0.08);
             --btn-primary-bg:#0a0a0c;
             --btn-primary-text:#f5f5f0;
             --btn-secondary-bg:rgba(0,0,0,0.05);
             --btn-secondary-border:rgba(0,0,0,0.12);
             --btn-secondary-text:rgba(10,10,12,0.72);
-            --shadow:0 24px 60px rgba(0,0,0,0.10);
+            --shadow:0 24px 70px rgba(0,0,0,0.10);
         }
         html{scroll-behavior:smooth;}
         body{
@@ -65,485 +64,646 @@
         }
         body::before{
             content:'';
-            position:fixed;inset:0;
+            position:fixed;
+            inset:0;
+            z-index:0;
+            pointer-events:none;
             background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
             opacity:.024;
-            pointer-events:none;
-            z-index:0;
         }
         .page-transition{
-            position:fixed;inset:0;z-index:9999;pointer-events:none;
-            background:
-                linear-gradient(180deg,rgba(255,255,255,0.05),transparent 18%),
-                radial-gradient(circle at 24% 18%, rgba(48,209,88,0.14), transparent 30%),
-                radial-gradient(circle at 76% 26%, rgba(90,200,250,0.12), transparent 32%),
-                linear-gradient(180deg,#060608,#060608);
+            position:fixed;
+            inset:0;
+            z-index:9999;
+            pointer-events:none;
             opacity:0;
             transform:translateY(100%);
-            transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .2s ease;
             overflow:hidden;
+            background:
+                linear-gradient(180deg,rgba(255,255,255,0.05),transparent 18%),
+                radial-gradient(circle at 22% 18%, rgba(48,209,88,0.16), transparent 32%),
+                radial-gradient(circle at 76% 24%, rgba(90,200,250,0.10), transparent 30%),
+                linear-gradient(180deg,#060608,#060608);
+            transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .2s ease;
         }
-        .page-transition::before,.page-transition::after{content:'';position:absolute;inset:0;pointer-events:none;}
-        .page-transition::before{background:repeating-linear-gradient(90deg,transparent 0 72px,rgba(255,255,255,0.05) 72px 73px);opacity:.28;transform:translateY(12px);}
-        .page-transition::after{background:linear-gradient(180deg,transparent,rgba(255,255,255,0.05),transparent);opacity:.35;transform:translateY(-100%);transition:transform .6s cubic-bezier(.22,1,.36,1);}
+        .page-transition::before{
+            content:'';
+            position:absolute;
+            inset:0;
+            background:repeating-linear-gradient(90deg,transparent 0 68px,rgba(255,255,255,0.05) 68px 69px);
+            opacity:.22;
+        }
         .page-transition.active{opacity:1;transform:translateY(0);}
-        .page-transition.active::after{transform:translateY(100%);}
         body.page-preload{opacity:0;transform:translateY(10px);}
         body.page-live{opacity:1;transform:none;transition:opacity .42s cubic-bezier(.22,1,.36,1),transform .42s cubic-bezier(.22,1,.36,1);}
         body.page-exit{opacity:0;transform:translateY(-10px);}
 
-        nav{
-            position:fixed;top:0;left:0;right:0;z-index:500;
-            display:flex;align-items:center;justify-content:space-between;
-            height:60px;padding:0 clamp(16px,4vw,32px);
+        .app-shell{
+            position:relative;
+            z-index:1;
+            display:grid;
+            grid-template-columns:96px minmax(0,1fr);
+            min-height:100vh;
+        }
+        .sidebar{
+            position:fixed;
+            top:0;
+            left:0;
+            bottom:0;
+            width:96px;
             background:var(--nav-bg);
             backdrop-filter:blur(24px) saturate(180%);
-            border-bottom:1px solid var(--nav-border);
+            border-right:1px solid var(--card-border);
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:space-between;
+            padding:18px 12px;
         }
-        .nav-brand{
+        .sidebar-brand{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            gap:10px;
+            color:var(--text);
+            text-decoration:none;
+        }
+        .brand-mark{
+            width:42px;
+            height:42px;
+            border-radius:14px;
+            border:1px solid rgba(48,209,88,0.22);
+            background:linear-gradient(135deg,rgba(48,209,88,0.18),rgba(255,255,255,0.04));
+            display:grid;
+            place-items:center;
             font-family:'Syne',sans-serif;
             font-size:18px;
             font-weight:800;
-            color:var(--text);
-            text-decoration:none;
-            letter-spacing:-.04em;
-            display:flex;align-items:center;gap:7px;
+            box-shadow:0 0 0 1px rgba(48,209,88,0.06),0 18px 38px rgba(0,0,0,0.22);
         }
-        .nav-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
-        .nav-brand em{font-family:'DM Sans',sans-serif;font-style:italic;font-weight:300;font-size:11px;color:var(--text3);}
-        .nav-right{display:flex;align-items:center;gap:8px;}
-        .theme-toggle{
-            width:34px;height:34px;border-radius:10px;
-            border:1px solid var(--btn-secondary-border)!important;
+        .brand-text{
+            writing-mode:vertical-rl;
+            transform:rotate(180deg);
+            font-family:'Syne',sans-serif;
+            font-size:12px;
+            letter-spacing:.18em;
+            text-transform:uppercase;
+            color:var(--text3);
+        }
+        .sidebar-nav{
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+        }
+        .side-link,.side-tool{
+            width:52px;
+            height:52px;
+            border-radius:16px;
+            border:1px solid var(--card-border);
             background:var(--btn-secondary-bg);
             color:var(--text2);
-            cursor:pointer;
-            display:flex;align-items:center;justify-content:center;
-            font-size:15px;
+            text-decoration:none;
+            display:grid;
+            place-items:center;
+            font-size:10px;
+            font-weight:700;
+            letter-spacing:.12em;
+            text-transform:uppercase;
+            transition:transform .18s ease,border-color .18s ease,background .18s ease,color .18s ease,box-shadow .18s ease;
         }
+        .side-link:hover,.side-tool:hover{
+            transform:translateY(-3px);
+            border-color:rgba(48,209,88,0.24);
+            color:var(--text);
+            background:rgba(255,255,255,0.08);
+            box-shadow:0 16px 36px rgba(0,0,0,0.24);
+        }
+        .side-tool{
+            font-family:inherit;
+            cursor:pointer;
+        }
+        .sidebar-bottom{
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            align-items:center;
+        }
+        .main{
+            margin-left:96px;
+            padding:24px 24px 80px;
+        }
+        .topbar{
+            display:flex;
+            justify-content:flex-end;
+            align-items:center;
+            gap:8px;
+            margin-bottom:18px;
+        }
+        .nav-right{display:flex;align-items:center;gap:8px;}
         .nav-btn{
-            padding:8px 16px;border-radius:10px;
-            font-size:12px;font-weight:600;text-decoration:none;
-            display:inline-flex;align-items:center;
-            border:none;cursor:pointer;font-family:inherit;
+            padding:9px 16px;
+            border-radius:12px;
+            font-family:inherit;
+            font-size:12px;
+            font-weight:600;
+            text-decoration:none;
+            display:inline-flex;
+            align-items:center;
+            border:none;
+            cursor:pointer;
             transition:transform .18s ease,opacity .18s ease,border-color .18s ease,color .18s ease,background .18s ease;
         }
+        .nav-btn:hover{transform:translateY(-1px);}
         .nav-login,.nav-logout{
             background:var(--btn-secondary-bg);
             border:1px solid var(--btn-secondary-border)!important;
             color:var(--btn-secondary-text);
         }
         .nav-signup{background:var(--btn-primary-bg);color:var(--btn-primary-text);}
-        .nav-btn:hover{transform:translateY(-1px);}
         .nav-username{font-size:13px;color:var(--text2);}
         .nav-username b{color:var(--text);}
+        .theme-toggle{
+            width:38px;
+            height:38px;
+            border-radius:12px;
+            border:1px solid var(--btn-secondary-border)!important;
+            background:var(--btn-secondary-bg);
+            color:var(--text2);
+            cursor:pointer;
+            display:grid;
+            place-items:center;
+            font-size:15px;
+        }
 
-        .site-shell{position:relative;z-index:1;padding-top:60px;}
         .hero{
             position:relative;
-            min-height:100vh;
-            display:grid;
-            align-items:center;
-            padding:28px clamp(18px,4vw,36px) 40px;
+            min-height:calc(100vh - 42px);
+            border:1px solid var(--card-border);
+            border-radius:34px;
             overflow:hidden;
+            background:
+                radial-gradient(circle at 72% 24%, rgba(48,209,88,0.14), transparent 28%),
+                radial-gradient(circle at 18% 80%, rgba(90,200,250,0.08), transparent 24%),
+                linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
+            box-shadow:var(--shadow);
         }
         .hero-grid{
-            position:absolute;inset:0;
+            position:absolute;
+            inset:0;
             background-image:
                 linear-gradient(var(--card-border) 1px,transparent 1px),
                 linear-gradient(90deg,var(--card-border) 1px,transparent 1px);
             background-size:72px 72px;
-            mask-image:radial-gradient(ellipse 82% 82% at 50% 42%,black 32%,transparent 84%);
-            -webkit-mask-image:radial-gradient(ellipse 82% 82% at 50% 42%,black 32%,transparent 84%);
-            animation:gridFloat 20s ease infinite alternate;
+            mask-image:radial-gradient(circle at 50% 42%,black 32%,transparent 82%);
+            -webkit-mask-image:radial-gradient(circle at 50% 42%,black 32%,transparent 82%);
+            animation:gridFloat 16s ease infinite alternate;
         }
-        @keyframes gridFloat{from{transform:translateY(0)}to{transform:translateY(-24px)}}
-        .hero-orb{
-            position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;
-        }
-        .hero-orb.a{width:560px;height:560px;background:radial-gradient(circle,rgba(48,209,88,0.10),transparent 72%);top:-130px;left:48%;transform:translateX(-50%);}
-        .hero-orb.b{width:300px;height:300px;background:radial-gradient(circle,rgba(90,200,250,0.08),transparent 72%);top:18%;right:-40px;}
-        .hero-orb.c{width:240px;height:240px;background:radial-gradient(circle,rgba(255,214,10,0.06),transparent 72%);bottom:12%;left:-40px;}
+        @keyframes gridFloat{from{transform:translateY(0)}to{transform:translateY(-18px)}}
         .hero-spotlight{
-            position:absolute;width:360px;height:360px;border-radius:50%;
-            background:radial-gradient(circle, rgba(48,209,88,0.16) 0%, rgba(48,209,88,0.08) 22%, transparent 70%);
-            filter:blur(34px);pointer-events:none;opacity:0;z-index:0;
-            transform:translate(-50%,-50%);transition:opacity .22s ease;
+            position:absolute;
+            width:320px;
+            height:320px;
+            border-radius:50%;
+            background:radial-gradient(circle, rgba(48,209,88,0.15) 0%, rgba(48,209,88,0.07) 22%, transparent 68%);
+            filter:blur(34px);
+            pointer-events:none;
+            opacity:0;
+            z-index:0;
+            transform:translate(-50%,-50%);
+            transition:opacity .22s ease;
         }
-        .hero-layout{
-            position:relative;z-index:1;
-            width:min(1220px,100%);
-            margin:0 auto;
+        .hero-inner{
+            position:relative;
+            z-index:1;
+            min-height:calc(100vh - 42px);
             display:grid;
             grid-template-columns:1.08fr .92fr;
             gap:18px;
-            align-items:end;
+            padding:30px;
         }
-        .hero-main,.hero-side{
-            border:1px solid var(--card-border);
-            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
-            border-radius:30px;
-            position:relative;
-            overflow:hidden;
-            box-shadow:var(--shadow);
+        .hero-copy,.hero-stack{
+            display:flex;
+            flex-direction:column;
         }
-        .hero-main{
-            min-height:640px;
-            padding:32px clamp(22px,4vw,42px) 34px;
-            display:flex;flex-direction:column;justify-content:space-between;
-        }
-        .hero-main::before{
-            content:'';position:absolute;inset:0;
-            background:
-                linear-gradient(135deg,rgba(48,209,88,0.10),transparent 38%,rgba(90,200,250,0.06)),
-                radial-gradient(circle at 66% 34%,rgba(255,255,255,0.04),transparent 30%);
-            pointer-events:none;
-        }
-        .hero-side{
-            min-height:640px;
-            display:grid;
-            grid-template-rows:1.08fr .92fr;
-            gap:0;
-        }
-        .hero-panel{
-            position:relative;padding:22px;
-            border-bottom:1px solid var(--card-border);
-        }
-        .hero-panel:last-child{border-bottom:none;}
-        .hero-panel::before{
-            content:'';position:absolute;inset:0;
-            background:linear-gradient(135deg,rgba(255,255,255,0.03),transparent 58%);
-            pointer-events:none;
-        }
-        .hero-panel > *,.hero-main > *{position:relative;z-index:1;}
+        .hero-copy{justify-content:space-between;}
         .eyebrow{
-            display:inline-flex;align-items:center;gap:8px;
-            font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
-            color:var(--text3);margin-bottom:14px;
-        }
-        .eyebrow::before{content:'';width:28px;height:1px;background:rgba(48,209,88,0.42);}
-        .hero-title{
-            font-family:'Syne',sans-serif;
-            font-size:clamp(54px,8vw,114px);
-            letter-spacing:-.07em;
-            line-height:.88;
-            max-width:700px;
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            font-size:10px;
+            font-weight:700;
+            letter-spacing:.18em;
+            text-transform:uppercase;
+            color:var(--text3);
             margin-bottom:18px;
         }
-        .hero-title .line{display:block;}
+        .eyebrow::before{
+            content:'';
+            width:30px;
+            height:1px;
+            background:rgba(48,209,88,0.46);
+        }
+        .hero-title{
+            font-family:'Syne',sans-serif;
+            font-size:clamp(56px,8vw,112px);
+            line-height:.88;
+            letter-spacing:-.08em;
+            max-width:720px;
+            margin-bottom:18px;
+        }
         .hero-title .muted{color:var(--text2);}
         .hero-sub{
-            max-width:520px;
-            font-size:17px;
+            max-width:470px;
+            font-size:16px;
             line-height:1.68;
             color:var(--text2);
             margin-bottom:26px;
         }
-        .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+        .hero-cta{
+            display:flex;
+            flex-wrap:wrap;
+            gap:12px;
+            margin-bottom:20px;
+        }
         .hero-button{
-            padding:15px 24px;border-radius:14px;border:none;
-            font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;
+            padding:15px 22px;
+            border-radius:14px;
+            border:none;
+            font-size:14px;
+            font-weight:700;
+            font-family:inherit;
+            cursor:pointer;
             transition:transform .18s ease,box-shadow .18s ease,background .18s ease,color .18s ease,border-color .18s ease;
         }
+        .hero-button:hover{transform:translateY(-2px);}
         .hero-button.primary{background:var(--btn-primary-bg);color:var(--btn-primary-text);}
         .hero-button.secondary{background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-text);}
-        .hero-button:hover{transform:translateY(-2px);}
-        .hero-stats{
-            display:grid;
-            grid-template-columns:repeat(3,minmax(0,1fr));
-            gap:12px;
-            max-width:700px;
+        .hero-tags{
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
         }
-        .hero-stat{
-            border-radius:18px;
-            background:rgba(255,255,255,0.03);
+        .hero-tag{
+            padding:10px 12px;
+            border-radius:999px;
             border:1px solid var(--card-border);
-            padding:16px 15px 14px;
-        }
-        .hero-stat strong{
-            display:block;
-            font-family:'Syne',sans-serif;
-            font-size:28px;
-            letter-spacing:-.05em;
-            margin-bottom:4px;
-        }
-        .hero-stat span{
+            background:rgba(255,255,255,0.04);
             font-size:11px;
-            line-height:1.55;
-            color:var(--text3);
+            font-weight:700;
+            letter-spacing:.12em;
             text-transform:uppercase;
-            letter-spacing:.14em;
+            color:var(--text2);
+            animation:tagPulse 3.6s ease-in-out infinite;
         }
-        .score-object{
-            position:absolute;
-            right:26px;bottom:22px;
-            width:min(46vw,360px);
-            aspect-ratio:1/1;
-            border-radius:32px;
-            border:1px solid rgba(255,255,255,0.08);
-            background:rgba(0,0,0,0.14);
-            backdrop-filter:blur(18px);
-            display:flex;align-items:center;justify-content:center;
-            box-shadow:0 24px 60px rgba(0,0,0,0.26);
+        .hero-tag:nth-child(2){animation-delay:.2s;}
+        .hero-tag:nth-child(3){animation-delay:.4s;}
+        .hero-tag:nth-child(4){animation-delay:.6s;}
+        @keyframes tagPulse{
+            0%,100%{transform:translateY(0);border-color:var(--card-border);}
+            50%{transform:translateY(-2px);border-color:rgba(48,209,88,0.18);}
         }
-        .score-object::before{
-            content:'';position:absolute;inset:20px;border-radius:50%;
-            border:1px solid rgba(255,255,255,0.08);
-        }
-        .score-object::after{
-            content:'';position:absolute;inset:0;
-            background:radial-gradient(circle at 50% 50%,rgba(48,209,88,0.12),transparent 60%);
-            filter:blur(18px);
-        }
-        .score-core{text-align:center;position:relative;z-index:1;}
-        .score-core .score-kicker{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
-        .score-core .score-value{font-family:'Syne',sans-serif;font-size:78px;letter-spacing:-.08em;line-height:.92;color:var(--text);}
-        .score-core .score-tier{font-size:18px;font-weight:700;color:var(--green);margin-top:8px;}
-        .hero-side-top{display:flex;flex-direction:column;justify-content:space-between;height:100%;}
-        .hero-side-title{font-family:'Syne',sans-serif;font-size:34px;letter-spacing:-.05em;line-height:.98;max-width:360px;}
-        .hero-side-copy{font-size:14px;line-height:1.68;color:var(--text2);max-width:330px;}
-        .stack-list{display:grid;gap:10px;}
-        .stack-item{
-            padding:14px 14px 13px;border-radius:16px;
-            background:rgba(255,255,255,0.03);
-            border:1px solid var(--card-border);
-            transition:transform .18s ease,border-color .18s ease,background .18s ease;
-        }
-        .stack-item:hover{transform:translateY(-3px);border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);}
-        .stack-item strong{display:block;font-size:12px;margin-bottom:5px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);}
-        .stack-item span{display:block;font-size:14px;line-height:1.55;color:var(--text);}
-        .guest-card{
-            display:flex;flex-direction:column;justify-content:space-between;height:100%;
-        }
-        .guest-badge{
-            display:inline-flex;align-items:center;gap:8px;
-            padding:9px 12px;border-radius:999px;
-            border:1px solid rgba(255,214,10,0.18);
-            background:rgba(255,214,10,0.08);
-            color:var(--gold);font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
-        }
-        .guest-title{font-family:'Syne',sans-serif;font-size:32px;line-height:.98;letter-spacing:-.05em;margin:18px 0 10px;}
-        .guest-copy{font-size:14px;line-height:1.68;color:var(--text2);margin-bottom:18px;}
-        .guest-lock{
-            border-radius:18px;padding:18px;
-            border:1px solid rgba(255,255,255,0.08);
-            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
-        }
-        .lock-score{font-family:'Syne',sans-serif;font-size:52px;letter-spacing:-.08em;line-height:.92;filter:blur(8px);opacity:.78;}
-        .lock-note{font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6;}
-        .ticker{
-            border-top:1px solid var(--card-border);
-            border-bottom:1px solid var(--card-border);
-            background:rgba(255,255,255,0.02);
-            overflow:hidden;
-        }
-        .ticker-track{
-            display:flex;gap:28px;white-space:nowrap;
-            padding:15px 0;
-            animation:tickerMove 26s linear infinite;
-        }
-        .ticker-track span{
-            font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);
-        }
-        .ticker-track strong{color:var(--text);}
-        @keyframes tickerMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-        .section{
-            width:min(1220px,calc(100% - 36px));
-            margin:0 auto;
-            padding:92px 0;
-        }
-        .section-head{
-            display:flex;justify-content:space-between;align-items:end;gap:18px;
-            margin-bottom:28px;
-        }
-        .section-kicker{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:10px;}
-        .section-title{font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,54px);letter-spacing:-.06em;line-height:.95;max-width:700px;}
-        .section-copy{max-width:380px;font-size:14px;line-height:1.7;color:var(--text2);}
-        .system-grid{
-            display:grid;
-            grid-template-columns:1.1fr .9fr .9fr;
+        .hero-stack{
             gap:14px;
+            justify-content:flex-end;
         }
-        .system-card{
-            border-radius:26px;
+        .score-card,.mini-panel,.lock-panel{
+            position:relative;
+            overflow:hidden;
+            border-radius:28px;
             border:1px solid var(--card-border);
-            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
-            padding:22px;
-            position:relative;overflow:hidden;
-            transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+            background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+            transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
         }
-        .system-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.12);box-shadow:0 24px 58px rgba(0,0,0,0.22);}
-        .system-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(48,209,88,0.09),transparent 55%,rgba(90,200,250,0.06));pointer-events:none;}
-        .system-card > *{position:relative;z-index:1;}
-        .system-card.large{grid-row:span 2;min-height:420px;display:flex;flex-direction:column;justify-content:space-between;}
-        .card-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;}
-        .card-title{font-family:'Syne',sans-serif;font-size:clamp(24px,3vw,38px);letter-spacing:-.05em;line-height:1.02;margin-bottom:10px;}
-        .card-copy{font-size:14px;color:var(--text2);line-height:1.68;}
-        .card-mini{
-            margin-top:18px;
-            padding-top:18px;
-            border-top:1px solid var(--card-border);
-            display:grid;gap:12px;
+        .score-card:hover,.mini-panel:hover,.lock-panel:hover,.info-card:hover,.rail-card:hover,.lb-item:hover{
+            transform:translateY(-4px);
+            border-color:rgba(48,209,88,0.24);
+            box-shadow:0 24px 58px rgba(0,0,0,0.22);
         }
-        .mini-row{
-            display:grid;grid-template-columns:72px 1fr;gap:12px;
-            font-size:13px;line-height:1.6;color:var(--text2);
-        }
-        .mini-row strong{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);}
-        .scan-journey{
+        .score-card{
+            min-height:350px;
             display:grid;
-            grid-template-columns:repeat(4,minmax(0,1fr));
-            gap:12px;
-            margin-top:18px;
+            place-items:center;
+            padding:28px;
         }
-        .journey-step{
-            border-radius:18px;padding:16px 15px 14px;
-            background:rgba(255,255,255,0.03);
-            border:1px solid var(--card-border);
-            min-height:150px;
+        .score-card::before{
+            content:'';
+            position:absolute;
+            inset:24px;
+            border-radius:50%;
+            border:1px solid rgba(255,255,255,0.08);
         }
-        .journey-step em{
-            display:block;
-            font-style:normal;
-            font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);
-            margin-bottom:12px;
+        .score-card::after{
+            content:'';
+            position:absolute;
+            inset:0;
+            background:
+                conic-gradient(from 220deg, transparent 0 18%, rgba(48,209,88,0.92) 18% 74%, rgba(255,255,255,0.07) 74% 100%);
+            mask:radial-gradient(circle at center, transparent 58%, black 59%, black 66%, transparent 67%);
+            -webkit-mask:radial-gradient(circle at center, transparent 58%, black 59%, black 66%, transparent 67%);
+            animation:ringSpin 9s linear infinite;
+            opacity:.92;
         }
-        .journey-step strong{
-            display:block;font-family:'Syne',sans-serif;font-size:20px;letter-spacing:-.04em;line-height:1.02;margin-bottom:8px;
+        @keyframes ringSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+        .score-core{
+            position:relative;
+            z-index:1;
+            text-align:center;
         }
-        .journey-step span{font-size:13px;color:var(--text2);line-height:1.6;}
-        .proof-wrap{
+        .score-kicker{
+            font-size:10px;
+            font-weight:700;
+            letter-spacing:.18em;
+            text-transform:uppercase;
+            color:var(--text3);
+            margin-bottom:10px;
+        }
+        .score-value{
+            font-family:'Syne',sans-serif;
+            font-size:78px;
+            line-height:.9;
+            letter-spacing:-.08em;
+            animation:scoreFloat 3.4s ease-in-out infinite;
+        }
+        @keyframes scoreFloat{
+            0%,100%{transform:translateY(0);}
+            50%{transform:translateY(-5px);}
+        }
+        .score-tier{
+            margin-top:8px;
+            font-size:18px;
+            font-weight:700;
+            color:var(--green);
+        }
+        .stack-grid{
             display:grid;
             grid-template-columns:1fr 1fr;
             gap:14px;
         }
-        .proof-card{
+        .mini-panel,.lock-panel{padding:18px;}
+        .panel-label{
+            font-size:10px;
+            font-weight:700;
+            letter-spacing:.16em;
+            text-transform:uppercase;
+            color:var(--text3);
+            margin-bottom:10px;
+        }
+        .panel-title{
+            font-family:'Syne',sans-serif;
+            font-size:28px;
+            line-height:.96;
+            letter-spacing:-.05em;
+            margin-bottom:8px;
+        }
+        .panel-copy{
+            font-size:13px;
+            line-height:1.65;
+            color:var(--text2);
+        }
+        .lock-score{
+            margin-top:16px;
+            font-family:'Syne',sans-serif;
+            font-size:52px;
+            letter-spacing:-.08em;
+            line-height:.9;
+            filter:blur(8px);
+            opacity:.8;
+        }
+        .lock-note{
+            margin-top:10px;
+            font-size:12px;
+            line-height:1.6;
+            color:var(--text3);
+        }
+
+        .section{
+            width:min(1180px,100%);
+            margin:22px auto 0;
+        }
+        .section-head{
+            display:flex;
+            justify-content:space-between;
+            align-items:end;
+            gap:18px;
+            margin-bottom:18px;
+        }
+        .section-kicker{
+            font-size:10px;
+            font-weight:700;
+            letter-spacing:.18em;
+            text-transform:uppercase;
+            color:var(--green);
+            margin-bottom:8px;
+        }
+        .section-title{
+            font-family:'Syne',sans-serif;
+            font-size:clamp(28px,4vw,46px);
+            line-height:.94;
+            letter-spacing:-.06em;
+            max-width:620px;
+        }
+        .section-copy{
+            max-width:320px;
+            font-size:13px;
+            line-height:1.65;
+            color:var(--text2);
+        }
+        .info-grid{
+            display:grid;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:14px;
+        }
+        .info-card{
             border-radius:24px;
             border:1px solid var(--card-border);
             background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
-            padding:22px;
-            position:relative;overflow:hidden;
+            padding:20px;
+            transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
         }
-        .proof-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(90,200,250,0.08),transparent 55%);pointer-events:none;}
-        .proof-card > *{position:relative;z-index:1;}
-        .proof-list{display:grid;gap:10px;margin-top:18px;}
-        .proof-item{
-            display:flex;gap:12px;align-items:flex-start;
-            padding:12px 0;border-bottom:1px solid var(--card-border);
-        }
-        .proof-item:last-child{border-bottom:none;padding-bottom:0;}
-        .proof-num{
-            width:24px;height:24px;border-radius:8px;
-            background:rgba(48,209,88,0.12);
-            border:1px solid rgba(48,209,88,0.2);
-            color:var(--green);
-            display:flex;align-items:center;justify-content:center;
-            font-size:11px;font-weight:700;flex-shrink:0;
-        }
-        .proof-item strong{display:block;font-size:13px;margin-bottom:4px;}
-        .proof-item span{font-size:12px;color:var(--text2);line-height:1.6;}
-        .progress-grid{
+        .card-num{
+            width:32px;
+            height:32px;
+            border-radius:10px;
             display:grid;
-            grid-template-columns:1.12fr .88fr;
+            place-items:center;
+            background:rgba(48,209,88,0.12);
+            border:1px solid rgba(48,209,88,0.20);
+            color:var(--green);
+            font-size:12px;
+            font-weight:700;
+            margin-bottom:14px;
+        }
+        .card-title{
+            font-family:'Syne',sans-serif;
+            font-size:28px;
+            line-height:.96;
+            letter-spacing:-.05em;
+            margin-bottom:8px;
+        }
+        .card-copy{
+            font-size:13px;
+            line-height:1.65;
+            color:var(--text2);
+        }
+
+        .rail-grid{
+            display:grid;
+            grid-template-columns:1.16fr .84fr;
             gap:14px;
         }
-        .progress-card{
+        .rail-card{
             border-radius:28px;
             border:1px solid var(--card-border);
             background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
             padding:22px;
-            position:relative;overflow:hidden;
+            transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
         }
-        .progress-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(48,209,88,0.08),transparent 50%);pointer-events:none;}
-        .progress-card > *{position:relative;z-index:1;}
-        .progress-chart{
-            margin-top:22px;
-            padding:22px 18px 16px;
-            border-radius:20px;
-            background:rgba(0,0,0,0.14);
-            border:1px solid rgba(255,255,255,0.06);
-        }
-        .chart-rail{
+        .metric-list{
             display:grid;
             gap:14px;
+            margin-top:20px;
         }
-        .chart-row{display:grid;grid-template-columns:58px 1fr 64px;gap:12px;align-items:center;}
-        .chart-row label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);}
-        .chart-bar{height:6px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;}
-        .chart-fill{height:100%;border-radius:999px;}
-        .chart-row span{font-size:12px;font-weight:700;text-align:right;}
-        .vault-card{
-            display:flex;flex-direction:column;justify-content:space-between;
-            min-height:100%;
-        }
-        .vault-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
-        .vault-metric{
-            border-radius:16px;background:rgba(255,255,255,0.03);
-            border:1px solid var(--card-border);padding:14px 12px;
-        }
-        .vault-metric strong{display:block;font-family:'Syne',sans-serif;font-size:28px;letter-spacing:-.05em;margin-bottom:4px;}
-        .vault-metric span{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.14em;}
-        .cta-band{
-            width:min(1220px,calc(100% - 36px));
-            margin:0 auto 80px;
-            border-radius:30px;
-            border:1px solid var(--card-border);
-            background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
-            padding:32px clamp(22px,4vw,36px);
+        .metric-row{
             display:grid;
-            grid-template-columns:1.1fr .9fr;
-            gap:18px;
-            align-items:end;
+            grid-template-columns:74px 1fr 56px;
+            gap:12px;
+            align-items:center;
         }
-        .cta-band::before{
-            content:'';position:absolute;
+        .metric-row label{
+            font-size:11px;
+            font-weight:700;
+            letter-spacing:.14em;
+            text-transform:uppercase;
+            color:var(--text3);
         }
-        .cta-copy{max-width:620px;}
-        .cta-title{
-            font-family:'Syne',sans-serif;
-            font-size:clamp(34px,5vw,62px);
-            letter-spacing:-.06em;line-height:.92;
-            margin-bottom:12px;
+        .metric-bar{
+            height:7px;
+            border-radius:999px;
+            background:rgba(255,255,255,0.06);
+            overflow:hidden;
         }
-        .cta-sub{font-size:15px;color:var(--text2);line-height:1.68;}
-        .cta-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px;flex-wrap:wrap;}
-        .lb-section{width:min(1220px,calc(100% - 36px));margin:0 auto 90px;}
+        .metric-fill{
+            height:100%;
+            border-radius:999px;
+            animation:fillGrow 1s cubic-bezier(.22,1,.36,1) both;
+            transform-origin:left center;
+        }
+        @keyframes fillGrow{from{transform:scaleX(.2);opacity:.4}to{transform:scaleX(1);opacity:1}}
+        .metric-row span{
+            text-align:right;
+            font-size:12px;
+            font-weight:700;
+        }
+        .mini-rail{
+            display:grid;
+            gap:10px;
+            margin-top:18px;
+        }
+        .mini-rail div{
+            padding:12px 14px;
+            border-radius:16px;
+            border:1px solid var(--card-border);
+            background:rgba(255,255,255,0.03);
+            font-size:13px;
+            color:var(--text2);
+        }
+        .mini-rail strong{color:var(--text);margin-right:8px;}
+
+        .lb-section{width:min(1180px,100%);margin:22px auto 0;}
         .lb-frame{
-            border-radius:28px;border:1px solid var(--card-border);
+            border-radius:28px;
+            border:1px solid var(--card-border);
             background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
-            padding:22px;
+            padding:20px;
         }
         .lb-item{
-            display:flex;align-items:center;gap:14px;
-            padding:14px 18px;border-radius:16px;
-            background:rgba(255,255,255,0.03);
+            display:flex;
+            align-items:center;
+            gap:14px;
+            padding:14px 16px;
+            border-radius:18px;
             border:1px solid var(--card-border);
+            background:rgba(255,255,255,0.03);
             margin-bottom:10px;
-            transition:transform .18s ease,border-color .18s ease,background .18s ease;
+            transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease,background .2s ease;
         }
-        .lb-item:hover{transform:translateX(4px);border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);}
+        .lb-item:last-child{margin-bottom:0;}
         .lb-rank{font-size:14px;font-weight:700;color:var(--text3);min-width:30px;text-align:center;}
         .lb-rank.top1{color:var(--gold);}
         .lb-rank.top2{color:#c0c0c0;}
         .lb-rank.top3{color:#cd7f32;}
         .lb-name{flex:1;font-size:14px;font-weight:600;color:var(--text);}
-        .lb-you{font-size:9px;font-weight:700;padding:3px 7px;border-radius:999px;background:rgba(48,209,88,0.12);color:var(--green);margin-left:7px;}
+        .lb-you{
+            display:inline-block;
+            margin-left:7px;
+            padding:3px 7px;
+            border-radius:999px;
+            background:rgba(48,209,88,0.12);
+            color:var(--green);
+            font-size:9px;
+            font-weight:700;
+        }
         .lb-score{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;}
         .lb-tier{font-size:10px;color:var(--text3);margin-top:2px;text-align:right;}
-        .lb-bar-bg{width:80px;height:3px;background:var(--card-border);border-radius:999px;overflow:hidden;}
+        .lb-bar-bg{width:84px;height:3px;background:var(--card-border);border-radius:999px;overflow:hidden;}
         .lb-bar-fill{height:100%;border-radius:999px;}
+
+        .cta-band{
+            width:min(1180px,100%);
+            margin:22px auto 0;
+            border-radius:30px;
+            border:1px solid var(--card-border);
+            background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+            padding:26px;
+            display:grid;
+            grid-template-columns:1fr auto;
+            gap:18px;
+            align-items:center;
+        }
+        .cta-title{
+            font-family:'Syne',sans-serif;
+            font-size:clamp(30px,4.2vw,52px);
+            line-height:.94;
+            letter-spacing:-.06em;
+            margin-bottom:8px;
+        }
+        .cta-sub{
+            max-width:520px;
+            font-size:14px;
+            line-height:1.65;
+            color:var(--text2);
+        }
+        .cta-actions{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            justify-content:flex-end;
+        }
         footer{
+            width:min(1180px,100%);
+            margin:22px auto 0;
+            padding:18px 0 0;
             border-top:1px solid var(--card-border);
-            padding:24px clamp(18px,4vw,36px) 34px;
-            display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:12px;
             color:var(--text3);
+            flex-wrap:wrap;
         }
         .foot-brand{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.03em;}
         .foot-note{font-size:11px;}
 
         .ov{
-            position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;
-            background:rgba(0,0,0,0.76);backdrop-filter:blur(8px);padding:20px;
+            position:fixed;
+            inset:0;
+            z-index:5000;
+            display:none;
+            align-items:center;
+            justify-content:center;
+            background:rgba(0,0,0,0.76);
+            backdrop-filter:blur(8px);
+            padding:20px;
         }
         .ov.show{display:flex;}
         .pb{
@@ -551,7 +711,8 @@
             border:1px solid var(--card-border);
             border-radius:24px;
             padding:34px 30px;
-            max-width:390px;width:100%;
+            max-width:390px;
+            width:100%;
             text-align:center;
             box-shadow:var(--shadow);
             animation:popIn .28s cubic-bezier(.34,1.56,.64,1);
@@ -564,7 +725,12 @@
         .pb-sub-gray{display:block;margin-top:8px;font-size:12px;color:var(--text3);}
         .pb-row{display:flex;gap:10px;}
         .btn-w,.btn-g{
-            flex:1;padding:14px;border-radius:12px;font-size:14px;font-family:inherit;cursor:pointer;
+            flex:1;
+            padding:14px;
+            border-radius:12px;
+            font-size:14px;
+            font-family:inherit;
+            cursor:pointer;
         }
         .btn-w{border:none;background:var(--btn-primary-bg);color:var(--btn-primary-text);font-weight:700;}
         .btn-g{border:1px solid var(--btn-secondary-border);background:var(--btn-secondary-bg);color:var(--btn-secondary-text);}
@@ -576,31 +742,58 @@
         .reveal-delay-3{transition-delay:.24s;}
 
         @media(max-width:1080px){
-            .hero-layout,
-            .proof-wrap,
-            .progress-grid,
-            .cta-band{grid-template-columns:1fr;}
-            .hero-main,.hero-side{min-height:auto;}
-            .score-object{position:relative;right:auto;bottom:auto;width:min(100%,360px);margin-top:20px;}
-            .hero-title{font-size:clamp(48px,10vw,88px);}
-            .system-grid{grid-template-columns:1fr 1fr;}
-            .system-card.large{grid-column:1 / -1;grid-row:auto;min-height:auto;}
-            .scan-journey{grid-template-columns:1fr 1fr;}
+            .hero-inner,.info-grid,.rail-grid,.cta-band{grid-template-columns:1fr;}
+            .stack-grid{grid-template-columns:1fr 1fr;}
             .section-head{flex-direction:column;align-items:flex-start;}
             .cta-actions{justify-content:flex-start;}
         }
-        @media(max-width:760px){
-            nav{padding:0 16px;}
-            .hero{padding:20px 18px 34px;}
-            .hero-main,.hero-side,.lb-frame,.cta-band,.system-card,.proof-card,.progress-card{border-radius:24px;}
-            .hero-main{padding:22px 18px 20px;}
-            .hero-panel{padding:18px;}
-            .hero-cta{flex-direction:column;align-items:stretch;}
-            .hero-button{width:100%;}
-            .hero-stats{grid-template-columns:1fr;}
-            .scan-journey,.system-grid,.vault-metrics{grid-template-columns:1fr;}
-            .ticker-track span{font-size:11px;}
-            .lb-item{padding:12px 14px;}
+        @media(max-width:820px){
+            .app-shell{display:block;}
+            .sidebar{
+                position:sticky;
+                top:0;
+                width:100%;
+                height:auto;
+                flex-direction:row;
+                justify-content:space-between;
+                padding:12px 14px;
+                border-right:none;
+                border-bottom:1px solid var(--card-border);
+                z-index:500;
+            }
+            .sidebar-brand{flex-direction:row;}
+            .brand-text{
+                writing-mode:horizontal-tb;
+                transform:none;
+                font-size:11px;
+                letter-spacing:.14em;
+            }
+            .sidebar-nav,.sidebar-bottom{flex-direction:row;}
+            .side-link,.side-tool{
+                width:auto;
+                height:40px;
+                min-width:40px;
+                padding:0 12px;
+                border-radius:12px;
+            }
+            .main{
+                margin-left:0;
+                padding:16px 16px 70px;
+            }
+            .hero,.hero-inner{min-height:auto;}
+        }
+        @media(max-width:640px){
+            .topbar{justify-content:space-between;flex-wrap:wrap;}
+            .hero-inner{padding:18px;}
+            .hero-title{font-size:clamp(44px,14vw,72px);}
+            .hero-cta,.cta-actions{flex-direction:column;align-items:stretch;}
+            .hero-button,.cta-actions .hero-button{width:100%;}
+            .stack-grid,.info-grid{grid-template-columns:1fr;}
+            .score-card{min-height:300px;}
+            .score-value{font-size:62px;}
+            .metric-row{grid-template-columns:58px 1fr 46px;}
+            .sidebar-nav{gap:6px;overflow-x:auto;max-width:48vw;}
+            .sidebar-bottom{gap:6px;}
             footer{flex-direction:column;align-items:flex-start;}
             .page-transition{transition:transform .38s cubic-bezier(.22,1,.36,1),opacity .2s ease;}
         }
@@ -609,312 +802,174 @@
 <body class="page-preload">
 <div class="page-transition" id="pageTransition"></div>
 
-<nav>
-    <a href="home.html" class="nav-brand">
-        <span class="nav-brand-dot"></span>
-        larp.ai
-        <em>v4.4</em>
-    </a>
-    <div class="nav-right">
-        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
-        <div id="navRight"></div>
-    </div>
-</nav>
+<div class="app-shell">
+    <aside class="sidebar">
+        <a href="home.html" class="sidebar-brand">
+            <span class="brand-mark">L</span>
+            <span class="brand-text">larp.ai</span>
+        </a>
+        <nav class="sidebar-nav">
+            <a class="side-link" href="#hero">Face</a>
+            <a class="side-link" href="#method">PSL</a>
+            <a class="side-link" href="#leaderboardSection">Top</a>
+            <a class="side-link" href="#account">Vault</a>
+        </nav>
+        <div class="sidebar-bottom">
+            <button class="side-tool" id="btnDashboard" style="display:none;">Dash</button>
+            <button class="side-tool" id="themeToggle" title="Toggle theme">🌙</button>
+        </div>
+    </aside>
 
-<div class="site-shell">
-    <section class="hero">
-        <div class="hero-grid"></div>
-        <div class="hero-orb a"></div>
-        <div class="hero-orb b"></div>
-        <div class="hero-orb c"></div>
-        <div class="hero-spotlight" id="heroSpotlight"></div>
+    <main class="main">
+        <div class="topbar">
+            <div id="navRight" class="nav-right"></div>
+        </div>
 
-        <div class="hero-layout">
-            <div class="hero-main">
-                <div>
-                    <div class="eyebrow">PSL Facial Analysis System</div>
-                    <h1 class="hero-title">
-                        <span class="line">Read the</span>
-                        <span class="line muted">structure.</span>
-                        <span class="line">Build the edge.</span>
-                    </h1>
-                    <p class="hero-sub">A premium facial analysis experience built around baseline scoring, locked guest previews, readable member detail, and progress that actually compounds.</p>
-                    <div class="hero-cta">
-                        <button class="hero-button primary" id="btnAnalysis">Start Analysis</button>
-                        <button class="hero-button secondary" id="btnDashboard" style="display:none;">Open Dashboard</button>
-                        <button class="hero-button secondary" id="btnLeaderboard">View Leaderboard</button>
-                    </div>
-                </div>
-
-                <div class="hero-stats">
-                    <div class="hero-stat">
-                        <strong>18</strong>
-                        <span>Facial metrics scored</span>
-                    </div>
-                    <div class="hero-stat">
-                        <strong>68</strong>
-                        <span>Landmark points mapped</span>
-                    </div>
-                    <div class="hero-stat">
-                        <strong>∞</strong>
-                        <span>Saved scans per account</span>
-                    </div>
-                </div>
-
-                <div class="score-object">
-                    <div class="score-core">
-                        <div class="score-kicker">Sample Reading</div>
-                        <div class="score-value">7.84</div>
-                        <div class="score-tier">HTN · Top 2%</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="hero-side">
-                <div class="hero-panel hero-side-top">
+        <section class="hero" id="hero">
+            <div class="hero-grid"></div>
+            <div class="hero-spotlight" id="heroSpotlight"></div>
+            <div class="hero-inner">
+                <div class="hero-copy">
                     <div>
-                        <div class="eyebrow">System Layer</div>
-                        <div class="hero-side-title">One scan for the baseline. One account for the climb.</div>
+                        <div class="eyebrow">PSL Looksmaxxing Scan</div>
+                        <h1 class="hero-title">Read your <span class="muted">bone structure.</span> Build your edge.</h1>
+                        <p class="hero-sub">One front-facing scan for baseline score, harmony, angles, and a clean path to improve.</p>
+                        <div class="hero-cta">
+                            <button class="hero-button primary" id="btnAnalysis">Start Analysis</button>
+                            <button class="hero-button secondary" id="btnLeaderboard">Leaderboard</button>
+                        </div>
                     </div>
-                    <div class="stack-list">
-                        <div class="stack-item">
-                            <strong>Guest Preview</strong>
-                            <span>Anyone can run the scan. Guests land on a premium locked score preview instead of full readable detail.</span>
+                    <div class="hero-tags">
+                        <span class="hero-tag">PSL scale</span>
+                        <span class="hero-tag">Bone structure</span>
+                        <span class="hero-tag">Harmony</span>
+                        <span class="hero-tag">Angles</span>
+                    </div>
+                </div>
+
+                <div class="hero-stack">
+                    <div class="score-card">
+                        <div class="score-core">
+                            <div class="score-kicker">Sample Rating</div>
+                            <div class="score-value">7.82</div>
+                            <div class="score-tier">HTN · Top 2%</div>
                         </div>
-                        <div class="stack-item">
-                            <strong>Readable Member Mode</strong>
-                            <span>Logged-in users unlock the exact score, readable breakdown, saved history, and dashboard movement.</span>
+                    </div>
+                    <div class="stack-grid">
+                        <div class="mini-panel">
+                            <div class="panel-label">Guest Mode</div>
+                            <div class="panel-title">Preview first.</div>
+                            <div class="panel-copy">Guests can scan, then hit a locked reveal instead of full readable detail.</div>
                         </div>
-                        <div class="stack-item">
-                            <strong>Return Loop</strong>
-                            <span>The product is designed so each scan becomes a comparison point, not a disposable result.</span>
+                        <div class="lock-panel">
+                            <div class="panel-label">Readable Tier</div>
+                            <div class="lock-score">HB7.5</div>
+                            <div class="lock-note">Full score and tier stay clear only for accounts.</div>
                         </div>
                     </div>
                 </div>
-                <div class="hero-panel guest-card">
-                    <div>
-                        <div class="guest-badge">Locked Guest Reveal</div>
-                        <div class="guest-title">Preview the result. Unlock the readable score.</div>
-                        <div class="guest-copy">The homepage now frames guest mode as intentional, not incomplete. The preview builds demand; the account unlock closes the loop.</div>
-                    </div>
-                    <div class="guest-lock">
-                        <div class="card-label">Guest Score State</div>
-                        <div class="lock-score">HB7.5</div>
-                        <div class="lock-note">Blurred tier, blurred score, clean conversion path. Full readability stays behind the account.</div>
-                    </div>
-                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <div class="ticker">
-        <div class="ticker-track">
-            <span><strong>Guest Mode</strong> blurred preview</span>
-            <span><strong>Member Mode</strong> readable detail</span>
-            <span><strong>Dashboard</strong> saved movement</span>
-            <span><strong>Analysis</strong> front-facing only</span>
-            <span><strong>Metrics</strong> structure, harmony, angularity</span>
-            <span><strong>Guest Mode</strong> blurred preview</span>
-            <span><strong>Member Mode</strong> readable detail</span>
-            <span><strong>Dashboard</strong> saved movement</span>
-            <span><strong>Analysis</strong> front-facing only</span>
-            <span><strong>Metrics</strong> structure, harmony, angularity</span>
-        </div>
-    </div>
-
-    <section class="section reveal">
-        <div class="section-head">
-            <div>
-                <div class="section-kicker">Campaign Layout</div>
-                <h2 class="section-title">The homepage now sells the product as a system, not just a tool.</h2>
-            </div>
-            <p class="section-copy">This redesign moves away from a standard app landing page. It frames larp.ai as a premium loop: scan, reveal, unlock, return.</p>
-        </div>
-        <div class="system-grid">
-            <div class="system-card large reveal reveal-delay-1">
+        <section class="section reveal" id="method">
+            <div class="section-head">
                 <div>
-                    <div class="card-label">Why It Feels Bigger</div>
-                    <div class="card-title">A clearer first impression, a stronger locked state, and a better reason to come back.</div>
-                    <div class="card-copy">The analysis itself stays the same. What changes here is the framing: stronger campaign energy on the homepage, stronger reveal energy in the app, and a stronger progress layer in the dashboard.</div>
+                    <div class="section-kicker">Core Loop</div>
+                    <h2 class="section-title">Scan. Reveal. Track.</h2>
                 </div>
-                <div class="card-mini">
-                    <div class="mini-row"><strong>Scan</strong><span>Front-facing upload with quality guidance before the model runs.</span></div>
-                    <div class="mini-row"><strong>Reveal</strong><span>A staged result landing instead of a plain instant output.</span></div>
-                    <div class="mini-row"><strong>Unlock</strong><span>Guest previews stay aspirational while logged-in mode stays readable.</span></div>
-                    <div class="mini-row"><strong>Return</strong><span>The dashboard becomes the long-term layer where progress compounds.</span></div>
+                <p class="section-copy">Simple homepage. Short copy. Straight to what the looksmaxxing crowd actually cares about.</p>
+            </div>
+            <div class="info-grid">
+                <div class="info-card reveal reveal-delay-1">
+                    <div class="card-num">01</div>
+                    <div class="card-title">Scan</div>
+                    <div class="card-copy">Front-facing only. Clean lighting. Neutral face. Let the baseline land correctly.</div>
+                </div>
+                <div class="info-card reveal reveal-delay-2">
+                    <div class="card-num">02</div>
+                    <div class="card-title">Reveal</div>
+                    <div class="card-copy">Get a score built around structure, harmony, and angularity instead of random fluff.</div>
+                </div>
+                <div class="info-card reveal reveal-delay-3" id="account">
+                    <div class="card-num">03</div>
+                    <div class="card-title">Track</div>
+                    <div class="card-copy">Create an account if you want readable results, saved scans, and a real climb over time.</div>
                 </div>
             </div>
-            <div class="system-card reveal reveal-delay-2">
-                <div class="card-label">Guest Mode</div>
-                <div class="card-title">Preview</div>
-                <div class="card-copy">Run the scan, land on the title screen, see the locked score state, then unlock the readable result through account creation.</div>
-            </div>
-            <div class="system-card reveal reveal-delay-3">
-                <div class="card-label">Member Mode</div>
-                <div class="card-title">History</div>
-                <div class="card-copy">Readable scores, saved scans, movement across time, and a more rewarding return-user loop.</div>
-            </div>
-            <div class="system-card reveal reveal-delay-2">
-                <div class="card-label">Analysis Core</div>
-                <div class="card-title">Structure, harmony, angularity.</div>
-                <div class="card-copy">The product reads the face, scores the baseline, and keeps the result ready for comparison later.</div>
-            </div>
-            <div class="system-card reveal reveal-delay-3">
-                <div class="card-label">Progress Layer</div>
-                <div class="card-title">Baseline to timeline.</div>
-                <div class="card-copy">The value is no longer just the first score. It is the ability to measure movement and keep returning.</div>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <section class="section reveal">
-        <div class="section-head">
-            <div>
-                <div class="section-kicker">Product Journey</div>
-                <h2 class="section-title">From upload to dashboard, the product now has clearer rhythm.</h2>
-            </div>
-            <p class="section-copy">The homepage introduces the exact path users move through once they enter the app.</p>
-        </div>
-        <div class="scan-journey">
-            <div class="journey-step reveal reveal-delay-1">
-                <em>01</em>
-                <strong>Upload</strong>
-                <span>Use a front-facing portrait with neutral expression, visible forehead, and clean lighting.</span>
-            </div>
-            <div class="journey-step reveal reveal-delay-1">
-                <em>02</em>
-                <strong>Measure</strong>
-                <span>68 landmarks are mapped into structure, harmony, and dimensional composites.</span>
-            </div>
-            <div class="journey-step reveal reveal-delay-2">
-                <em>03</em>
-                <strong>Reveal</strong>
-                <span>Guests see a locked premium preview. Members get the readable score and full detail.</span>
-            </div>
-            <div class="journey-step reveal reveal-delay-3">
-                <em>04</em>
-                <strong>Return</strong>
-                <span>The dashboard stores every readable scan so progress turns into a visible system.</span>
-            </div>
-        </div>
-    </section>
-
-    <section class="section reveal">
-        <div class="proof-wrap">
-            <div class="proof-card reveal reveal-delay-1">
-                <div class="section-kicker">Scan Better</div>
-                <div class="card-title">Set yourself up for a cleaner result before you ever upload.</div>
-                <div class="proof-list">
-                    <div class="proof-item"><div class="proof-num">1</div><div><strong>Neutral expression</strong><span>No smile, no jaw tension, and no exaggerated squint. Keep the face relaxed and straight.</span></div></div>
-                    <div class="proof-item"><div class="proof-num">2</div><div><strong>Visible forehead and upper neck</strong><span>The hairline step works best when the top of the face is not cropped too tight.</span></div></div>
-                    <div class="proof-item"><div class="proof-num">3</div><div><strong>Soft lighting, no shadows</strong><span>Even light across both sides of the face gives the cleanest structural read.</span></div></div>
-                    <div class="proof-item"><div class="proof-num">4</div><div><strong>Use an account for clarity</strong><span>Guest mode is now a preview. Readable results and tracking stay behind the account.</span></div></div>
-                </div>
-            </div>
-            <div class="proof-card reveal reveal-delay-2">
-                <div class="section-kicker">Private And Guided</div>
-                <div class="card-title">Same analysis core. Better framing, better locked states, stronger return-user value.</div>
-                <div class="proof-list">
-                    <div class="proof-item"><div class="proof-num">A</div><div><strong>Client-side feel</strong><span>The product is designed to feel controlled and personal, with local account storage and a more premium reveal shell.</span></div></div>
-                    <div class="proof-item"><div class="proof-num">B</div><div><strong>Guest preview</strong><span>Anyone can try the scan. Readable score detail is intentionally reserved for signed-in users.</span></div></div>
-                    <div class="proof-item"><div class="proof-num">C</div><div><strong>Progress-first</strong><span>Signed-in users get readable output, saved scans, dashboard tracking, and a better return-user experience.</span></div></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section reveal">
-        <div class="progress-grid">
-            <div class="progress-card reveal reveal-delay-1">
-                <div class="section-kicker">Progress Preview</div>
-                <div class="card-title">The dashboard is the long-term layer.</div>
-                <div class="card-copy">Scans only become valuable over time if the product stores them clearly and makes movement visible. That is the job of the account side.</div>
-                <div class="progress-chart">
-                    <div class="chart-rail">
-                        <div class="chart-row">
-                            <label>HARM</label>
-                            <div class="chart-bar"><div class="chart-fill" style="width:82%;background:var(--green);"></div></div>
+        <section class="section reveal">
+            <div class="rail-grid">
+                <div class="rail-card reveal reveal-delay-1">
+                    <div class="section-kicker">What Gets Read</div>
+                    <div class="card-title">The metrics people actually care about.</div>
+                    <div class="metric-list">
+                        <div class="metric-row">
+                            <label>Harmony</label>
+                            <div class="metric-bar"><div class="metric-fill" style="width:82%;background:var(--green);"></div></div>
                             <span style="color:var(--green);">8.2</span>
                         </div>
-                        <div class="chart-row">
-                            <label>ANGU</label>
-                            <div class="chart-bar"><div class="chart-fill" style="width:77%;background:var(--orange);"></div></div>
-                            <span style="color:var(--orange);">7.7</span>
+                        <div class="metric-row">
+                            <label>Angles</label>
+                            <div class="metric-bar"><div class="metric-fill" style="width:78%;background:var(--orange);"></div></div>
+                            <span style="color:var(--orange);">7.8</span>
                         </div>
-                        <div class="chart-row">
-                            <label>DIMO</label>
-                            <div class="chart-bar"><div class="chart-fill" style="width:75%;background:var(--orange);"></div></div>
-                            <span style="color:var(--orange);">7.5</span>
+                        <div class="metric-row">
+                            <label>Ratios</label>
+                            <div class="metric-bar"><div class="metric-fill" style="width:76%;background:var(--orange);"></div></div>
+                            <span style="color:var(--orange);">7.6</span>
                         </div>
-                        <div class="chart-row">
-                            <label>MISC</label>
-                            <div class="chart-bar"><div class="chart-fill" style="width:79%;background:var(--green);"></div></div>
-                            <span style="color:var(--green);">7.9</span>
+                        <div class="metric-row">
+                            <label>Dimorphism</label>
+                            <div class="metric-bar"><div class="metric-fill" style="width:80%;background:var(--green);"></div></div>
+                            <span style="color:var(--green);">8.0</span>
                         </div>
                     </div>
                 </div>
+                <div class="rail-card reveal reveal-delay-2">
+                    <div class="section-kicker">Looksmax Notes</div>
+                    <div class="card-title">Keep the page lean. Keep the vibe right.</div>
+                    <div class="mini-rail">
+                        <div><strong>Bone structure</strong> matters most when the photo is clean.</div>
+                        <div><strong>Guest preview</strong> keeps the reveal gated without killing curiosity.</div>
+                        <div><strong>Dashboard</strong> is where your best scan and movement start to matter.</div>
+                    </div>
+                </div>
             </div>
-            <div class="progress-card reveal reveal-delay-2">
-                <div class="vault-card">
-                    <div>
-                        <div class="section-kicker">Account Vault</div>
-                        <div class="card-title">Readable results. Saved scans. Better return energy.</div>
-                        <div class="card-copy">The account side is where readable detail, score comparisons, best-score moments, and scan history all stay together.</div>
-                    </div>
-                    <div class="vault-metrics">
-                        <div class="vault-metric">
-                            <strong>Peak</strong>
-                            <span>best score state</span>
-                        </div>
-                        <div class="vault-metric">
-                            <strong>Trend</strong>
-                            <span>movement over time</span>
-                        </div>
-                        <div class="vault-metric">
-                            <strong>Fixes</strong>
-                            <span>member detail</span>
-                        </div>
-                        <div class="vault-metric">
-                            <strong>Loop</strong>
-                            <span>reason to return</span>
-                        </div>
-                    </div>
+        </section>
+
+        <div class="lb-section reveal" id="leaderboardSection">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Leaderboard</div>
+                    <h2 class="section-title">Top rated readable accounts.</h2>
+                </div>
+                <p class="section-copy">Best saved scan per user. Guests do not touch the board.</p>
+            </div>
+            <div class="lb-frame">
+                <div id="leaderboardList">
+                    <div style="text-align:center;padding:32px 0;color:var(--text3);font-size:13px;">Loading leaderboard...</div>
                 </div>
             </div>
         </div>
-    </section>
 
-    <div class="lb-section reveal" id="leaderboardSection">
-        <div class="section-head">
+        <section class="cta-band reveal">
             <div>
-                <div class="section-kicker">Leaderboard</div>
-                <h2 class="section-title">Top rated readable accounts.</h2>
+                <div class="section-kicker">Enter Larp.ai</div>
+                <div class="cta-title">Read the face. Unlock the full results.</div>
+                <div class="cta-sub">Start free as a guest, or create an account for readable scores, saved scans, and the dashboard.</div>
             </div>
-            <p class="section-copy">Best analysis per logged-in user. The board only reflects saved readable scans, not guest previews.</p>
-        </div>
-        <div class="lb-frame">
-            <div id="leaderboardList">
-                <div style="text-align:center;padding:32px 0;color:var(--text3);font-size:13px;">Loading leaderboard...</div>
+            <div class="cta-actions">
+                <button class="hero-button primary" id="btnAnalysisCta">Start Analysis</button>
+                <a href="signup.html" class="hero-button secondary" style="text-decoration:none;">Create Account</a>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <section class="cta-band reveal">
-        <div class="cta-copy">
-            <div class="section-kicker">Enter The System</div>
-            <div class="cta-title">Find the baseline. Read the score. Track the climb.</div>
-            <div class="cta-sub">Run the facial analysis free. Sign up if you want readable results, saved progress, and a dashboard that keeps the whole system together.</div>
-        </div>
-        <div class="cta-actions">
-            <button class="hero-button primary" id="btnAnalysisCta">Start Your Analysis</button>
-            <a href="signup.html" class="hero-button secondary" style="text-decoration:none;">Create Account</a>
-        </div>
-    </section>
-
-    <footer>
-        <div class="foot-brand">larp.ai</div>
-        <div class="foot-note">For self-improvement reference. Not medical advice.</div>
-    </footer>
+        <footer>
+            <div class="foot-brand">larp.ai</div>
+            <div class="foot-note">For self-improvement reference. Not medical advice.</div>
+        </footer>
+    </main>
 </div>
 
 <div class="ov" id="suggestPopup">
@@ -959,6 +1014,7 @@
 </div>
 
 <script src="auth.js"></script>
+<script src="site-shell.js"></script>
 <script>
 (() => {
     const ROUTES = new Set(['index.html','home.html','login.html','signup.html','app.html','dashboard.html']);
@@ -1038,21 +1094,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const showOv = id => document.getElementById(id).classList.add('show');
     const hideOv = id => document.getElementById(id).classList.remove('show');
     ['suggestPopup','loginRequiredPopup','resultsPopup'].forEach(id => {
-        document.getElementById(id).addEventListener('click', function(e){ if(e.target===this) hideOv(id); });
+        document.getElementById(id).addEventListener('click', function(e){ if (e.target === this) hideOv(id); });
     });
 
     const goAnalysis = () => {
         if (auth.isLoggedIn()) nav('app.html');
         else showOv('suggestPopup');
     };
-    document.getElementById('btnAnalysis').addEventListener('click', goAnalysis);
-    document.getElementById('btnAnalysisCta').addEventListener('click', goAnalysis);
-    document.getElementById('suggestLogin').addEventListener('click', () => nav('login.html'));
-    document.getElementById('suggestContinue').addEventListener('click', () => nav('app.html'));
-    document.getElementById('lrpBack').addEventListener('click', () => hideOv('loginRequiredPopup'));
-    document.getElementById('lrpLogin').addEventListener('click', () => nav('login.html'));
-    document.getElementById('closeResultsPopup').addEventListener('click', () => hideOv('resultsPopup'));
-    document.getElementById('newAnalysisBtn').addEventListener('click', () => nav('app.html'));
+    document.getElementById('btnAnalysis')?.addEventListener('click', goAnalysis);
+    document.getElementById('btnAnalysisCta')?.addEventListener('click', goAnalysis);
+    document.getElementById('suggestLogin')?.addEventListener('click', () => nav('login.html'));
+    document.getElementById('suggestContinue')?.addEventListener('click', () => nav('app.html'));
+    document.getElementById('lrpBack')?.addEventListener('click', () => hideOv('loginRequiredPopup'));
+    document.getElementById('lrpLogin')?.addEventListener('click', () => nav('login.html'));
+    document.getElementById('closeResultsPopup')?.addEventListener('click', () => hideOv('resultsPopup'));
+    document.getElementById('newAnalysisBtn')?.addEventListener('click', () => nav('app.html'));
 
     if (hero && heroSpotlight && window.matchMedia('(pointer:fine)').matches) {
         hero.addEventListener('pointermove', e => {

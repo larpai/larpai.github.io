@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playbook — larp.ai</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="site-shell.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        :root{--bg:#060608;--card:#0d0d10;--border:rgba(255,255,255,0.08);--text:#f0f0f2;--muted:rgba(240,240,242,0.6);--faint:rgba(240,240,242,0.32);}
+        [data-theme="light"]{--bg:#f5f5f0;--card:#ecece7;--border:rgba(0,0,0,0.08);--text:#0a0a0c;--muted:rgba(10,10,12,0.58);--faint:rgba(10,10,12,0.32);}
+        body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+        .page{width:min(1180px,calc(100% - 36px));margin:0 auto;padding:86px 0 80px;}
+        .hero{border-radius:34px;border:1px solid var(--border);padding:34px;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));box-shadow:0 28px 80px rgba(0,0,0,0.28);}
+        .kicker{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-bottom:14px;}
+        h1{font-family:'Syne',sans-serif;font-size:clamp(42px,7vw,84px);line-height:.88;letter-spacing:-.07em;max-width:760px;margin-bottom:14px;}
+        .sub{max-width:560px;font-size:15px;line-height:1.72;color:var(--muted);}
+        .tabs{margin-top:24px;border-radius:30px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));overflow:hidden;}
+        .tab-list{display:flex;gap:10px;padding:14px;border-bottom:1px solid var(--border);overflow:auto;}
+        .tab-btn{border:none;border-radius:14px;padding:11px 14px;background:rgba(255,255,255,0.04);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-family:inherit;cursor:pointer;}
+        .tab-btn.active{background:rgba(255,255,255,0.08);color:var(--text);}
+        .tab-panel{display:none;padding:20px;}
+        .tab-panel.active{display:block;}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+        .card{border-radius:24px;border:1px solid var(--border);padding:18px;background:rgba(255,255,255,0.03);}
+        .card h2{font-family:'Syne',sans-serif;font-size:26px;letter-spacing:-.05em;line-height:.94;margin-bottom:8px;}
+        .card p{font-size:13px;line-height:1.68;color:var(--muted);}
+        .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+        .chip{padding:10px 12px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,0.03);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+        footer{margin-top:26px;padding-top:18px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--faint);font-size:12px;}
+        @media(max-width:900px){.grid{grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <div class="kicker">Playbook</div>
+            <h1>Extra context around the score.</h1>
+            <p class="sub">This is not a new analysis engine. It is a reference layer so the website feels broader and more useful without making the main scanner harder to use.</p>
+        </section>
+
+        <section class="tabs" data-shell-tabs>
+            <div class="tab-list">
+                <button class="tab-btn active" data-tab="read">Reading</button>
+                <button class="tab-btn" data-tab="prep">Prep</button>
+                <button class="tab-btn" data-tab="compare">Compare</button>
+            </div>
+            <div class="tab-panel active" data-panel="read">
+                <div class="grid">
+                    <div class="card"><h2>Score first.</h2><p>Treat the overall read as a baseline snapshot, not a final verdict. One scan matters most when it can later be compared against another.</p></div>
+                    <div class="card"><h2>Category second.</h2><p>Harmony, angles, ratios, and dimorphism are more useful when they are read as a pattern rather than isolated numbers.</p></div>
+                </div>
+                <div class="chip-row">
+                    <span class="chip">baseline</span><span class="chip">tier</span><span class="chip">pattern</span><span class="chip">trajectory</span>
+                </div>
+            </div>
+            <div class="tab-panel" data-panel="prep">
+                <div class="grid">
+                    <div class="card"><h2>Consistency wins.</h2><p>If you want to know whether changes helped, use similar lighting, distance, and expression for each scan.</p></div>
+                    <div class="card"><h2>Keep it honest.</h2><p>Extreme angles, filters, and dramatic edits make the site feel better for a minute but worse for comparison later.</p></div>
+                </div>
+            </div>
+            <div class="tab-panel" data-panel="compare">
+                <div class="grid">
+                    <div class="card"><h2>Use the dashboard.</h2><p>Saved scans are where the score gets context. A single result is useful; a timeline is more useful.</p></div>
+                    <div class="card"><h2>Best scan is not everything.</h2><p>Peak result, average result, and most recent result all tell a different story. Read all three.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <span>larp.ai playbook</span>
+            <span>Reference page only. The core facial analysis logic remains unchanged.</span>
+        </footer>
+    </main>
+    <script>
+        document.querySelectorAll('[data-shell-tabs]').forEach(root => {
+            const buttons = [...root.querySelectorAll('[data-tab]')];
+            const panels = [...root.querySelectorAll('[data-panel]')];
+            const set = id => {
+                buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === id));
+                panels.forEach(panel => panel.classList.toggle('active', panel.dataset.panel === id));
+            };
+            buttons.forEach(btn => btn.addEventListener('click', () => set(btn.dataset.tab)));
+        });
+    </script>
+    <script src="site-shell.js"></script>
+</body>
+</html>
