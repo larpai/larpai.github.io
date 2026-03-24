@@ -1113,8 +1113,12 @@
         body.page-preload{opacity:0;transform:translateY(10px);}
         body.page-live{opacity:1;transform:none;transition:opacity .42s cubic-bezier(.22,1,.36,1),transform .42s cubic-bezier(.22,1,.36,1);}
         body.page-exit{opacity:0;transform:translateY(-10px);}
-        .page-transition{position:fixed;inset:0;z-index:9999;pointer-events:none;background:radial-gradient(circle at 25% 20%, rgba(48,209,88,0.14), transparent 30%),radial-gradient(circle at 75% 30%, rgba(90,200,250,0.12), transparent 32%),linear-gradient(180deg,#060608,#060608);opacity:0;transform:translateY(100%);transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .2s ease;}
+        .page-transition{position:fixed;inset:0;z-index:9999;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,0.05),transparent 18%),radial-gradient(circle at 25% 20%, rgba(48,209,88,0.14), transparent 30%),radial-gradient(circle at 75% 30%, rgba(90,200,250,0.12), transparent 32%),linear-gradient(180deg,#060608,#060608);opacity:0;transform:translateY(100%);transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .2s ease;overflow:hidden;}
+        .page-transition::before,.page-transition::after{content:"";position:absolute;inset:0;pointer-events:none;}
+        .page-transition::before{background:repeating-linear-gradient(90deg,transparent 0 72px,rgba(255,255,255,0.05) 72px 73px);opacity:.28;transform:translateY(12px);}
+        .page-transition::after{background:linear-gradient(180deg,transparent,rgba(255,255,255,0.05),transparent);opacity:.35;transform:translateY(-100%);transition:transform .6s cubic-bezier(.22,1,.36,1);}
         .page-transition.active{opacity:1;transform:translateY(0);}
+        .page-transition.active::after{transform:translateY(100%);}
         @media(max-width:720px){body.page-live{transition-duration:.3s;}.page-transition{transition:transform .38s cubic-bezier(.22,1,.36,1),opacity .2s ease;}}
 
     </style>
@@ -1151,7 +1155,7 @@
                         <div class="surface-head">
                             <div>
                                 <div class="surface-title">Upload Your Photo</div>
-                                <div class="surface-sub">Use a clean portrait with your full face visible. The redesign keeps your original dark premium aesthetic, but makes the scan workflow feel more deliberate and more trustworthy.</div>
+                                <div class="surface-sub">Use a clean front-facing portrait with your full face visible. This flow is now tighter, cleaner, and more guided.</div>
                             </div>
                             <div class="surface-badge">Client-side scan</div>
                         </div>
@@ -1179,7 +1183,7 @@
 
                         <div class="status-row">
                             <p class="status" id="status">Loading models...</p>
-                            <div class="status-note">Guests can run a scan, but full readable score detail is reserved for logged-in accounts.</div>
+                            <div class="status-note">Guests can scan. Readable detail stays locked for accounts.</div>
                         </div>
                     </section>
 
@@ -1187,7 +1191,7 @@
                         <div class="surface-head">
                             <div>
                                 <div class="surface-title">Before You Scan</div>
-                                <div class="surface-sub">These additions are not analysis features. They are UX support to make the scan output more reliable and the flow more premium.</div>
+                                <div class="surface-sub">A few pre-scan checks so the output is cleaner and the flow feels intentional.</div>
                             </div>
                         </div>
                         <div class="checklist">
@@ -1214,7 +1218,7 @@
                         <div class="surface-head">
                             <div>
                                 <div class="surface-title">Quality Signals</div>
-                                <div class="surface-sub">Three quick reminders built into the scanner so the product feels guided instead of empty while waiting for upload.</div>
+                                <div class="surface-sub">Three quick quality reminders so the scanner never feels empty or generic.</div>
                             </div>
                         </div>
                         <div class="micro-grid">
@@ -1257,7 +1261,7 @@
                             </div>
                         </div>
 
-                        <div class="guest-preview-note" id="guestPreviewNote"><strong>Guest preview only.</strong> Your analysis can run without an account, but the readable score and detailed feature breakdown stay locked until you log in or sign up.</div>
+                        <div class="guest-preview-note" id="guestPreviewNote"><strong>Guest preview only.</strong> The scan can run without an account, but the readable score and full breakdown stay behind the unlock.</div>
                         <div class="features" id="featuresBox">
                             <div class="empty">Upload and analyze to see detailed scores</div>
                         </div>
@@ -1398,20 +1402,7 @@
             }
         };
 
-        // Patch the cinematic onDone to redirect to dashboard if logged in
-        const origCinematic = FacialAnalyzer.prototype._showCinematicReveal;
-        FacialAnalyzer.prototype._showCinematicReveal = function(scores, m, onDone) {
-            const wrappedOnDone = () => {
-                if (onDone) onDone();
-                // After results panel fades in, redirect logged-in users to dashboard
-                if (window.LarpAuth && window.LarpAuth.isLoggedIn()) {
-                    setTimeout(() => {
-                        nav('dashboard.html');
-                    }, 1200);
-                }
-            };
-            origCinematic.call(this, scores, m, wrappedOnDone);
-        };
+        // Dashboard navigation is handled by the final cinematic CTA in app.js.
     });
     </script>
 

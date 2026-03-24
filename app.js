@@ -1396,11 +1396,7 @@ class FacialAnalyzer {
             ];
             html += `<div style="margin-bottom:18px;padding:18px;border-radius:18px;border:1px solid rgba(255,214,10,0.18);background:linear-gradient(180deg,rgba(255,214,10,0.10),rgba(255,214,10,0.04));">
                 <div style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#ffd60a;margin-bottom:10px;">Guest Preview</div>
-                <div style="font-size:14px;color:rgba(255,255,255,0.84);line-height:1.7;margin-bottom:14px;">The scan is complete, but the exact score and readable feature analysis remain blurred in guest mode. Unlock them by logging in or creating a free account.</div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-                    <a href="signup.html" style="flex:1;min-width:150px;padding:13px 16px;border-radius:12px;background:#fff;color:#000;text-decoration:none;font-size:13px;font-weight:700;text-align:center;">Create Free Account</a>
-                    <a href="login.html" style="flex:1;min-width:150px;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.84);text-decoration:none;font-size:13px;font-weight:600;text-align:center;">Log In To Unlock</a>
-                </div>
+                <div style="font-size:14px;color:rgba(255,255,255,0.84);line-height:1.7;margin-bottom:12px;">The scan is complete, but the exact score and readable feature analysis remain blurred in guest mode. Unlock them with a free larp.ai account.</div>
                 <div style="font-size:11px;color:rgba(255,255,255,0.38);line-height:1.6;">Accounts unlock readable scores, detailed features, saved result history, and dashboard tracking.</div>
             </div>`;
 
@@ -2508,12 +2504,28 @@ class FacialAnalyzer {
             const guestBlur = isGuestView ? 'filter:blur(10px);opacity:0.85;' : '';
 
             const stageWrap = document.createElement('div');
-            stageWrap.style.cssText = `width:100%;display:flex;flex-direction:column;align-items:center;`;
+            stageWrap.style.cssText = `width:100%;display:flex;flex-direction:column;align-items:center;position:relative;isolation:isolate;`;
+
+            const scoreAura = document.createElement('div');
+            scoreAura.style.cssText = `
+                position:absolute;inset:-60px -40px auto;
+                height:${isMobile ? '240px' : '300px'};
+                background:radial-gradient(circle at 50% 50%, ${rColor}22 0%, transparent 70%);
+                filter:blur(${isMobile ? '28px' : '36px'});
+                opacity:${isMobile ? '0.42' : '0.54'};
+                pointer-events:none;z-index:-1;
+                transition:transform .18s ease, opacity .25s ease;
+            `;
+            stageWrap.appendChild(scoreAura);
 
             const preLabel = document.createElement('div');
             preLabel.style.cssText = `font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:18px;`;
             preLabel.textContent = 'Official Rating';
             fadeInEl(preLabel, isMobile ? 40 : 80, isMobile ? 320 : 460);
+
+            const launchLine = document.createElement('div');
+            launchLine.style.cssText = `width:${isMobile ? '38px' : '54px'};height:2px;background:${rColor};opacity:.68;border-radius:999px;margin:0 auto 18px;box-shadow:0 0 20px ${rColor}44;`;
+            scaleInEl(launchLine, isMobile ? 120 : 180, isMobile ? 300 : 420, 0.82);
 
             // Ring
             const circumference = 452;
@@ -2545,6 +2557,11 @@ class FacialAnalyzer {
             `;
             scaleInEl(labelWrap, isMobile ? 900 : 1320, isMobile ? 360 : 520, isMobile ? 0.988 : 0.97);
 
+            const scoreMeta = document.createElement('div');
+            scoreMeta.style.cssText = `font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.22);margin-bottom:16px;`;
+            scoreMeta.textContent = isGuestView ? 'Locked Preview' : (isFirstAnalysis ? 'First Recorded Scan' : 'Saved Scan');
+            fadeInEl(scoreMeta, isMobile ? 1020 : 1500, isMobile ? 260 : 360, isMobile ? 8 : 10);
+
             const pctEl = document.createElement('div');
             pctEl.style.cssText = `font-size:14px;font-weight:700;color:${rColor};margin-bottom:8px;${isGuestView ? 'filter:blur(6px);opacity:0.82;' : ''}`;
             pctEl.textContent = rating.pct;
@@ -2575,14 +2592,28 @@ class FacialAnalyzer {
             scaleInEl(compositeBox, isMobile ? 1380 : 2100, isMobile ? 340 : 480, isMobile ? 0.988 : 0.975);
 
             stageWrap.appendChild(preLabel);
+            stageWrap.appendChild(launchLine);
             stageWrap.appendChild(ringWrap);
             stageWrap.appendChild(labelWrap);
+            stageWrap.appendChild(scoreMeta);
             if (!isGuestView) {
                 stageWrap.appendChild(pctEl);
                 stageWrap.appendChild(tipEl);
                 stageWrap.appendChild(compositeBox);
             }
             content.appendChild(stageWrap);
+
+            if (!isMobile && window.matchMedia('(pointer:fine)').matches) {
+                stageWrap.addEventListener('pointermove', e => {
+                    const rect = stageWrap.getBoundingClientRect();
+                    const rx = ((e.clientX - rect.left) / rect.width - 0.5) * 24;
+                    const ry = ((e.clientY - rect.top) / rect.height - 0.5) * 18;
+                    scoreAura.style.transform = `translate(${rx}px, ${ry}px)`;
+                });
+                stageWrap.addEventListener('pointerleave', () => {
+                    scoreAura.style.transform = 'translate(0,0)';
+                });
+            }
 
             // Animate ring + count-up
             setTimeout(() => {
@@ -2614,16 +2645,15 @@ class FacialAnalyzer {
                 const guestCard = document.createElement('div');
                 guestCard.style.cssText = `
                     width:100%;max-width:360px;margin:18px auto 0;
-                    background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.18);
-                    border-radius:16px;padding:18px 18px 16px;
+                    background:linear-gradient(180deg,rgba(255,214,10,0.10),rgba(255,214,10,0.05));
+                    border:1px solid rgba(255,214,10,0.18);
+                    border-radius:18px;padding:18px 18px 16px;
+                    box-shadow:0 24px 60px rgba(0,0,0,0.22);
                 `;
                 guestCard.innerHTML = `
                     <div style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#ffd60a;margin-bottom:10px;">Guest Preview</div>
-                    <div style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.65;margin-bottom:14px;">Guests only see the title screen and a locked score preview. Log in or create an account to unlock the readable score, full tier, and detailed breakdown.</div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <a href="signup.html" style="flex:1;min-width:140px;padding:12px 14px;border-radius:12px;background:#fff;color:#000;text-decoration:none;font-size:13px;font-weight:700;text-align:center;">Create Account</a>
-                        <a href="login.html" style="flex:1;min-width:140px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.84);text-decoration:none;font-size:13px;font-weight:600;text-align:center;">Log In</a>
-                    </div>
+                    <div style="font-size:13px;color:rgba(255,255,255,0.84);line-height:1.65;margin-bottom:8px;">Guests only see the title screen and a locked score preview.</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.46);line-height:1.65;">Unlock the readable score, full tier, and detailed breakdown with an account.</div>
                 `;
                 fadeInEl(guestCard, 1800, 500);
                 content.appendChild(guestCard);
@@ -2731,6 +2761,9 @@ class FacialAnalyzer {
                 setTimeout(() => {
                     ov.remove();
                     if (typeof onDone === 'function') onDone();
+                    if (!isFirstAnalysis) {
+                        navigate('dashboard.html');
+                    }
                 }, 400);
             };
             ctaBtn.addEventListener('click', dismiss);

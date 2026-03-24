@@ -235,36 +235,79 @@
         }
 
         .hero-title{
-            font-family:'Syne',sans-serif;
-            font-size:clamp(58px,14vw,130px);
-            font-weight:800;
-            letter-spacing:-.06em;
-            line-height:.88;
-            margin-bottom:24px;
+            margin:0 auto 24px;
+            max-width:700px;
             opacity:0;animation:fadeUp 0.7s ease 0.25s forwards;
         }
-        .hero-title-line{display:block;overflow:hidden;}
-        .hero-title-word{
-            display:inline-block;
-            animation:hero-word-in .9s cubic-bezier(.22,1,.36,1) both;
+        .hero-flip-stack{
+            display:grid;
+            gap:14px;
+            perspective:1200px;
+        }
+        .hero-flip-card{
+            position:relative;
+            display:block;
+            height:clamp(76px,11vw,110px);
+            transform-style:preserve-3d;
+            animation:hero-card-in .9s cubic-bezier(.22,1,.36,1) both;
             will-change:transform,opacity,filter;
         }
-        .hero-title-word.accent{color:var(--text3);}
-        .hero-title-word.delay-2{animation-delay:.18s;}
-        .hero-title-word.delay-3{animation-delay:.36s;}
-        @keyframes hero-word-in{
-            0%{opacity:0;transform:translateY(44px) skewY(6deg);filter:blur(12px);}
-            100%{opacity:1;transform:translateY(0) skewY(0);filter:blur(0);}
+        .hero-flip-card.delay-2{animation-delay:.16s;}
+        .hero-flip-card.delay-3{animation-delay:.32s;}
+        .hero-flip-face{
+            position:absolute;
+            inset:0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:28px;
+            border:1px solid rgba(255,255,255,0.12);
+            background:linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03));
+            box-shadow:0 22px 46px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06);
+            backface-visibility:hidden;
+            font-family:'Syne',sans-serif;
+            font-size:clamp(40px,7vw,76px);
+            font-weight:800;
+            letter-spacing:-.06em;
+            line-height:1;
         }
-        .hero-title-dim{color:var(--text3);}
+        .hero-flip-face.front{
+            color:var(--text);
+            background:
+                linear-gradient(135deg,rgba(48,209,88,0.10),rgba(255,255,255,0.04)),
+                rgba(10,12,14,0.88);
+        }
+        .hero-flip-face.back{
+            color:var(--text3);
+            transform:rotateX(180deg);
+            background:
+                linear-gradient(135deg,rgba(90,200,250,0.10),rgba(255,255,255,0.03)),
+                rgba(10,12,14,0.88);
+        }
+        .hero-flip-card:hover{
+            transform:translateY(-6px) rotateX(180deg);
+        }
+        .hero-title-caption{
+            display:block;
+            margin-top:18px;
+            font-family:'DM Sans',sans-serif;
+            font-size:clamp(18px,2.4vw,22px);
+            font-weight:500;
+            color:var(--text2);
+            letter-spacing:-.02em;
+        }
+        @keyframes hero-card-in{
+            0%{opacity:0;transform:translateY(44px) rotateX(-18deg);filter:blur(12px);}
+            100%{opacity:1;transform:translateY(0) rotateX(0);filter:blur(0);}
+        }
 
         .hero-sub{
             font-size:clamp(14px,2vw,17px);
             color:var(--text2);
-            max-width:480px;
-            line-height:1.7;
-            margin:0 auto 48px;
-            font-weight:300;
+            max-width:430px;
+            line-height:1.65;
+            margin:0 auto 34px;
+            font-weight:400;
             opacity:0;animation:fadeUp 0.7s ease 0.4s forwards;
         }
 
@@ -337,23 +380,39 @@
 
         /* ── CHIPS ── */
         .chips{
-            display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
-            padding:0 24px 56px;
+            width:min(1040px,calc(100% - 36px));
+            margin:0 auto;
+            display:grid;
+            grid-template-columns:repeat(6,minmax(0,1fr));
+            gap:10px;
+            padding:0 0 56px;
             position:relative;z-index:1;
             opacity:0;animation:fadeUp 0.7s ease 0.7s forwards;
         }
         .chip{
-            font-size:11px;color:var(--text3);font-weight:500;
-            display:flex;align-items:center;gap:6px;
-            padding:5px 12px;
-            border-radius:100px;
-            background:var(--card);
+            min-height:74px;
+            font-size:11px;color:var(--text2);font-weight:600;
+            display:flex;align-items:flex-end;
+            padding:14px 14px 12px;
+            border-radius:18px;
+            background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
             border:1px solid var(--card-border);
-            transition:var(--transition);
+            transition:transform .24s ease,border-color .24s ease,background .24s ease,box-shadow .24s ease;
             transform-origin:center;
+            position:relative;
+            overflow:hidden;
+            line-height:1.45;
         }
-        .chip:hover{border-color:rgba(48,209,88,0.3);color:var(--accent);transform:translateY(-2px) scale(1.02);}
-        .chip::before{content:'\2713';color:var(--accent);font-weight:700;font-size:10px;}
+        .chip::after{
+            content:'';
+            position:absolute;inset:0;
+            background:linear-gradient(135deg,rgba(48,209,88,0.10),transparent 55%,rgba(90,200,250,0.08));
+            opacity:0;
+            transition:opacity .24s ease;
+        }
+        .chip:hover{border-color:rgba(48,209,88,0.24);color:var(--text);transform:translateY(-4px);box-shadow:0 20px 48px rgba(0,0,0,0.22);}
+        .chip:hover::after{opacity:1;}
+        .chip span{position:relative;z-index:1;display:block;}
 
         .announce{
             margin:76px auto 0;
@@ -401,7 +460,7 @@
         }
         .sec-sub{font-size:15px;color:var(--text2);line-height:1.7;max-width:500px;margin:0 auto 52px;font-weight:300;}
 
-        .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+        .steps{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px;}
         .step{
             background:var(--card);
             border:1px solid var(--card-border);
@@ -420,6 +479,10 @@
             transition:opacity 0.3s ease;
         }
         .step:hover{border-color:rgba(48,209,88,0.25);transform:translateY(-3px);}
+        .step:nth-child(1){grid-column:span 6;}
+        .step:nth-child(2){grid-column:span 6;}
+        .step:nth-child(3){grid-column:span 7;}
+        .step:nth-child(4){grid-column:span 5;}
         [data-theme="light"] .step:hover{border-color:rgba(26,140,56,0.25);}
         .step:hover::before{opacity:0.04;}
         .step:hover .step-icon{transform:translateY(-2px) rotate(-3deg);border-color:rgba(48,209,88,0.22);}
@@ -485,7 +548,9 @@
             padding:26px 24px;
             position:relative;
             overflow:hidden;
+            transition:transform .26s ease,border-color .26s ease,box-shadow .26s ease,background .26s ease;
         }
+        .split-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.12);box-shadow:0 26px 66px rgba(0,0,0,0.22);}
         .split-card::before{
             content:'';
             position:absolute;inset:0;
@@ -522,8 +587,13 @@
             background:rgba(255,255,255,0.03);
             border:1px solid var(--card-border);
             transition:transform .22s ease,border-color .22s ease,background .22s ease;
+            position:relative;
+            overflow:hidden;
         }
+        .promise::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(90,200,250,0.10),transparent 58%);opacity:0;transition:opacity .22s ease;}
         .promise:hover{transform:translateY(-3px);border-color:rgba(90,200,250,0.18);background:rgba(255,255,255,0.045);}
+        .promise:hover::after{opacity:1;}
+        .promise > *{position:relative;z-index:1;}
         .promise-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
         .promise-copy{font-size:13px;color:var(--text2);line-height:1.6;}
 
@@ -633,7 +703,8 @@
             footer{flex-direction:column;text-align:center;}
             .chips{gap:8px;}
             .announce{margin-top:72px;}
-            .hero-title-word{animation-duration:.72s;}
+            .hero-flip-card{height:82px;}
+            .hero-flip-face{border-radius:22px;font-size:42px;}
             .hero-spotlight{display:none;}
         }
         @media(max-width:860px){
@@ -645,16 +716,31 @@
         .page-transition{
             position:fixed;inset:0;z-index:9999;pointer-events:none;
             background:
+                linear-gradient(180deg,rgba(255,255,255,0.05),transparent 18%),
                 radial-gradient(circle at 20% 20%, rgba(48,209,88,0.16), transparent 30%),
                 radial-gradient(circle at 80% 30%, rgba(90,200,250,0.12), transparent 32%),
                 linear-gradient(180deg,#060608,#060608);
             opacity:0;transform:translateY(100%);
             transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .2s ease;
+            overflow:hidden;
         }
+        .page-transition::before,.page-transition::after{content:'';position:absolute;inset:0;pointer-events:none;}
+        .page-transition::before{background:repeating-linear-gradient(90deg,transparent 0 72px,rgba(255,255,255,0.05) 72px 73px);opacity:.28;transform:translateY(12px);}
+        .page-transition::after{background:linear-gradient(180deg,transparent,rgba(255,255,255,0.05),transparent);opacity:.35;transform:translateY(-100%);transition:transform .6s cubic-bezier(.22,1,.36,1);}
         .page-transition.active{opacity:1;transform:translateY(0);}
+        .page-transition.active::after{transform:translateY(100%);}
         @media(max-width:720px){
             body.page-live{transition-duration:.3s;}
             .page-transition{transition:transform .38s cubic-bezier(.22,1,.36,1),opacity .2s ease;}
+        }
+        @media(max-width:960px){
+            .chips{grid-template-columns:repeat(2,minmax(0,1fr));width:calc(100% - 36px);}
+            .step{grid-column:span 6;}
+        }
+        @media(max-width:720px){
+            .steps{grid-template-columns:1fr;}
+            .step{grid-column:span 1;}
+            .chip{min-height:64px;padding:12px;}
         }
     </style>
 </head>
@@ -708,20 +794,24 @@
             <span class="hero-badge-dot"></span>
             PSL · Looksmaxxing · Bone Structure
         </div>
-        <h1 class="hero-title">
-            <span class="hero-title-line">
-                <span class="hero-title-word">Read</span>
+        <h1 class="hero-title" aria-label="Ascend. Improve. Refine. All with larp.ai.">
+            <span class="hero-flip-stack">
+                <span class="hero-flip-card">
+                    <span class="hero-flip-face front">Ascend</span>
+                    <span class="hero-flip-face back">Ascend</span>
+                </span>
+                <span class="hero-flip-card delay-2">
+                    <span class="hero-flip-face front">Improve</span>
+                    <span class="hero-flip-face back">Improve</span>
+                </span>
+                <span class="hero-flip-card delay-3">
+                    <span class="hero-flip-face front">Refine</span>
+                    <span class="hero-flip-face back">Refine</span>
+                </span>
             </span>
-            <span class="hero-title-line">
-                <span class="hero-title-word delay-2">Your Face.</span>
-            </span>
-            <span class="hero-title-line">
-                <span class="hero-title-word accent delay-3">Build Your Edge.</span>
-            </span>
+            <span class="hero-title-caption">All with larp.ai.</span>
         </h1>
-        <p class="hero-sub">
-            Precision PSL scoring based on bone structure, facial harmony, and 16 other metrics. Softmax and hardmax fixes — personalised by gender.
-        </p>
+        <p class="hero-sub">Precision PSL scoring for structure, harmony, angularity, and your next move.</p>
         <div class="hero-btns">
             <button class="hbtn hbtn-p" id="btnAnalysis">Analysis</button>
             <button class="hbtn hbtn-s" id="btnDashboard" style="display:none;">Dashboard</button>
@@ -732,12 +822,12 @@
 
 <!-- CHIPS -->
 <div class="chips">
-    <div class="chip">PSL scale scoring</div>
-    <div class="chip">Bone structure analysis</div>
-    <div class="chip">Softmax &amp; hardmax guide</div>
-    <div class="chip">Canthal tilt · FWHR · Gonial angle</div>
-    <div class="chip">Male &amp; female scales</div>
-    <div class="chip">Track your glow up</div>
+    <div class="chip"><span>PSL scale scoring</span></div>
+    <div class="chip"><span>Bone structure read</span></div>
+    <div class="chip"><span>Softmax and hardmax path</span></div>
+    <div class="chip"><span>Canthal tilt, FWHR, gonial angle</span></div>
+    <div class="chip"><span>Male and female calibrated scales</span></div>
+    <div class="chip"><span>Saved scans and progress tracking</span></div>
 </div>
 
 <div class="div-line"></div>
@@ -746,7 +836,7 @@
 <div class="section reveal">
     <div class="sec-eyebrow">How it works</div>
     <h2 class="sec-title">Know exactly where you stand</h2>
-    <p class="sec-sub">68 facial landmarks mapped, scored against PSL-calibrated ideals. See your bone structure, harmony, and angularity broken down.</p>
+    <p class="sec-sub">68 landmarks mapped into one clean score, a readable breakdown, and a clear improvement path.</p>
     <div class="steps">
         <div class="step reveal reveal-delay-1">
             <div class="step-num">01</div>
@@ -758,19 +848,19 @@
             <div class="step-num">02</div>
             <div class="step-icon">🔬</div>
             <div class="step-title">68-Point Detection</div>
-            <div class="step-desc">68 landmarks mapped. Canthal tilt, FWHR, gonial angle, facial thirds, zygomatic prominence — all calculated.</div>
+            <div class="step-desc">Core facial structure is mapped and scored against PSL-calibrated ideals.</div>
         </div>
         <div class="step reveal reveal-delay-3">
             <div class="step-num">03</div>
             <div class="step-icon">🎬</div>
             <div class="step-title">Cinematic Reveal</div>
-            <div class="step-desc">Your PSL score revealed with a full breakdown of what's holding you back and how to fix each flaw.</div>
+            <div class="step-desc">Your score lands in a staged reveal instead of a flat instant dump.</div>
         </div>
         <div class="step reveal reveal-delay-4">
             <div class="step-num">04</div>
             <div class="step-icon">📈</div>
             <div class="step-title">Track Progress</div>
-            <div class="step-desc">Save every scan. Watch your score move over time as you implement softmax and hardmax changes.</div>
+            <div class="step-desc">Save scans, compare movement, and see whether your stack is working.</div>
         </div>
     </div>
 </div>
@@ -801,7 +891,7 @@
     <div class="split-card reveal reveal-delay-1">
         <div class="sec-eyebrow" style="justify-content:flex-start;">Scan Better</div>
         <h2 class="split-title">Set yourself up for a cleaner result before you ever upload.</h2>
-        <p class="split-sub">The visual design stays the same, but the product is now more guided. These additions reduce bad scans and make the app feel more intentional.</p>
+        <p class="split-sub">A cleaner scan starts with cleaner input. These checks reduce bad uploads before the model ever runs.</p>
         <div class="scan-list">
             <div class="scan-row"><div class="scan-num">1</div><div><strong>Neutral expression</strong><span>No smile, no jaw tension, and no exaggerated squint. Keep the face relaxed and straight.</span></div></div>
             <div class="scan-row"><div class="scan-num">2</div><div><strong>Visible forehead and upper neck</strong><span>The manual hairline step works best when the image is framed slightly wider than a cropped selfie.</span></div></div>
@@ -812,7 +902,7 @@
     <div class="split-card reveal reveal-delay-2">
         <div class="sec-eyebrow" style="justify-content:flex-start;">Product Promise</div>
         <h2 class="split-title">Private, guided, and built for progress.</h2>
-        <p class="split-sub">These are UI and product-layer upgrades, not changes to the analysis formula. The app now explains itself better and converts better without breaking the original aesthetic.</p>
+        <p class="split-sub">Same analysis core. Better framing, better locked states, and a much stronger return-user experience.</p>
         <div class="promise-grid">
             <div class="promise">
                 <div class="promise-label">Client-side feel</div>
